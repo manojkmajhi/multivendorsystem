@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Settings - Admin</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="/staticfiles/admin-style.css?v=3.0" />
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="admin-navbar">
+    <div class="admin-navbar-container">
+      <a href="/admin/" class="admin-brand">
+        <% if(siteSetting && siteSetting.logo_url){ %>
+          <img src="<%= siteSetting.logo_url %>" alt="Logo" />
+        <% } %>
+      </a>
+      
+      <button class="mobile-menu-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Sidebar -->
+  <div class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar-content">
+      <div class="sidebar-header">
+        <% if(siteSetting && siteSetting.logo_url){ %>
+          <img src="<%= siteSetting.logo_url %>" alt="Logo" class="sidebar-logo" />
+        <% } %>
+        <h3 class="sidebar-title"><%= (siteSetting && siteSetting.name) || 'Admin Panel' %></h3>
+        <button class="sidebar-close" onclick="toggleSidebar()" aria-label="Close menu">&times;</button>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <a href="/admin/" class="sidebar-link">
+          <span class="sidebar-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="/admin/products" class="sidebar-link">
+          <span class="sidebar-icon">📦</span>
+          <span>Products</span>
+        </a>
+        <a href="/admin/categories" class="sidebar-link">
+          <span class="sidebar-icon">📁</span>
+          <span>Categories</span>
+        </a>
+        <a href="/admin/hero-images" class="sidebar-link">
+          <span class="sidebar-icon">🖼️</span>
+          <span>Hero Images</span>
+        </a>
+        <a href="/admin/settings" class="sidebar-link active">
+          <span class="sidebar-icon">⚙️</span>
+          <span>Settings</span>
+        </a>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <form method="POST" action="/admin/logout">
+          <button type="submit" class="sidebar-logout-btn">
+            <span class="sidebar-icon">🚪</span>
+            <span>Logout</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="admin-container">
+    <div class="page-header">
+      <h1 class="page-title">Settings</h1>
+    </div>
+
+    <% if(msg){ %>
+      <div class="alert alert-success"><%= msg %></div>
+    <% } %>
+
+    <div style="max-width: 700px;">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Site Configuration</h2>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            <div class="form-group">
+              <label class="form-label">Site Name *</label>
+              <input name="name" class="form-control" value="<%= site.name %>" required placeholder="e.g., All Strawhats" />
+              <small class="form-text">Your store's name that appears in the admin panel</small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Logo URL *</label>
+              <input name="logo_url" class="form-control" value="<%= site.logo_url %>" required placeholder="/staticfiles/logo.png or https://..." />
+              <small class="form-text">URL to your store logo</small>
+            </div>
+
+            <% if(site.logo_url) { %>
+              <div class="form-group">
+                <label class="form-label">Logo Preview</label>
+                <div style="padding: 1rem; background: var(--gray-100); border-radius: var(--border-radius-sm); display: inline-block;">
+                  <img src="<%= site.logo_url %>" style="height: 50px; max-width: 200px; object-fit: contain;" alt="Logo preview">
+                </div>
+              </div>
+            <% } %>
+
+            <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--gray-200);">
+
+            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 1rem; color: var(--gray-900);">Security</h3>
+
+            <div class="form-group">
+              <label class="form-label">New Admin Password</label>
+              <input name="new_password" type="password" class="form-control" minlength="6" placeholder="••••••••" autocomplete="new-password" />
+              <small class="form-text">Leave blank to keep your current password. Minimum 6 characters.</small>
+            </div>
+
+            <div style="margin-top: 2rem;">
+              <button type="submit" class="btn btn-success">Save Settings</button>
+              <a href="/admin/" class="btn btn-outline-primary ml-2">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Additional Information Card -->
+      <div class="card mt-3">
+        <div class="card-header">
+          <h2 class="card-title">System Information</h2>
+        </div>
+        <div class="card-body">
+          <table style="width: 100%;">
+            <tr style="border-bottom: 1px solid var(--gray-200);">
+              <td style="padding: 0.75rem 0; font-weight: 500; color: var(--gray-700);">Admin Version</td>
+              <td style="padding: 0.75rem 0; text-align: right; color: var(--gray-900);">1.0.0</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--gray-200);">
+              <td style="padding: 0.75rem 0; font-weight: 500; color: var(--gray-700);">Last Updated</td>
+              <td style="padding: 0.75rem 0; text-align: right; color: var(--gray-900);"><%= new Date().toLocaleDateString() %></td>
+            </tr>
+            <tr>
+              <td style="padding: 0.75rem 0; font-weight: 500; color: var(--gray-700);">Status</td>
+              <td style="padding: 0.75rem 0; text-align: right;">
+                <span class="badge badge-success">Active</span>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="admin-footer">
+    &copy; <%= new Date().getFullYear() %> <%= (siteSetting && siteSetting.name) || 'Admin' %>. All rights reserved.
+  </footer>
+
+  <script src="/staticfiles/admin-enhancements.js?v=3.0"></script>
+</body>
+</html>

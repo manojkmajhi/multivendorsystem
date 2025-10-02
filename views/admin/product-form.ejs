@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title><%= item? 'Edit':'New' %> Product - Admin</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="/staticfiles/admin-style.css?v=3.0" />
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="admin-navbar">
+    <div class="admin-navbar-container">
+      <a href="/admin/" class="admin-brand">
+        <% if(siteSetting && siteSetting.logo_url){ %>
+          <img src="<%= siteSetting.logo_url %>" alt="Logo" />
+        <% } %>
+      </a>
+      
+      <button class="mobile-menu-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Sidebar -->
+  <div class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar-content">
+      <div class="sidebar-header">
+        <% if(siteSetting && siteSetting.logo_url){ %>
+          <img src="<%= siteSetting.logo_url %>" alt="Logo" class="sidebar-logo" />
+        <% } %>
+        <h3 class="sidebar-title"><%= (siteSetting && siteSetting.name) || 'Admin Panel' %></h3>
+        <button class="sidebar-close" onclick="toggleSidebar()" aria-label="Close menu">&times;</button>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <a href="/admin/" class="sidebar-link">
+          <span class="sidebar-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="/admin/products" class="sidebar-link active">
+          <span class="sidebar-icon">📦</span>
+          <span>Products</span>
+        </a>
+        <a href="/admin/categories" class="sidebar-link">
+          <span class="sidebar-icon">📁</span>
+          <span>Categories</span>
+        </a>
+        <a href="/admin/hero-images" class="sidebar-link">
+          <span class="sidebar-icon">🖼️</span>
+          <span>Hero Images</span>
+        </a>
+        <a href="/admin/settings" class="sidebar-link">
+          <span class="sidebar-icon">⚙️</span>
+          <span>Settings</span>
+        </a>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <form method="POST" action="/admin/logout">
+          <button type="submit" class="sidebar-logout-btn">
+            <span class="sidebar-icon">🚪</span>
+            <span>Logout</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="admin-container">
+    <div class="page-header">
+      <h1 class="page-title"><%= item? 'Edit':'New' %> Product</h1>
+      <a href="/admin/products" class="btn btn-outline-primary">← Back to Products</a>
+    </div>
+
+    <div style="max-width: 800px;">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Product Information</h2>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            <div class="form-group">
+              <label class="form-label">Product Name *</label>
+              <input name="name" class="form-control" value="<%= item? item.name:'' %>" required placeholder="e.g., Op-Op Fruit Pillow" />
+              <small class="form-text">Give your product a descriptive name</small>
+            </div>
+
+            <div class="grid-2-cols">
+              <div class="form-group">
+                <label class="form-label">Price (Rs.) *</label>
+                <input name="price" type="number" step="0.01" class="form-control" value="<%= item? item.price:45 %>" required placeholder="450" />
+                <small class="form-text">Price in Nepali Rupees</small>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Type</label>
+                <input name="type" class="form-control" value="<%= item? item.type:'Sticker' %>" placeholder="e.g., Sticker, Pillow" />
+                <small class="form-text">Product type or variant</small>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Category *</label>
+              <select name="category" class="form-control" required>
+                <option value="">-- Select a category --</option>
+                <% categories.forEach(c => { %>
+                  <option value="<%= c.name || c %>" <%= item && item.category === (c.name||c) ? 'selected':'' %>>
+                    <%= c.name || c %>
+                  </option>
+                <% }) %>
+              </select>
+              <small class="form-text">Choose the category for this product</small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Image URL</label>
+              <input name="image" class="form-control" value="<%= item? item.image:'' %>" placeholder="/media/123_file.jpg or https://..." />
+              <small class="form-text">Full URL or path to product image</small>
+            </div>
+
+            <% if(item && item.image) { %>
+              <div class="form-group">
+                <label class="form-label">Image Preview</label>
+                <div style="padding: 1rem; background: var(--gray-100); border-radius: var(--border-radius-sm); display: inline-block;">
+                  <img src="<%= item.image %>" style="max-height: 150px; max-width: 100%; object-fit: contain;" alt="Product preview">
+                </div>
+              </div>
+            <% } %>
+
+            <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--gray-200);">
+
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+              <button type="submit" class="btn btn-success">
+                <%= item? 'Update Product':'Create Product' %>
+              </button>
+              <a href="/admin/products" class="btn btn-outline-primary">Cancel</a>
+              
+              <% if(item){ %>
+                <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+                  <form method="POST" action="/admin/products/<%= item.id %>/toggle-active" style="margin: 0;">
+                    <button type="submit" class="btn btn-outline-warning">
+                      <%= item.active? '🔒 Disable':'✓ Enable' %>
+                    </button>
+                  </form>
+                  <form method="POST" action="/admin/products/<%= item.id %>/delete" style="margin: 0;" onsubmit="return confirm('Are you sure you want to delete this product? This action cannot be undone.');">
+                    <button type="submit" class="btn btn-outline-danger">🗑 Delete</button>
+                  </form>
+                </div>
+              <% } %>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <% if(item){ %>
+        <div class="card mt-3">
+          <div class="card-header">
+            <h2 class="card-title">Product Status</h2>
+          </div>
+          <div class="card-body">
+            <table style="width: 100%;">
+              <tr style="border-bottom: 1px solid var(--gray-200);">
+                <td style="padding: 0.75rem 0; font-weight: 500; color: var(--gray-700);">Status</td>
+                <td style="padding: 0.75rem 0; text-align: right;">
+                  <span class="badge <%= item.active? 'badge-success':'badge-secondary' %>">
+                    <%= item.active? 'Active':'Inactive' %>
+                  </span>
+                </td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--gray-200);">
+                <td style="padding: 0.75rem 0; font-weight: 500; color: var(--gray-700);">Product ID</td>
+                <td style="padding: 0.75rem 0; text-align: right; color: var(--gray-900);"><%= item.id %></td>
+              </tr>
+              <tr>
+                <td style="padding: 0.75rem 0; font-weight: 500; color: var(--gray-700);">Category</td>
+                <td style="padding: 0.75rem 0; text-align: right; color: var(--gray-900);"><%= item.category %></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="admin-footer">
+    &copy; <%= new Date().getFullYear() %> <%= (siteSetting && siteSetting.name) || 'Admin' %>. All rights reserved.
+  </footer>
+
+  <script src="/staticfiles/admin-enhancements.js?v=3.0"></script>
+</body>
+</html>

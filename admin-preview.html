@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Design System - Component Preview</title>
+  <link rel="stylesheet" href="/staticfiles/admin-style.css">
+  <style>
+    .preview-section {
+      margin-bottom: 3rem;
+      padding-bottom: 3rem;
+      border-bottom: 2px solid var(--gray-200);
+    }
+    .preview-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--primary-color);
+      display: inline-block;
+    }
+    .component-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .preview-container {
+      background: white;
+      padding: 2rem;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Preview -->
+  <nav class="admin-navbar">
+    <div class="admin-navbar-container">
+      <a href="#" class="admin-brand">
+        <span>🎨 Admin Design System</span>
+      </a>
+      
+      <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+      
+      <div class="admin-nav-links" id="navLinks">
+        <a href="#" class="admin-nav-link active">Components</a>
+        <a href="#" class="admin-nav-link">Buttons</a>
+        <a href="#" class="admin-nav-link">Forms</a>
+        <a href="#" class="admin-nav-link">Tables</a>
+        <a href="#" class="admin-nav-link">Cards</a>
+      </div>
+      
+      <button class="admin-logout-btn">Preview Only</button>
+    </div>
+  </nav>
+
+  <div class="admin-container">
+    <div class="page-header">
+      <h1 class="page-title">Component Preview</h1>
+    </div>
+
+    <!-- Alerts -->
+    <section class="preview-section">
+      <h2 class="preview-title">Alerts</h2>
+      <div class="alert alert-success">This is a success alert message!</div>
+      <div class="alert alert-warning">This is a warning alert message!</div>
+      <div class="alert alert-danger">This is a danger alert message!</div>
+      <div class="alert alert-info">This is an info alert message!</div>
+    </section>
+
+    <!-- Buttons -->
+    <section class="preview-section">
+      <h2 class="preview-title">Buttons</h2>
+      
+      <div class="component-row">
+        <button class="btn btn-primary">Primary</button>
+        <button class="btn btn-success">Success</button>
+        <button class="btn btn-warning">Warning</button>
+        <button class="btn btn-danger">Danger</button>
+      </div>
+      
+      <div class="component-row">
+        <button class="btn btn-outline-primary">Outline Primary</button>
+        <button class="btn btn-outline-warning">Outline Warning</button>
+        <button class="btn btn-outline-danger">Outline Danger</button>
+      </div>
+      
+      <div class="component-row">
+        <button class="btn btn-sm btn-primary">Small</button>
+        <button class="btn btn-primary">Default</button>
+        <button class="btn btn-lg btn-primary">Large</button>
+      </div>
+    </section>
+
+    <!-- Badges -->
+    <section class="preview-section">
+      <h2 class="preview-title">Badges</h2>
+      <div class="component-row">
+        <span class="badge badge-success">Active</span>
+        <span class="badge badge-secondary">Inactive</span>
+        <span class="badge badge-warning">Pending</span>
+        <span class="badge badge-primary">New</span>
+      </div>
+    </section>
+
+    <!-- Stats Cards -->
+    <section class="preview-section">
+      <h2 class="preview-title">Stat Cards</h2>
+      <div class="stats-grid">
+        <div class="stat-card primary">
+          <div class="stat-label">Total Products</div>
+          <div class="stat-value">156</div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-label">Categories</div>
+          <div class="stat-value">12</div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-label">Hero Images</div>
+          <div class="stat-value">5</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Forms -->
+    <section class="preview-section">
+      <h2 class="preview-title">Forms</h2>
+      <div class="card" style="max-width: 600px;">
+        <div class="card-header">
+          <h3 class="card-title">Form Example</h3>
+        </div>
+        <div class="card-body">
+          <form>
+            <div class="form-group">
+              <label class="form-label">Text Input</label>
+              <input type="text" class="form-control" placeholder="Enter text here">
+              <small class="form-text">This is helper text for the input</small>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Select Dropdown</label>
+              <select class="form-control">
+                <option>Option 1</option>
+                <option>Option 2</option>
+                <option>Option 3</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Textarea</label>
+              <textarea class="form-control" placeholder="Enter description"></textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="button" class="btn btn-outline-primary ml-2">Cancel</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Table -->
+    <section class="preview-section">
+      <h2 class="preview-title">Tables</h2>
+      <div class="table-container">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:60px;">#</th>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td><strong>Op-Op Fruit Pillow</strong></td>
+                <td>Pillow</td>
+                <td><strong>Rs. 450</strong></td>
+                <td><span class="badge badge-success">Active</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn btn-sm btn-outline-primary">Edit</button>
+                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td><strong>Naruto Sticker Pack</strong></td>
+                <td>Sticker</td>
+                <td><strong>Rs. 45</strong></td>
+                <td><span class="badge badge-secondary">Inactive</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn btn-sm btn-outline-primary">Edit</button>
+                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td><strong>One Piece Banner</strong></td>
+                <td>Poster</td>
+                <td><strong>Rs. 300</strong></td>
+                <td><span class="badge badge-success">Active</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn btn-sm btn-outline-primary">Edit</button>
+                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cards -->
+    <section class="preview-section">
+      <h2 class="preview-title">Cards</h2>
+      <div class="grid-2-cols">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Card Title</h3>
+          </div>
+          <div class="card-body">
+            <p>This is a card component with header and body. Cards are great for organizing content into distinct sections.</p>
+            <button class="btn btn-primary">Action Button</button>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Another Card</h3>
+          </div>
+          <div class="card-body">
+            <p>Cards can contain any type of content including forms, tables, images, and more.</p>
+            <button class="btn btn-outline-primary">Secondary Action</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Empty State -->
+    <section class="preview-section">
+      <h2 class="preview-title">Empty State</h2>
+      <div class="card">
+        <div class="card-body">
+          <div class="empty-state">
+            <div class="empty-state-icon">📦</div>
+            <h3 class="empty-state-title">No Items Yet</h3>
+            <p class="empty-state-text">Get started by adding your first item to see it appear here.</p>
+            <button class="btn btn-primary mt-3">+ Add First Item</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Footer -->
+  <footer class="admin-footer">
+    &copy; 2025 Admin Design System Preview
+  </footer>
+
+  <script>
+    function toggleMobileMenu() {
+      const navLinks = document.getElementById('navLinks');
+      navLinks.classList.toggle('active');
+    }
+  </script>
+</body>
+</html>

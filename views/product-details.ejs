@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title><%= product.name %> | All Strawhats</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" />
+  <link rel="stylesheet" href="/staticfiles/style.blue.css">
+  <link rel="stylesheet" href="/staticfiles/floating-button.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-pbCf3Z52eQX1ZsaAJ+lZeI7IuAv89xDSHLVbkP4SRrped1IovnEwlHGawEq+y3OCAXoTr4Wr9L5xRcmRl6Vw2g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .main-content {
+      flex: 1 0 auto;
+    }
+    footer {
+      flex-shrink: 0;
+      margin-top: 40px;
+    }
+    .thumbs-img-details-page{margin-left:-4px !important; height:100px; width:100px;}
+    .owl-thumbs::-webkit-scrollbar{width:0px;}
+    @media only screen and (max-width: 600px){
+      .thumbs-img-details-page{margin-left:0px !important;}
+      .details-texts h1{font-size:25px !important;}
+      .details-texts .text-uppercase{font-size:15px !important;}
+      .details-texts .lead{font-weight:500; font-size:15px !important;}
+    }
+    .show-added-message{position:absolute; left:0; top:0; background:#000; color:#fff; font-size:11px; padding:2px 4px; display:none;}
+    /* Added: consistent product card + related styling */
+    .product-grid .product{background:#f8f8f8; border:1px solid #f8f8f8; min-height:100%; transition:box-shadow .25s, transform .25s; border-radius:2px;}
+    .product-grid .product:hover{box-shadow:0 6px 18px -6px rgba(0,0,0,.12); transform:translateY(-3px);}    
+    .product-grid .product img{height:150px; object-fit:contain; transition:transform .3s; width:100%;}
+    .product-grid .product:hover img{transform:scale(1.04);}    
+    .product-grid .product h5{font-size:13px; line-height:16px; font-weight:600; margin-top:0; min-height:32px;}
+    .product-grid .product h5 a{color:#000; text-decoration:none;}
+    .product-grid .btn-dark{background:#000; border-color:#000; font-size:12px;}
+    .product-grid .btn-outline-dark{border-color:#000; font-size:12px;}
+    .related-products-wrapper{padding-top:5px; padding-bottom:25px;}
+    h2.related-title{font-size:13px; letter-spacing:1.5px; font-weight:700; margin-bottom:14px;}
+
+  </style>
+</head>
+<body>
+  <div class="main-content">
+  <nav class="navbar navbar-light fixed-top py-0 px-2">
+    <div class="container px-0 px-lg-3">
+  <a class="navbar-brand" href="/"><img src="<%= (siteSetting && siteSetting.logo_url) || '/staticfiles/brand.svg' %>" height="60"></a>
+  <form method="POST" id="search-form-in-navbar">
+        <div class="input-group search-input-group">
+          <input class="form-control form-control-lg search" id="search" name="search" type="text" placeholder="Search Stickers">
+          <div class="input-group-append">
+            <button class="input-group-text search-icon" id="search-icon-id"><i class="fas fa-search"></i></button>
+          </div>
+        </div>
+      </form>
+      <ul class="navbar-nav ml-auto phone-in-navbar" style="display: none;">
+        <li class="nav-item"><a class="nav-link" href="tel:9802326980"> <i class="fas fa-phone-alt"></i>
+          9802326980<sup><small> NP</small></sup></a></li>
+      </ul>
+    </div>
+  </nav>
+
+      <!-- Shared floating cart -->
+      <%- include('partials/floating-cart') %>
+
+  <div class="container-fluid" style="margin-top: 80px;">
+  <section class="py-2 py-md-5">
+    <div class="container px-0 px-sm-2 px-md-3">
+      <div class="row mb-5">
+        <div class="col-lg-6">
+          <!-- PRODUCT SLIDER-->
+          <div class="row m-sm-0">
+            <div class="col-sm-2 p-sm-0 order-2 order-sm-1 mt-2 mt-sm-0 text-center">
+              <i class="fas fa-caret-up caret" style="display:none;"></i>
+              <div class="owl-thumbs d-flex flex-row flex-sm-column" id="content" style="max-height: 450px; overflow-y: auto;" data-slider-id="1">
+                <div class="owl-thumb-item flex-fill mb-0 mb-sm-1 mr-1 mr-sm-0 active"><img class="thumbs-img-details-page" src="<%= product.image %>"></div>
+              </div>
+              <i class="fas fa-caret-down caret" style="display:none;"></i>
+            </div>
+            <div class="col-sm-10 order-1 order-sm-2">
+              <div class="owl-carousel product-slider" data-slider-id="1">
+                <div class="item"><img class="img-fluid" src="<%= product.image %>" style="width: 100% !important;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- PRODUCT DETAILS-->
+        <div class="col-lg-6 details-texts">
+          <h1 class="mt-3 mb-1 mb-md-2"><%= product.name %></h1>
+          <p class="lead mb-0">Rs. <%= product.price %></p>
+          <ul style="list-style: none;" class="descripton-ul pl-0 text-uppercase">
+            <li><i class="fas fa-check"></i> Waterproof</li>
+            <li><i class="fas fa-check"></i> Premium</li>
+            <li><i class="fas fa-check"></i> No Residue on Removal</li>
+            <li><i class="fas fa-check"></i> Scratch Proof</li>
+            <li><i class="fas fa-check"></i> No Fading</li>
+          </ul>
+          <div class="row align-items-stretch mb-4">
+            <div class="col-sm-5 pr-sm-0">
+              <div class="border d-flex align-items-center justify-content-between py-1 px-3 bg-white border-white"><span class="small text-uppercase text-gray mr-4 no-select">Quantity</span>
+                <div class="quantity">
+                  <button class="dec-btn p-0"><i class="fas fa-caret-left"></i></button>
+                  <input class="form-control border-0 shadow-0 p-0" type="text" id="product_qty" value="1">
+                  <button class="inc-btn p-0"><i class="fas fa-caret-right"></i></button>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-3 pl-sm-0"><button class="btn btn-dark btn-sm btn-block h-100 d-flex align-items-center justify-content-center px-0" id="product-add-to-cart" value="<%= product.id %>">Add to cart</button></div>
+          </div>
+          <ul class="list-unstyled small d-inline-block">
+            <li class="px-3 py-2 mb-1 bg-white text-muted"><strong class="text-uppercase text-dark">Category:</strong><a class="reset-anchor ml-2" href="/shop/<%= product.category %>/"><%= product.category %></a></li>
+          </ul>
+        </div>
+      </div>
+      <!-- RELATED PRODUCTS-->
+      <% var __related = (typeof related !== 'undefined' && Array.isArray(related)) ? related : []; %>
+      <% if(__related.length){ %>
+      <div class="related-products-wrapper">
+        <h2 class="related-title text-uppercase">Related Products</h2>
+        <div class="row product-grid related-products-grid">
+          <% __related.forEach(function(r){ %>
+            <div class="col-xl-2 col-lg-4 col-md-4 col-6 px-1 py-1">
+              <div class="product text-center pt-2 bg-light" style="border:1px solid #f8f8f8; height:100%!important;">
+                <div class="position-relative mb-1">
+                  <div class="<%= r.id %>-added-message show-added-message show-added-message-details"></div>
+                  <a class="d-block" href="/details/<%= r.id %>/"><img class="img-fluid" src="<%= r.image %>" alt="<%- r.name.replace(/\"/g,'&quot;') %>"></a>
+                </div>
+                <ul class="mb-2 mt-0 list-inline">
+                  <li class="list-inline-item m-0 p-0"><button class="btn btn-sm btn-dark py-1 px-2" onclick="addToCart('<%= r.id %>','1', false)">Add to Cart</button></li>
+                  <li class="list-inline-item mr-0"><a class="btn btn-sm btn-outline-dark py-1 px-2 quick-view-btn" data-id="<%= r.id %>" data-image="<%= r.image %>" data-name="<%- r.name %>" data-price="<%= r.price %>" data-link="/details/<%= r.id %>/"><i class="fas fa-expand"></i></a></li>
+                </ul>
+                <h5 class="mb-0 text-sm"><a class="reset-anchor" href="/details/<%= r.id %>/"><%= r.name %></a></h5>
+                <p class="small text-muted mb-2">Rs. <%= r.price %></p>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+      <% } %>
+    </div>
+  </section>
+  </div>
+
+  <!-- Quick View Modal -->
+  <div class="modal fade" id="productView" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-body p-0">
+          <div class="row align-items-stretch">
+            <div class="col-lg-6 p-lg-0">
+              <a id="modal-img-link" class="product-view d-block h-100 bg-cover bg-center"></a>
+            </div>
+            <div class="col-lg-6">
+              <button class="close p-4" type="button" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+              <div class="p-5 my-md-4">
+                <h2 class="h4" id="product-modal-title"></h2>
+                <p class="text-muted" id="product-modal-price"></p>
+                <ul style="list-style: none;" class="descripton-ul pl-0 text-uppercase">
+                  <li><i class="fas fa-check"></i> Waterproof</li>
+                  <li><i class="fas fa-check"></i> Premium</li>
+                  <li><i class="fas fa-check"></i> No Residue on Removal</li>
+                  <li><i class="fas fa-check"></i> Scratch Proof</li>
+                  <li><i class="fas fa-check"></i> No Fading</li>
+                </ul>
+                <div class="row align-items-stretch mb-4">
+                  <div class="col-sm-7 pr-sm-0">
+                    <div class="border d-flex align-items-center justify-content-between py-1 px-3"><span class="small text-uppercase text-gray mr-4 no-select">Quantity</span>
+                      <div class="quantity">
+                        <button class="dec-btn p-0"><i class="fas fa-caret-left"></i></button>
+                        <input class="form-control border-0 shadow-0 p-0" type="text" value="1" id="qty">
+                        <button class="inc-btn p-0"><i class="fas fa-caret-right"></i></button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-sm-5 pl-sm-0"><button class="btn btn-dark btn-sm btn-block h-100 d-flex align-items-center justify-content-center px-0" id="add-to-cart">Add to cart</button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div> <!-- End main-content -->
+
+  <footer class="bg-dark text-white shadow" style="color: #fff;">
+    <div class="container py-4">
+      <div class="row">
+        <div class="col-lg-6">
+          <p class="small text-gray mb-0">© <%= new Date().getFullYear() %> All rights reserved.</p>
+          <p class="small text-gray mb-0">Crafted by <a class="text-white reset-anchor" href="https://ulpuskins.com" target="_blank">ULPU Skins</a></p>
+        </div>
+        <div class="col-lg-6 text-lg-right">
+          <p class="small mb-0">FIND US &nbsp;
+            <a href="https://facebook.com/allstrawhats/" target="_blank"><i class="fab fa-facebook-square mr-1" style="color: #f5f5f5;"></i></a>
+            <a href="https://instagram.com/allstrawhats/" target="_blank"><i class="fab fa-instagram" style="color: #f5f5f5;"></i></a>
+          </p>
+          <p class="text-sm text-gray mb-0"><a class="text-gray reset-anchor" href="mailto:info@allstrawhats.com" target="_blank"><i class="fas fa-envelope"></i> &nbsp;info@allstrawhats.com</a></p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Floating cart provided by partial earlier -->
+
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
+  <script src="/staticfiles/owl.carousel2.thumbs.min.js"></script>
+  <script src="/staticfiles/front.js"></script>
+  <script src="https://kit.fontawesome.com/d6db3c2373.js" crossorigin="anonymous"></script>
+  <script>
+    var selected;
+    function viewproduct(id, image, name, price, description, link){
+      selected = id;
+      $("#productView").modal();
+      $("#modal-img-link").css('background-image','url('+ image + ')');
+      $("#product-modal-title").html(name);
+      $("#product-modal-price").html('Rs. ' + price);
+      $("#modal-img-link").attr("href", link);
+      $('#add-to-cart').val(id);
+    }
+
+    $('#add-to-cart').click(function(){
+      addToCart($('#add-to-cart').val(), $('#qty').val(), true);
+      $("#productView").modal("toggle");
+    });
+
+    $(document).ready(function(){
+      if ($('#content').prop('scrollHeight') > $('#content').prop('clientHeight')){ $(".caret").show(); } else { $(".caret").hide(); }
+      // Quick view button clicks
+      $(document).on('click', '.quick-view-btn', function(){
+        const id = $(this).data('id');
+        const image = $(this).data('image');
+        const name = $(this).data('name');
+        const price = $(this).data('price');
+        const link = $(this).data('link');
+        viewproduct(id, image, name, price, 'description', link);
+      });
+    });
+
+    $('#product-add-to-cart').click(function(){ addToCart($('#product-add-to-cart').val(), $('#product_qty').val(), true); });
+
+    // Use shared cart-shared.js for cart logic; keep only product view + search submit
+    $("#search-form-in-navbar").submit(function(e){ e.preventDefault(); var search_term = $("#search").val(); if(search_term){ window.location = window.location.origin+"/search/all/?q="+search_term; } });
+  </script>
+  <script src="/staticfiles/cart-shared.js?v=4"></script>
+</body>
+</html>
