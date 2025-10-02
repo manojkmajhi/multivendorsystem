@@ -16,6 +16,37 @@
         <% } %>
       </a>
       
+      <!-- Desktop Navigation Links -->
+      <div class="desktop-nav-links">
+        <a href="/admin/" class="nav-link">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="/admin/products" class="nav-link active">
+          <span class="nav-icon">📦</span>
+          <span>Products</span>
+        </a>
+        <a href="/admin/categories" class="nav-link">
+          <span class="nav-icon">📁</span>
+          <span>Categories</span>
+        </a>
+        <a href="/admin/hero-images" class="nav-link">
+          <span class="nav-icon">🖼️</span>
+          <span>Hero Images</span>
+        </a>
+        <a href="/admin/settings" class="nav-link">
+          <span class="nav-icon">⚙️</span>
+          <span>Settings</span>
+        </a>
+        <form method="POST" action="/admin/logout" style="display: inline;">
+          <button type="submit" class="nav-link nav-logout-btn">
+            <span class="nav-icon">🚪</span>
+            <span>Logout</span>
+          </button>
+        </form>
+      </div>
+      
+      <!-- Mobile Hamburger Menu -->
       <button class="mobile-menu-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">
         <span></span>
         <span></span>

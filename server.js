@@ -1,6 +1,8 @@
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
+const multer = require('multer');
+const fs = require('fs');
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
@@ -48,16 +50,16 @@ app.use((req,res,next)=>{
 // -------- Site Setting Injection (for dynamic logo/name in admin UI) --------
 let siteCache = { value: null, fetchedAt: 0 };
 async function loadSiteSetting(force=false){
-  if(!supabase) return { name: 'Stickers Nepal', logo_url: '/staticfiles/brand.svg' };
+  if(!supabase) return { name: 'All Strawhats', logo_url: '/staticfiles/brand.svg' };
   if(!force && siteCache.value && Date.now() - siteCache.fetchedAt < 60_000){
     return siteCache.value;
   }
   try {
-    const site = await getSetting('site', { name: 'Stickers Nepal', logo_url: '/staticfiles/brand.svg' });
+    const site = await getSetting('site', { name: 'All Strawhats', logo_url: '/staticfiles/brand.svg' });
     siteCache = { value: site, fetchedAt: Date.now() };
     return site;
   } catch(e){
-    return { name: 'Stickers Nepal', logo_url: '/staticfiles/brand.svg' };
+    return { name: 'All Strawhats', logo_url: '/staticfiles/brand.svg' };
   }
 }
 app.use(async (req,res,next)=>{
@@ -183,6 +185,63 @@ app.use('/media', express.static(path.join(__dirname, 'stickersnepal.com', 'medi
 app.use('/staticfiles', express.static(path.join(__dirname, 'stickersnepal.com', 'staticfiles')));
 // NOTE: root static serving moved to bottom (after dynamic routes) to avoid swallowing /details/:id/ etc.
 
+// -------- Multer Configuration for File Uploads --------
+const uploadDir = path.join(__dirname, 'stickersnepal.com', 'media', 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    const name = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9]/g, '_');
+    cb(null, name + '-' + uniqueSuffix + ext);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: function (req, file, cb) {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed (jpeg, jpg, png, gif, webp)'));
+    }
+  }
+});
+
+// Multer error handling middleware
+function handleMulterError(err, req, res, next) {
+  if (err instanceof multer.MulterError) {
+    console.error('Multer error:', err);
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).render('simple-message', { 
+        title: 'Error', 
+        message: 'File too large. Maximum size is 5MB.' 
+      });
+    }
+    return res.status(400).render('simple-message', { 
+      title: 'Error', 
+      message: 'File upload error: ' + err.message 
+    });
+  } else if (err) {
+    console.error('Upload error:', err);
+    return res.status(500).render('simple-message', { 
+      title: 'Error', 
+      message: err.message 
+    });
+  }
+  next();
+}
+
 // -------- Admin Auth (very light placeholder) --------
 // For now use a simple header token or query param; later integrate Supabase auth.
 let cachedAdminHash = null;
@@ -282,19 +341,50 @@ app.get('/admin/products/new', adminGuard, async (req,res)=>{
   res.render('admin/product-form', { item: null, categories, siteSetting: res.locals.siteSetting });
 });
 
-app.post('/admin/products/new', adminGuard, async (req,res)=>{
+app.post('/admin/products/new', adminGuard, upload.single('imageFile'), handleMulterError, async (req,res)=>{
+  console.log('📝 Creating new product...');
+  console.log('Body:', req.body);
+  console.log('File:', req.file);
+  
   const { name, price, category, type, image } = req.body;
+  let finalImage = image || '';
+  
+  // If a file was uploaded, use it instead of the URL
+  if (req.file) {
+    finalImage = '/media/uploads/' + req.file.filename;
+    console.log('✅ File uploaded:', finalImage);
+  }
+  
   try {
     if (supabase) {
-      const { error } = await supabase.from('products').insert({ name, price: parseFloat(price), category, type, image });
-      if (error) throw error;
+      console.log('Inserting to database:', { name, price: parseFloat(price), category, type, image: finalImage });
+      const { error } = await supabase.from('products').insert({ 
+        name, 
+        price: parseFloat(price), 
+        category, 
+        type, 
+        image: finalImage 
+      });
+      if (error) {
+        console.error('❌ Supabase error:', error);
+        throw error;
+      }
     } else {
-      products.push({ id: String(Date.now()), name, price: parseFloat(price), category, type, image });
+      products.push({ 
+        id: String(Date.now()), 
+        name, 
+        price: parseFloat(price), 
+        category, 
+        type, 
+        image: finalImage 
+      });
     }
+    console.log('✅ Product created successfully');
     res.redirect('/admin/products?msg=' + encodeURIComponent('Product created'));
   } catch (e) {
-    console.error(e);
-    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to create product.' });
+    console.error('❌ Error creating product:', e);
+    console.error('Error details:', e.message, e.stack);
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to create product: ' + e.message });
   }
 });
 
@@ -312,17 +402,30 @@ app.get('/admin/products/:id/edit', adminGuard, async (req,res)=>{
   }
 });
 
-app.post('/admin/products/:id/edit', adminGuard, async (req,res)=>{
+app.post('/admin/products/:id/edit', adminGuard, upload.single('imageFile'), handleMulterError, async (req,res)=>{
   const id = req.params.id;
   const { name, price, category, type, image } = req.body;
+  let finalImage = image || '';
+  
+  // If a file was uploaded, use it instead of the URL
+  if (req.file) {
+    finalImage = '/media/uploads/' + req.file.filename;
+  }
+  
   try {
     if (supabase) {
-      const { error } = await supabase.from('products').update({ name, price: parseFloat(price), category, type, image }).eq('id', id);
+      const { error } = await supabase.from('products').update({ 
+        name, 
+        price: parseFloat(price), 
+        category, 
+        type, 
+        image: finalImage 
+      }).eq('id', id);
       if(error) throw error;
     } else {
       const idx = products.findIndex(p=>p.id === id);
       if(idx === -1) return res.status(404).render('simple-message', { title: 'Not Found', message:'Product missing.' });
-      products[idx] = { ...products[idx], name, price: parseFloat(price), category, type, image };
+      products[idx] = { ...products[idx], name, price: parseFloat(price), category, type, image: finalImage };
     }
     res.redirect('/admin/products?msg=' + encodeURIComponent('Product updated'));
   } catch(e){
@@ -379,20 +482,55 @@ app.get('/admin/categories', adminGuard, async (req,res)=>{
   }
 });
 
-app.post('/admin/categories/new', adminGuard, async (req,res)=>{
+app.post('/admin/categories/new', adminGuard, upload.single('imageFile'), async (req,res)=>{
   const { name, image_url } = req.body;
+  let finalImage = image_url;
+  
+  // If a file was uploaded, use it instead of the URL
+  if (req.file) {
+    finalImage = '/media/uploads/' + req.file.filename;
+  }
+  
   try {
     if (supabase) {
-      const { error } = await supabase.from('categories').insert({ name, image_url });
+      const { error } = await supabase.from('categories').insert({ name, image_url: finalImage });
       if(error) throw error;
       await dbFetchCategories(true);
     } else {
-      fallbackCategories.push({ name, image: image_url });
+      fallbackCategories.push({ name, image: finalImage });
     }
     res.redirect('/admin/categories?msg=' + encodeURIComponent('Category added'));
   } catch(e){
     console.error(e);
     res.status(500).render('simple-message', { title:'Error', message:'Failed to add category.' });
+  }
+});
+
+app.post('/admin/categories/:id/edit', adminGuard, upload.single('imageFile'), async (req,res)=>{
+  const id = req.params.id;
+  const { name, image_url } = req.body;
+  let finalImage = image_url;
+  
+  // If a file was uploaded, use it instead of the URL
+  if (req.file) {
+    finalImage = '/media/uploads/' + req.file.filename;
+  }
+  
+  try {
+    if (supabase) {
+      const { error } = await supabase.from('categories').update({ name, image_url: finalImage }).eq('id', id);
+      if(error) throw error;
+      await dbFetchCategories(true);
+    } else {
+      const idx = fallbackCategories.findIndex(c=>c.name===id);
+      if(idx!==-1) {
+        fallbackCategories[idx] = { name, image: finalImage };
+      }
+    }
+    res.redirect('/admin/categories?msg=' + encodeURIComponent('Category updated'));
+  } catch(e){
+    console.error(e);
+    res.status(500).render('simple-message', { title:'Error', message:'Failed to update category.' });
   }
 });
 
@@ -417,7 +555,7 @@ app.post('/admin/categories/:id/delete', adminGuard, async (req,res)=>{
 // Settings (logo, site name, etc.)
 app.get('/admin/settings', adminGuard, async (req,res)=>{
   try {
-    const site = await getSetting('site', { name: 'Stickers Nepal', logo_url: '/staticfiles/brand.svg' });
+    const site = await getSetting('site', { name: 'All Strawhats', logo_url: '/staticfiles/brand.svg' });
   res.render('admin/settings', { site, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
   } catch(e){
     console.error(e);
@@ -475,17 +613,60 @@ app.get('/admin/hero-images', adminGuard, async (req,res)=>{
   }
 });
 
-app.post('/admin/hero-images/new', adminGuard, async (req,res)=>{
-  const { title, image_url, link_url, position } = req.body;
+app.post('/admin/hero-images/new', adminGuard, upload.single('imageFile'), async (req,res)=>{
+  const { title, image_url, description, link_url, cta_label, position } = req.body;
+  let finalImage = image_url;
+  
+  // If a file was uploaded, use it instead of the URL
+  if (req.file) {
+    finalImage = '/media/uploads/' + req.file.filename;
+  }
+  
   try {
     if(supabase){
-      const { error } = await supabase.from('hero_images').insert({ title, image_url, link_url, position: parseInt(position||0,10) });
+      const { error } = await supabase.from('hero_images').insert({ 
+        title, 
+        image_url: finalImage, 
+        description,
+        link_url, 
+        cta_label,
+        position: parseInt(position||0,10) 
+      });
       if(error) throw error;
     }
     res.redirect('/admin/hero-images?msg=' + encodeURIComponent('Hero image added'));
   } catch(e){
     console.error(e);
     res.status(500).render('simple-message', { title:'Error', message:'Failed to add hero image.' });
+  }
+});
+
+app.post('/admin/hero-images/:id/edit', adminGuard, upload.single('imageFile'), async (req,res)=>{
+  const id = req.params.id;
+  const { title, image_url, description, link_url, cta_label, position } = req.body;
+  let finalImage = image_url;
+  
+  // If a file was uploaded, use it instead of the URL
+  if (req.file) {
+    finalImage = '/media/uploads/' + req.file.filename;
+  }
+  
+  try {
+    if(supabase){
+      const { error } = await supabase.from('hero_images').update({ 
+        title, 
+        image_url: finalImage, 
+        description,
+        link_url, 
+        cta_label,
+        position: parseInt(position||0,10) 
+      }).eq('id', id);
+      if(error) throw error;
+    }
+    res.redirect('/admin/hero-images?msg=' + encodeURIComponent('Hero image updated'));
+  } catch(e){
+    console.error(e);
+    res.status(500).render('simple-message', { title:'Error', message:'Failed to update hero image.' });
   }
 });
 

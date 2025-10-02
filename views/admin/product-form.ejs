@@ -16,6 +16,37 @@
         <% } %>
       </a>
       
+      <!-- Desktop Navigation Links -->
+      <div class="desktop-nav-links">
+        <a href="/admin/" class="nav-link">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="/admin/products" class="nav-link active">
+          <span class="nav-icon">📦</span>
+          <span>Products</span>
+        </a>
+        <a href="/admin/categories" class="nav-link">
+          <span class="nav-icon">📁</span>
+          <span>Categories</span>
+        </a>
+        <a href="/admin/hero-images" class="nav-link">
+          <span class="nav-icon">🖼️</span>
+          <span>Hero Images</span>
+        </a>
+        <a href="/admin/settings" class="nav-link">
+          <span class="nav-icon">⚙️</span>
+          <span>Settings</span>
+        </a>
+        <form method="POST" action="/admin/logout" style="display: inline;">
+          <button type="submit" class="nav-link nav-logout-btn">
+            <span class="nav-icon">🚪</span>
+            <span>Logout</span>
+          </button>
+        </form>
+      </div>
+      
+      <!-- Mobile Hamburger Menu -->
       <button class="mobile-menu-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">
         <span></span>
         <span></span>
@@ -83,7 +114,7 @@
           <h2 class="card-title">Product Information</h2>
         </div>
         <div class="card-body">
-          <form method="POST">
+          <form method="POST" enctype="multipart/form-data">
             <div class="form-group">
               <label class="form-label">Product Name *</label>
               <input name="name" class="form-control" value="<%= item? item.name:'' %>" required placeholder="e.g., Op-Op Fruit Pillow" />
@@ -118,19 +149,33 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label">Image URL</label>
-              <input name="image" class="form-control" value="<%= item? item.image:'' %>" placeholder="/media/123_file.jpg or https://..." />
-              <small class="form-text">Full URL or path to product image</small>
+              <label class="form-label">Product Image</label>
+              <div style="margin-bottom: 1rem;">
+                <input type="file" name="imageFile" id="imageFile" class="form-control" accept="image/*" onchange="previewImage(event)" />
+                <small class="form-text">Upload an image from your computer (JPG, PNG, WebP, max 5MB)</small>
+              </div>
+              <div style="margin-top: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--gray-700);">Or enter image URL:</label>
+                <input name="image" id="imageUrl" class="form-control" value="<%= item? item.image:'' %>" placeholder="/media/123_file.jpg or https://..." />
+                <small class="form-text">If you upload a file, it will override the URL</small>
+              </div>
             </div>
 
             <% if(item && item.image) { %>
               <div class="form-group">
-                <label class="form-label">Image Preview</label>
+                <label class="form-label">Current Image</label>
                 <div style="padding: 1rem; background: var(--gray-100); border-radius: var(--border-radius-sm); display: inline-block;">
-                  <img src="<%= item.image %>" style="max-height: 150px; max-width: 100%; object-fit: contain;" alt="Product preview">
+                  <img src="<%= item.image %>" id="currentImage" style="max-height: 150px; max-width: 100%; object-fit: contain;" alt="Product preview">
                 </div>
               </div>
             <% } %>
+            
+            <div class="form-group" id="newImagePreview" style="display: none;">
+              <label class="form-label">New Image Preview</label>
+              <div style="padding: 1rem; background: var(--gray-100); border-radius: var(--border-radius-sm); display: inline-block;">
+                <img id="previewImg" style="max-height: 150px; max-width: 100%; object-fit: contain;" alt="Preview">
+              </div>
+            </div>
 
             <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--gray-200);">
 
@@ -193,5 +238,20 @@
   </footer>
 
   <script src="/staticfiles/admin-enhancements.js?v=3.0"></script>
+  <script>
+    function previewImage(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('previewImg').src = e.target.result;
+          document.getElementById('newImagePreview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        document.getElementById('newImagePreview').style.display = 'none';
+      }
+    }
+  </script>
 </body>
 </html>

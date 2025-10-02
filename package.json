@@ -1,7 +1,7 @@
 {
-  "name": "stickersnepal",
-  "version": "0.1.0",
-  "description": "Minimal full-stack setup for Stickers Nepal (static frontend + Express backend)",
+  "name": "allstrawhats",
+  "version": "1.0.0",
+  "description": "Minimal full-stack setup for All Strawhats (anime store frontend + Express backend)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -15,8 +15,8 @@
     "ejs": "^3.1.10",
     "@supabase/supabase-js": "^2.44.4",
     "dotenv": "^16.4.5",
-  "multer": "^1.4.5-lts.1",
-  "bcryptjs": "^2.4.3"
+    "multer": "^1.4.5-lts.1",
+    "bcryptjs": "^2.4.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.4"

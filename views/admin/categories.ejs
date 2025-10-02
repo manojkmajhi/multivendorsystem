@@ -16,6 +16,37 @@
         <% } %>
       </a>
       
+      <!-- Desktop Navigation Links -->
+      <div class="desktop-nav-links">
+        <a href="/admin/" class="nav-link">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="/admin/products" class="nav-link">
+          <span class="nav-icon">📦</span>
+          <span>Products</span>
+        </a>
+        <a href="/admin/categories" class="nav-link active">
+          <span class="nav-icon">📁</span>
+          <span>Categories</span>
+        </a>
+        <a href="/admin/hero-images" class="nav-link">
+          <span class="nav-icon">🖼️</span>
+          <span>Hero Images</span>
+        </a>
+        <a href="/admin/settings" class="nav-link">
+          <span class="nav-icon">⚙️</span>
+          <span>Settings</span>
+        </a>
+        <form method="POST" action="/admin/logout" style="display: inline;">
+          <button type="submit" class="nav-link nav-logout-btn">
+            <span class="nav-icon">🚪</span>
+            <span>Logout</span>
+          </button>
+        </form>
+      </div>
+      
+      <!-- Mobile Hamburger Menu -->
       <button class="mobile-menu-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">
         <span></span>
         <span></span>
@@ -91,7 +122,7 @@
                   <tr>
                     <th>Category Name</th>
                     <th style="width:120px;">Image</th>
-                    <th style="width:120px;">Actions</th>
+                    <th style="width:180px;">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -106,9 +137,18 @@
                         <% } %>
                       </td>
                       <td>
-                        <form method="POST" action="/admin/categories/<%= c.id || c.name %>/delete" onsubmit="return confirm('Delete this category? This cannot be undone.');">
-                          <button class="btn btn-sm btn-outline-danger">Delete</button>
-                        </form>
+                        <div class="table-actions">
+                          <button class="btn btn-sm btn-outline-primary" 
+                                  data-id="<%= c.id || c.name %>" 
+                                  data-name="<%= c.name %>" 
+                                  data-image="<%= c.image_url || c.image || '' %>"
+                                  onclick="editCategory(this.dataset.id, this.dataset.name, this.dataset.image)">
+                            Edit
+                          </button>
+                          <form method="POST" action="/admin/categories/<%= c.id || c.name %>/delete" onsubmit="return confirm('Delete this category? This cannot be undone.');" style="display:inline;">
+                            <button class="btn btn-sm btn-outline-danger">Delete</button>
+                          </form>
+                        </div>
                       </td>
                     </tr>
                   <% }) %>
@@ -133,20 +173,41 @@
       <div>
         <div class="card">
           <div class="card-header">
-            <h2 class="card-title">Add Category</h2>
+            <h2 class="card-title" id="formTitle">Add Category</h2>
           </div>
           <div class="card-body">
-            <form method="POST" action="/admin/categories/new">
+            <form method="POST" action="/admin/categories/new" id="categoryForm" enctype="multipart/form-data">
+              <input type="hidden" name="categoryId" id="categoryId" value="" />
+              
               <div class="form-group">
                 <label class="form-label">Category Name *</label>
-                <input class="form-control" name="name" required placeholder="e.g., Stickers, Pillows" />
+                <input class="form-control" name="name" id="categoryName" required placeholder="e.g., Stickers, Pillows" />
               </div>
+              
               <div class="form-group">
-                <label class="form-label">Image URL</label>
-                <input class="form-control" name="image_url" placeholder="/staticfiles/Category.jpg or https://..." />
-                <small class="form-text">Optional: Add an image for this category</small>
+                <label class="form-label">Category Image</label>
+                <div style="margin-bottom: 1rem;">
+                  <input type="file" name="imageFile" id="categoryImageFile" class="form-control" accept="image/*" onchange="previewCategoryImage(event)" />
+                  <small class="form-text">Upload an image from your computer (JPG, PNG, WebP, max 5MB)</small>
+                </div>
+                <div style="margin-top: 1rem;">
+                  <label style="display: block; margin-bottom: 0.5rem; color: var(--gray-700);">Or enter image URL:</label>
+                  <input class="form-control" name="image_url" id="categoryImageUrl" placeholder="/staticfiles/Category.jpg or https://..." />
+                  <small class="form-text">If you upload a file, it will override the URL</small>
+                </div>
               </div>
-              <button type="submit" class="btn btn-primary">Add Category</button>
+              
+              <div class="form-group" id="categoryImagePreview" style="display: none;">
+                <label class="form-label">Image Preview</label>
+                <div style="padding: 1rem; background: var(--gray-100); border-radius: var(--border-radius-sm); display: inline-block;">
+                  <img id="categoryPreviewImg" style="max-height: 150px; max-width: 100%; object-fit: contain;" alt="Preview">
+                </div>
+              </div>
+              
+              <div style="display: flex; gap: 0.5rem;">
+                <button type="submit" class="btn btn-primary" id="submitBtn">Add Category</button>
+                <button type="button" class="btn btn-outline-secondary" id="cancelBtn" onclick="resetForm()" style="display: none;">Cancel</button>
+              </div>
             </form>
           </div>
         </div>
@@ -160,5 +221,48 @@
   </footer>
 
   <script src="/staticfiles/admin-enhancements.js?v=3.0"></script>
+  <script>
+    function previewCategoryImage(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('categoryPreviewImg').src = e.target.result;
+          document.getElementById('categoryImagePreview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        document.getElementById('categoryImagePreview').style.display = 'none';
+      }
+    }
+    
+    function editCategory(id, name, imageUrl) {
+      document.getElementById('formTitle').textContent = 'Edit Category';
+      document.getElementById('categoryForm').action = '/admin/categories/' + id + '/edit';
+      document.getElementById('categoryId').value = id;
+      document.getElementById('categoryName').value = name;
+      document.getElementById('categoryImageUrl').value = imageUrl;
+      document.getElementById('submitBtn').textContent = 'Update Category';
+      document.getElementById('cancelBtn').style.display = 'inline-block';
+      
+      if (imageUrl) {
+        document.getElementById('categoryPreviewImg').src = imageUrl;
+        document.getElementById('categoryImagePreview').style.display = 'block';
+      }
+      
+      // Scroll to form
+      document.getElementById('categoryForm').scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    function resetForm() {
+      document.getElementById('formTitle').textContent = 'Add Category';
+      document.getElementById('categoryForm').action = '/admin/categories/new';
+      document.getElementById('categoryForm').reset();
+      document.getElementById('categoryId').value = '';
+      document.getElementById('submitBtn').textContent = 'Add Category';
+      document.getElementById('cancelBtn').style.display = 'none';
+      document.getElementById('categoryImagePreview').style.display = 'none';
+    }
+  </script>
 </body>
 </html>

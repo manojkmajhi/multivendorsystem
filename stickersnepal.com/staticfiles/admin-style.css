@@ -167,9 +167,64 @@ a:hover {
   object-fit: contain;
 }
 
-/* Hamburger Menu Button */
-.mobile-menu-toggle {
+/* Desktop Navigation Links */
+.desktop-nav-links {
   display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: flex-end;
+  margin-left: 2rem;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  color: var(--gray-700);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: var(--border-radius-md);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.nav-link:hover {
+  background-color: var(--primary-light);
+  color: var(--primary-color);
+}
+
+.nav-link.active {
+  background-color: var(--primary-light);
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.nav-icon {
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-logout-btn {
+  color: var(--danger-color);
+}
+
+.nav-logout-btn:hover {
+  background-color: var(--danger-light);
+  color: var(--danger-color);
+}
+
+/* Hamburger Menu Button - Hidden on Desktop */
+.mobile-menu-toggle {
+  display: none;
   flex-direction: column;
   justify-content: space-around;
   width: 32px;
@@ -996,6 +1051,16 @@ tbody td {
 @media (max-width: 768px) {
   :root {
     --navbar-height: 56px;
+  }
+  
+  /* Hide desktop nav links on mobile */
+  .desktop-nav-links {
+    display: none;
+  }
+  
+  /* Show hamburger menu on mobile */
+  .mobile-menu-toggle {
+    display: flex;
   }
   
   .admin-navbar-container {

@@ -75,7 +75,7 @@
   <a class="navbar-brand" href="/"><img src="<%= (siteSetting && siteSetting.logo_url) || '/staticfiles/brand.svg' %>" height="60" /></a>
       <form method="POST" id="search-form-in-navbar">
         <div class="input-group search-input-group">
-          <input class="form-control form-control-lg search" id="search" name="search" type="text" placeholder="Search Stickers" />
+          <input class="form-control form-control-lg search" id="search" name="search" type="text" placeholder="Search Anime Products" />
           <div class="input-group-append">
             <button class="input-group-text search-icon" id="search-icon-id"><i class="fas fa-search"></i></button>
           </div>
@@ -102,7 +102,7 @@
     <% if(!items.length){ %>
       <div class="empty-state">
         <h4>Your cart is empty</h4>
-        <p class="text-muted mb-4">Browse categories and add some stickers.</p>
+        <p class="text-muted mb-4">Browse categories and add some items.</p>
         <a href="/shop/All/" class="btn btn-dark">Go to Shop</a>
       </div>
     <% } else { %>
@@ -147,7 +147,7 @@
             <p class="mb-1 d-flex justify-content-between"><span class="text-muted">Items</span><span><%= itemCount %></span></p>
             <hr class="my-2"/>
             <p class="mb-0 d-flex justify-content-between align-items-center"><span class="summary-total">Total</span><strong>Rs. <span id="cart-total"><%= total %></span></strong></p>
-            <p class="mt-1 mb-3 small text-muted">(Inclusive of per-sticker pricing)</p>
+            <p class="mt-1 mb-3 small text-muted">(Inclusive of all items pricing)</p>
             <a href="/shop/All/" class="btn btn-outline-dark btn-sm mb-2 w-100">Continue Shopping</a>
             <a href="/checkout/" class="btn btn-dark btn-block" style="font-weight:600; letter-spacing:.5px;">Checkout</a>
           </div>
@@ -170,7 +170,7 @@
       <div class="row">
         <div class="col-lg-6">
           <p class="small text-gray mb-0">&copy; <%= new Date().getFullYear() %> All rights reserved.</p>
-          <p class="small text-gray mb-0">Crafted by <a class="text-white reset-anchor" href="https://ulpuskins.com" target="_blank">ULPU Skins</a></p>
+          <p class="small text-gray mb-0">Crafted by <a class="text-white reset-anchor" href="https://gauravsah.com.np" target="_blank">Gaurav Sah</a></p>
         </div>
         <div class="col-lg-6 text-lg-right">
           <p class="small mb-0">FIND US &nbsp; <a href="https://facebook.com/allstrawhats/" target="_blank"><i class="fab fa-facebook-square mr-1" style="color:#f5f5f5;"></i></a> <a href="https://instagram.com/allstrawhats/" target="_blank"><i class="fab fa-instagram" style="color:#f5f5f5;"></i></a></p>

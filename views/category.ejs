@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title><%= category.name %> | Stickers</title>
+  <title><%= category.name %> | Anime Store</title>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
   <link rel="stylesheet" href="/staticfiles/style.blue.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -14,7 +14,7 @@
   <a class="navbar-brand" href="/"><img src="<%= (siteSetting && siteSetting.logo_url) || '/staticfiles/brand.svg' %>" height="60" alt="<%= (siteSetting && siteSetting.name) || 'All Strawhats' %>"></a>
   <form method="POST" id="search-form-in-navbar">
         <div class="input-group search-input-group">
-          <input class="form-control form-control-lg search" id="search" name="search" type="text" placeholder="Search Stickers">
+          <input class="form-control form-control-lg search" id="search" name="search" type="text" placeholder="Search Anime Products">
           <div class="input-group-append">
             <button class="input-group-text search-icon" id="search-icon-id"><i class="fas fa-search"></i></button>
           </div>
@@ -27,7 +27,7 @@
   </nav>
   <div style="height:80px;"></div>
   <div class="container py-3">
-    <h1 class="h4 mb-3"><%= category.name %> Stickers</h1>
+    <h1 class="h4 mb-3"><%= category.name %></h1>
     <div class="row">
       <% products.forEach(p => { %>
         <div class="col-md-3 col-6 mb-3">
