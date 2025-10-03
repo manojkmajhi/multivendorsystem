@@ -100,6 +100,9 @@ $(function () {
                               html += '<img src="' + item.image + '" alt="' + item.name + '">';
                               html += '<div class="suggestion-info">';
                               html += '<div class="suggestion-name">' + item.name + '</div>';
+                              if(item.snippet){
+                                  html += '<div class="suggestion-snippet">' + $('<div>').text(item.snippet).html() + '</div>';
+                              }
                               html += '<div class="suggestion-price">Rs. ' + item.price + '</div>';
                               html += '</div>';
                               html += '</div>';
