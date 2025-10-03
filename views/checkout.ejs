@@ -59,7 +59,7 @@
     <div class="container px-0 px-lg-3 d-flex align-items-center justify-content-between">
   <a class="navbar-brand" href="/"><img src="<%= (siteSetting && siteSetting.logo_url) || '/staticfiles/brand.svg' %>" height="60" /></a>
       <ul class="navbar-nav ml-auto phone-in-navbar" style="display:flex; flex-direction:row;">
-        <li class="nav-item"><a class="nav-link" href="tel:9802326980"><i class="fas fa-phone-alt"></i> 9802326980<sup><small> NP</small></sup></a></li>
+        <li class="nav-item"><a class="nav-link" href="tel:9814789009"><i class="fas fa-phone-alt"></i> 9814789009<sup><small> NP</small></sup></a></li>
       </ul>
     </div>
   </nav>
@@ -103,6 +103,10 @@
             <div class="col-md-6 form-group">
               <label class="sr-only" for="address">Detailed Address *</label>
               <input id="address" class="form-control" placeholder="Detailed Address *" required />
+            </div>
+            <div class="col-12 form-group">
+              <label class="sr-only" for="notes">Order Notes (Optional)</label>
+              <textarea id="notes" class="form-control" placeholder="Order Notes (Optional)" rows="2"></textarea>
             </div>
             <div class="col-12 form-group mb-2">
               <a href="/cart/" class="back-cart-btn"><span style="font-size:16px; line-height:0;" class="mr-1">&larr;</span> Change Cart</a>
@@ -159,7 +163,14 @@
     document.getElementById('region').addEventListener('change', updateAreas);
     updateAreas();
 
-    function recalc(){ const subtotal=parseInt(document.getElementById('subtotal').textContent,10); const region=document.getElementById('region').value; let fee=0; if(region==='Outside Valley'){ fee=70; } document.getElementById('delivery-fee').textContent=fee; document.getElementById('grand-total').textContent=subtotal+fee; }
+    function recalc(){ 
+      const subtotal=parseInt(document.getElementById('subtotal').textContent,10); 
+      const region=document.getElementById('region').value; 
+      let fee=0; 
+      if(region==='Outside Valley'){ fee=70; } 
+      document.getElementById('delivery-fee').textContent=fee; 
+      document.getElementById('grand-total').textContent=subtotal+fee; 
+    }
     document.getElementById('area').addEventListener('change', recalc);
 
     // Celebration + confetti instead of alert
@@ -173,7 +184,64 @@
     function initPieces(){pieces=[]; for(let i=0;i<pieceCount;i++){pieces.push({x:canvas.width*Math.random(),y:randomRange(-canvas.height,0),w:randomRange(6,14),h:randomRange(10,22),vx:randomRange(-2.8,2.8),vy:randomRange(1,3),r:randomRange(0,360),vr:randomRange(-6,6),color:colors[i%colors.length],alpha:1});}}
     function update(){ctx.clearRect(0,0,canvas.width,canvas.height); pieces.forEach(p=>{p.vy+=gravity; if(p.vy>terminal) p.vy=terminal; p.x+=p.vx; p.y+=p.vy; p.r+=p.vr; if(p.y>canvas.height+20) {p.y=randomRange(-canvas.height*0.2,0); p.x=Math.random()*canvas.width; p.vy=randomRange(1,3);} ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r*Math.PI/180); ctx.fillStyle=p.color; ctx.globalAlpha=p.alpha; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore(); }); if(running) requestAnimationFrame(update); }
     function startConfetti(){resizeCanvas(); initPieces(); running=true; update(); setTimeout(()=>{running=false;},7000);}    
-    document.getElementById('checkout-form').addEventListener('submit', function(e){ e.preventDefault(); celebrateEl.classList.add('active'); startConfetti(); });
+    
+    // Form submission - actually save order to database
+    document.getElementById('checkout-form').addEventListener('submit', async function(e){ 
+      e.preventDefault(); 
+      
+      const formData = {
+        name: document.getElementById('name')?.value || '',
+        mobile: document.getElementById('mobile')?.value || '',
+        email: document.getElementById('email')?.value || '',
+        region: document.getElementById('region')?.value || 'Inside Valley',
+        area: document.getElementById('area')?.value || '',
+        address: document.getElementById('address')?.value || '',
+        notes: document.getElementById('notes')?.value || '',
+        subtotal: parseInt(document.getElementById('subtotal')?.textContent || '0'),
+        deliveryFee: parseInt(document.getElementById('delivery-fee')?.textContent || '0'),
+        total: parseInt(document.getElementById('grand-total')?.textContent || '0')
+      };
+      
+      // Validate
+      if(!formData.name || !formData.mobile || !formData.address || formData.area === 'Select Area') {
+        alert('Please fill in all required fields');
+        return;
+      }
+      
+      try {
+        // Disable submit button
+        const submitBtn = document.querySelector('.place-order-btn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Placing order...';
+        
+        // Submit order to server
+        const response = await fetch('/checkout/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        if(result.success) {
+          // Show celebration
+          celebrateEl.classList.add('active'); 
+          startConfetti();
+        } else {
+          throw new Error(result.error || 'Failed to place order');
+        }
+      } catch(error) {
+        console.error('Order submission error:', error);
+        alert('Failed to place order. Please try again or contact us directly.');
+        // Re-enable button
+        const submitBtn = document.querySelector('.place-order-btn');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Place order';
+      }
+    });
+    
     document.getElementById('celebrate-home').addEventListener('click',()=>{window.location='/';});
     // Auto redirect after celebration
     celebrateEl.addEventListener('transitionend',()=>{ if(celebrateEl.classList.contains('active')) setTimeout(()=>{window.location='/'},6000);});

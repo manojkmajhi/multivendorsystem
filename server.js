@@ -343,40 +343,57 @@ app.get('/admin/products/new', adminGuard, async (req,res)=>{
 
 app.post('/admin/products/new', adminGuard, upload.single('imageFile'), handleMulterError, async (req,res)=>{
   console.log('📝 Creating new product...');
-  console.log('Body:', req.body);
+  console.log('Raw body fields received:', Object.keys(req.body));
+  console.log('Body preview (trimmed lengths):', {
+    short_description_len: req.body.short_description ? req.body.short_description.trim().length : 0,
+    long_description_len: req.body.long_description ? req.body.long_description.trim().length : 0
+  });
   console.log('File:', req.file);
-  
+
   const { name, price, category, type, image } = req.body;
+  // Trim descriptions & coerce empty -> null
+  const short_description = (req.body.short_description || '').trim();
+  const long_description = (req.body.long_description || '').trim();
+
   let finalImage = image || '';
-  
+
   // If a file was uploaded, use it instead of the URL
   if (req.file) {
     finalImage = '/media/uploads/' + req.file.filename;
     console.log('✅ File uploaded:', finalImage);
   }
-  
+
   try {
+    const cleanedShort = short_description || null;
+    const cleanedLong = long_description || null;
     if (supabase) {
-      console.log('Inserting to database:', { name, price: parseFloat(price), category, type, image: finalImage });
-      const { error } = await supabase.from('products').insert({ 
-        name, 
-        price: parseFloat(price), 
-        category, 
-        type, 
-        image: finalImage 
-      });
+      console.log('Inserting to database:', { name, price: parseFloat(price), category, type, image: finalImage, cleanedShort_len: cleanedShort ? cleanedShort.length : 0, cleanedLong_len: cleanedLong ? cleanedLong.length : 0 });
+      const insertPayload = {
+        name,
+        price: parseFloat(price),
+        category,
+        type,
+        image: finalImage,
+        short_description: cleanedShort,
+        long_description: cleanedLong
+      };
+      console.log('Insert payload prepared:', insertPayload);
+      const { data: insData, error } = await supabase.from('products').insert(insertPayload).select();
       if (error) {
         console.error('❌ Supabase error:', error);
         throw error;
       }
+      console.log('Insert returned rows:', insData && insData.length, insData);
     } else {
-      products.push({ 
-        id: String(Date.now()), 
-        name, 
-        price: parseFloat(price), 
-        category, 
-        type, 
-        image: finalImage 
+      products.push({
+        id: String(Date.now()),
+        name,
+        price: parseFloat(price),
+        category,
+        type,
+        image: finalImage,
+        short_description: short_description || null,
+        long_description: long_description || null
       });
     }
     console.log('✅ Product created successfully');
@@ -405,32 +422,67 @@ app.get('/admin/products/:id/edit', adminGuard, async (req,res)=>{
 app.post('/admin/products/:id/edit', adminGuard, upload.single('imageFile'), handleMulterError, async (req,res)=>{
   const id = req.params.id;
   const { name, price, category, type, image } = req.body;
+  const short_description = (req.body.short_description || '').trim();
+  const long_description = (req.body.long_description || '').trim();
   let finalImage = image || '';
-  
+
+  console.log('📝 Updating product...', {
+    id,
+    name,
+    price,
+    category,
+    type,
+    hasFile: !!req.file,
+    short_len: short_description.length,
+    long_len: long_description.length
+  });
+
   // If a file was uploaded, use it instead of the URL
   if (req.file) {
     finalImage = '/media/uploads/' + req.file.filename;
+    console.log('✅ File uploaded:', finalImage);
   }
-  
+
   try {
     if (supabase) {
-      const { error } = await supabase.from('products').update({ 
-        name, 
-        price: parseFloat(price), 
-        category, 
-        type, 
-        image: finalImage 
-      }).eq('id', id);
-      if(error) throw error;
+      const updateData = {
+        name,
+        price: parseFloat(price),
+        category,
+        type,
+        image: finalImage,
+        short_description: short_description || null,
+        long_description: long_description || null
+      };
+
+      // Remove keys that are strictly undefined (none should be) - keep nulls intentionally
+      Object.keys(updateData).forEach(k => updateData[k] === undefined && delete updateData[k]);
+      console.log('Final update payload:', updateData);
+      const { data: updData, error } = await supabase.from('products').update(updateData).eq('id', id).select();
+      if (error) {
+        console.error('❌ Supabase update error:', error);
+        throw error;
+      }
+      console.log('✓ Updated rows:', updData && updData.length, updData);
+      console.log('✅ Product updated successfully');
     } else {
-      const idx = products.findIndex(p=>p.id === id);
-      if(idx === -1) return res.status(404).render('simple-message', { title: 'Not Found', message:'Product missing.' });
-      products[idx] = { ...products[idx], name, price: parseFloat(price), category, type, image: finalImage };
+      const idx = products.findIndex(p => p.id === id);
+      if (idx === -1) return res.status(404).render('simple-message', { title: 'Not Found', message: 'Product missing.' });
+      products[idx] = {
+        ...products[idx],
+        name,
+        price: parseFloat(price),
+        category,
+        type,
+        image: finalImage,
+        short_description: short_description || null,
+        long_description: long_description || null
+      };
     }
     res.redirect('/admin/products?msg=' + encodeURIComponent('Product updated'));
-  } catch(e){
-    console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to update product.' });
+  } catch (e) {
+    console.error('❌ Failed to update product:', e.message, e.details || '');
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to update product: ' + (e.message || 'Unknown error') });
   }
 });
 
@@ -700,6 +752,107 @@ app.post('/admin/hero-images/:id/toggle-active', adminGuard, async (req,res)=>{
   }
 });
 
+// ---------- Orders Management ----------
+app.get('/admin/orders', adminGuard, async (req,res)=>{
+  try {
+    const filter = req.query.filter || 'all';
+    let orders = [];
+    
+    if(supabase){
+      let query = supabase.from('orders').select('*').order('created_at', { ascending: false });
+      
+      if(filter !== 'all') {
+        query = query.eq('status', filter);
+      }
+      
+      const { data, error } = await query;
+      if(!error && data) orders = data;
+    }
+    
+    // Calculate stats
+    const allOrders = supabase ? (await supabase.from('orders').select('*')).data || [] : [];
+    const stats = {
+      total: allOrders.length,
+      pending: allOrders.filter(o => o.status === 'pending').length,
+      confirmed: allOrders.filter(o => o.status === 'confirmed').length,
+      processing: allOrders.filter(o => o.status === 'processing').length,
+      shipped: allOrders.filter(o => o.status === 'shipped').length,
+      delivered: allOrders.filter(o => o.status === 'delivered').length,
+      cancelled: allOrders.filter(o => o.status === 'cancelled').length,
+      revenue: allOrders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + parseFloat(o.total || 0), 0)
+    };
+    
+    res.render('admin/orders', { 
+      orders, 
+      stats,
+      filter,
+      msg: req.query.msg || '', 
+      siteSetting: res.locals.siteSetting 
+    });
+  } catch(e){
+    console.error('ORDERS_LIST_ERROR', e);
+    res.status(500).render('simple-message', { title:'Error', message:'Failed to load orders.' });
+  }
+});
+
+// Get single order (JSON for modal)
+app.get('/admin/orders/:id', adminGuard, async (req,res)=>{
+  const id = req.params.id;
+  try {
+    if(supabase){
+      const { data, error } = await supabase.from('orders').select('*').eq('id', id).single();
+      if(error) throw error;
+      res.json(data);
+    } else {
+      res.status(404).json({ error: 'Order not found' });
+    }
+  } catch(e){
+    console.error('ORDER_FETCH_ERROR', e);
+    res.status(500).json({ error: 'Failed to fetch order' });
+  }
+});
+
+// Update order status
+app.post('/admin/orders/:id/status', adminGuard, async (req,res)=>{
+  const id = req.params.id;
+  const { status } = req.body;
+  
+  const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+  if(!validStatuses.includes(status)) {
+    return res.status(400).json({ error: 'Invalid status' });
+  }
+  
+  try {
+    if(supabase){
+      const { error } = await supabase.from('orders').update({ status }).eq('id', id);
+      if(error) throw error;
+      res.json({ success: true });
+    } else {
+      res.status(500).json({ error: 'Database not configured' });
+    }
+  } catch(e){
+    console.error('ORDER_UPDATE_ERROR', e);
+    res.status(500).json({ error: 'Failed to update order' });
+  }
+});
+
+// Delete order
+app.post('/admin/orders/:id/delete', adminGuard, async (req,res)=>{
+  const id = req.params.id;
+  try {
+    if(supabase){
+      const { error } = await supabase.from('orders').delete().eq('id', id);
+      if(error) throw error;
+      res.json({ success: true });
+    } else {
+      res.status(500).json({ error: 'Database not configured' });
+    }
+  } catch(e){
+    console.error('ORDER_DELETE_ERROR', e);
+    res.status(500).json({ error: 'Failed to delete order' });
+  }
+});
+
 // Category route matching existing links like /shop/DC-Studios/
 app.get('/shop/:category/', async (req, res) => {
   try {
@@ -754,6 +907,98 @@ app.get('/details/:id/', async (req,res)=>{
   } catch(e){
     console.error('DETAILS_PAGE_ERROR', e);
     res.status(500).render('simple-message', { title:'Error', message:'Failed to load product.' });
+  }
+});
+
+// Search route - /search/all/?q=query
+app.get('/search/:category/', async (req, res) => {
+  try {
+    const searchQuery = (req.query.q || '').trim().toLowerCase();
+    const catParam = req.params.category;
+    
+    if (!searchQuery) {
+      return res.redirect('/');
+    }
+
+    const allCategories = await dbFetchCategories();
+    
+    // Fetch all products (or from specific category if not 'all')
+    let allProducts = [];
+    if (catParam.toLowerCase() === 'all') {
+      allProducts = await dbFetchProducts({});
+    } else {
+      allProducts = await dbFetchProducts({ category: catParam });
+    }
+    
+    // Filter products based on search query
+    const searchResults = allProducts.filter(p => {
+      const name = (p.name || '').toLowerCase();
+      const category = (p.category || '').toLowerCase();
+      const type = (p.type || '').toLowerCase();
+      return name.includes(searchQuery) || 
+             category.includes(searchQuery) || 
+             type.includes(searchQuery);
+    });
+
+    // Pagination
+    const pageSize = 32;
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const totalCount = searchResults.length;
+    const totalPages = Math.max(Math.ceil(totalCount / pageSize), 1);
+    const safePage = Math.min(page, totalPages);
+    const startIdx = (safePage - 1) * pageSize;
+    const endIdxExclusive = Math.min(startIdx + pageSize, totalCount);
+    const pageProducts = searchResults.slice(startIdx, endIdxExclusive);
+
+    res.render('shop-category', {
+      activeCategory: 'Search Results',
+      categories: allCategories,
+      products: pageProducts,
+      total: totalCount,
+      showingStart: totalCount ? startIdx + 1 : 0,
+      showingEnd: endIdxExclusive,
+      page: safePage,
+      totalPages,
+      searchQuery,
+      siteSetting: res.locals.siteSetting
+    });
+  } catch(e){
+    console.error('SEARCH_PAGE_ERROR', e);
+    res.status(500).render('simple-message', { title:'Error', message:'Failed to perform search.' });
+  }
+});
+
+// API endpoint for search suggestions/autocomplete
+app.get('/api/search-suggestions', async (req, res) => {
+  try {
+    const query = (req.query.q || '').trim().toLowerCase();
+    
+    if (!query || query.length < 2) {
+      return res.json({ suggestions: [] });
+    }
+
+    // Fetch all products
+    const allProducts = await dbFetchProducts({});
+    
+    // Filter and get top 10 matches
+    const matches = allProducts
+      .filter(p => {
+        const name = (p.name || '').toLowerCase();
+        return name.includes(query);
+      })
+      .slice(0, 10)
+      .map(p => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        image: p.image,
+        category: p.category
+      }));
+
+    res.json({ suggestions: matches });
+  } catch(e){
+    console.error('SEARCH_SUGGESTIONS_ERROR', e);
+    res.status(500).json({ error: 'Failed to fetch suggestions' });
   }
 });
 
@@ -1011,6 +1256,94 @@ app.get('/checkout/', async (req, res) => {
   } catch(e){
     console.error('CHECKOUT_PAGE_ERROR', e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load checkout.' });
+  }
+});
+
+// Submit order from checkout
+app.post('/checkout/', async (req, res) => {
+  try {
+    const { name, mobile, email, region, area, address, notes, subtotal, deliveryFee, total } = req.body;
+    
+    // Validate required fields
+    if(!name || !mobile || !region || !area || !address) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    const device = req.cookies.device || 'anonymous';
+    const cart = getCart(device);
+    
+    if(!cart.length) {
+      return res.status(400).json({ error: 'Cart is empty' });
+    }
+    
+    // Build order items from cart
+    const orderItems = [];
+    for(const item of cart){
+      const p = await getAnyProductById(item.productId);
+      if(p){
+        orderItems.push({
+          productId: p.id,
+          productName: p.name || 'Item',
+          price: parseFloat(p.price) || 0,
+          qty: item.qty,
+          subtotal: (parseFloat(p.price) || 0) * item.qty,
+          image: p.image || ''
+        });
+      }
+    }
+    
+    if(!orderItems.length) {
+      return res.status(400).json({ error: 'No valid items in cart' });
+    }
+    
+    // Create order in database
+    if(supabase){
+      const orderData = {
+        customer_name: name,
+        customer_mobile: mobile,
+        customer_email: email || null,
+        region,
+        area,
+        address,
+        notes: notes || null,
+        subtotal: parseFloat(subtotal),
+        delivery_fee: parseFloat(deliveryFee),
+        total: parseFloat(total),
+        status: 'pending',
+        items: orderItems
+        // order_number will be auto-generated by database trigger
+      };
+      
+      const { data, error } = await supabase.from('orders').insert(orderData).select().single();
+      
+      if(error) {
+        console.error('ORDER_CREATE_ERROR', error);
+        throw error;
+      }
+      
+      // Clear cart after successful order
+      carts[device] = [];
+      
+      res.json({ 
+        success: true, 
+        orderId: data.id,
+        orderNumber: data.order_number,
+        message: 'Order placed successfully!' 
+      });
+    } else {
+      // Fallback if no database
+      console.warn('Order received but no database configured:', { name, mobile, total });
+      carts[device] = [];
+      res.json({ 
+        success: true, 
+        orderId: 'TEMP-' + Date.now(),
+        orderNumber: 'TEMP-' + Date.now(),
+        message: 'Order received (test mode)' 
+      });
+    }
+  } catch(e){
+    console.error('CHECKOUT_SUBMIT_ERROR', e);
+    res.status(500).json({ error: 'Failed to place order. Please try again.' });
   }
 });
 

@@ -113,13 +113,28 @@
     <% } %>
 
     <% if(items && items.length > 0) { %>
+      <!-- Search Box -->
+      <div class="search-container">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input 
+            type="search" 
+            id="productSearch" 
+            class="search-input" 
+            placeholder="Search products by name, category, or type..."
+            autocomplete="off"
+          />
+          <span class="search-count" id="searchCount"></span>
+        </div>
+      </div>
+
       <div class="table-container">
         <div class="table-responsive">
-          <table>
+          <table id="productsTable">
             <thead>
               <tr>
                 <th style="width:40px;">#</th>
-                <th>Name</th>
+                <th>Name & Short Description</th>
                 <th>Category</th>
                 <th>Type</th>
                 <th>Price</th>
@@ -129,9 +144,16 @@
             </thead>
             <tbody>
             <% items.forEach((p,idx) => { %>
-              <tr>
+              <tr class="product-row" data-search="<%= (p.name + ' ' + (p.short_description||'') + ' ' + p.category + ' ' + p.type).toLowerCase() %>">
                 <td><%= idx+1 %></td>
-                <td><strong><%= p.name %></strong></td>
+                <td>
+                  <strong><%= p.name %></strong>
+                  <% if(p.short_description){ %>
+                    <div style="font-size:11px; color:#666; margin-top:2px; max-width:260px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                      <%= p.short_description %>
+                    </div>
+                  <% } %>
+                </td>
                 <td><%= p.category %></td>
                 <td><span class="badge badge-primary"><%= p.type %></span></td>
                 <td><strong>Rs. <%= p.price %></strong></td>
@@ -159,6 +181,13 @@
             <% }) %>
             </tbody>
           </table>
+        </div>
+        
+        <!-- No Results Message -->
+        <div id="noResults" class="empty-state" style="display: none; padding: 3rem;">
+          <div class="empty-state-icon">🔍</div>
+          <h3 class="empty-state-title">No products found</h3>
+          <p class="empty-state-text">Try adjusting your search terms.</p>
         </div>
       </div>
     <% } else { %>

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.css" />
   <link rel="stylesheet" href="/staticfiles/style.blue.css" />
   <link rel="stylesheet" href="/staticfiles/floating-button.css" />
+  <link rel="stylesheet" href="/staticfiles/product-quickview.css?v=1" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-pbCf3Z52eQX1ZsaAJ+lZeI7IuAv89xDSHLVbkP4SRrped1IovnEwlHGawEq+y3OCAXoTr4Wr9L5xRcmRl6Vw2g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <style>
@@ -77,7 +78,7 @@
         </div>
       </form>
       <ul class="navbar-nav ml-auto phone-in-navbar" style="display: none;">
-        <li class="nav-item"><a class="nav-link" href="tel:9802326980"> <i class="fas fa-phone-alt"></i> 9802326980<sup><small> NP</small></sup></a></li>
+        <li class="nav-item"><a class="nav-link" href="tel:9814789009"> <i class="fas fa-phone-alt"></i> 9814789009<sup><small> NP</small></sup></a></li>
       </ul>
     </div>
   </nav>
@@ -145,7 +146,7 @@
               </div>
               <ul class="mb-2 mt-0 list-inline">
                 <li class="list-inline-item m-0 p-0"><button class="btn btn-sm btn-dark py-1 px-2" onclick="addToCart('<%= p.id %>','1', false)">Add to Cart</button></li>
-                <li class="list-inline-item mr-0"><a class="btn btn-sm btn-outline-dark py-1 px-2 view-btn" data-id="<%= p.id %>" data-img="<%= p.image %>" data-name="<%- p.name.replace(/\"/g,'&quot;') %>" data-price="<%= p.price %>" data-link="/details/<%= p.id %>/"><i class="fas fa-expand"></i></a></li>
+                <li class="list-inline-item mr-0"><a class="btn btn-sm btn-outline-dark py-1 px-2 view-btn" data-id="<%= p.id %>" data-img="<%= p.image %>" data-name="<%- p.name.replace(/\"/g,'&quot;') %>" data-price="<%= p.price %>" data-link="/details/<%= p.id %>/" data-short="<%- (p.short_description || '').replace(/\"/g,'&quot;') %>"><i class="fas fa-expand"></i></a></li>
               </ul>
               <h5 class="mb-0 text-sm"><a class="reset-anchor" href="/details/<%= p.id %>/"><%= p.name %></a></h5>
               <p class="small text-muted mb-2">Rs. <%= p.price %></p>
@@ -159,39 +160,35 @@
     </section>
   </div>
 
-  <!-- Product Quick View Modal -->
-  <div class="modal fade" id="productView" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-      <div class="modal-content">
-        <div class="modal-body p-0">
-          <div class="row align-items-stretch">
-            <div class="col-lg-6 p-lg-0">
-              <a id="modal-img-link" class="product-view d-block h-100 bg-cover bg-center"></a>
+  <!-- Unified Quickview Modal -->
+  <div class="modal fade quickview-modal" id="productQuickView" tabindex="-1" role="dialog" aria-hidden="true" aria-modal="true" aria-labelledby="quickview-title" aria-describedby="quickview-description">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content" role="document">
+        <div class="quickview-wrap" role="group">
+          <button class="close quickview-close" type="button" data-dismiss="modal" aria-label="Close" id="quickview-close-btn"><span aria-hidden="true">×</span></button>
+          <div class="quickview-grid">
+            <div class="quickview-media">
+              <a id="quickview-img-link" href="#" class="d-block" aria-label="Product details link"><img id="quickview-img" class="quickview-img" src="" alt="Product image"></a>
             </div>
-            <div class="col-lg-6">
-              <button class="close p-4" type="button" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
-              <div class="p-5 my-md-4">
-                <h2 class="h4" id="product-modal-title"></h2>
-                <p class="text-muted" id="product-modal-price"></p>
-                <ul style="list-style:none;" class="descripton-ul pl-0 text-uppercase mb-4">
-                  <li><i class="fas fa-check"></i> Waterproof</li>
-                  <li><i class="fas fa-check"></i> Premium</li>
-                  <li><i class="fas fa-check"></i> No Residue</li>
-                  <li><i class="fas fa-check"></i> Scratch Proof</li>
-                  <li><i class="fas fa-check"></i> No Fading</li>
-                </ul>
-                <div class="row align-items-stretch mb-4">
-                  <div class="col-sm-7 pr-sm-0">
-                    <div class="border d-flex align-items-center justify-content-between py-1 px-3"><span class="small text-uppercase text-gray mr-4 no-select">Quantity</span>
-                      <div class="quantity">
-                        <button class="dec-btn p-0"><i class="fas fa-caret-left"></i></button>
-                        <input class="form-control border-0 shadow-0 p-0" type="text" value="1" id="qty">
-                        <button class="inc-btn p-0"><i class="fas fa-caret-right"></i></button>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-sm-5 pl-sm-0"><button class="btn btn-dark btn-sm btn-block h-100 d-flex align-items-center justify-content-center px-0" id="add-to-cart">Add to cart</button></div>
+            <div class="quickview-info">
+              <h3 class="quickview-title" id="quickview-title"></h3>
+              <div class="quickview-price" id="quickview-price"></div>
+              <div class="quickview-description" id="quickview-description"></div>
+              <div class="variant-block" id="quickview-size-block" style="display:none;">
+                <div class="quickview-section-label">Size</div>
+                <select id="quickview-size" class="quickview-select" aria-label="Select size"></select>
+              </div>
+              <div class="variant-block" id="quickview-color-block" style="display:none;">
+                <div class="quickview-section-label">Color</div>
+                <div class="variant-row" id="quickview-colors" role="radiogroup" aria-label="Choose color"></div>
+              </div>
+              <div class="add-to-cart-row mt-2">
+                <div class="quantity-bar" role="group" aria-label="Quantity selector">
+                  <button type="button" id="quickview-dec" aria-label="Decrease quantity">‹</button>
+                  <input type="text" id="quickview-qty" value="1" aria-label="Quantity" inputmode="numeric" pattern="[0-9]*">
+                  <button type="button" id="quickview-inc" aria-label="Increase quantity">›</button>
                 </div>
+                <button id="quickview-add-to-cart" class="btn btn-dark btn-sm" aria-label="Add to cart">Add to Cart</button>
               </div>
             </div>
           </div>
@@ -215,35 +212,44 @@
     $('#hero-carousel').owlCarousel({items:1, loop:true, autoplay:true, autoplayTimeout:4000, dots:true});
     if(typeof addToCart === 'undefined') { console.warn('addToCart not in scope - ensure front.js loaded'); }
     
-    // Quantity button handlers (ensure they work in modal)
-    $(document).on('click', '.dec-btn', function () {
-      var siblings = $(this).siblings('input');
-      if (parseInt(siblings.val(), 10) >= 1) {
-        siblings.val(parseInt(siblings.val(), 10) - 1);
-      }
+    // Unified quickview logic with variants + a11y
+    let quickviewSelectedId=null; let lastFocusedEl=null;
+    function openQuickview(id,image,name,price,shortDescription,link, variants){
+      quickviewSelectedId=id; lastFocusedEl=document.activeElement;
+      $('#quickview-img').attr('src', image); $('#quickview-img-link').attr('href', link);
+      $('#quickview-title').text(name); $('#quickview-price').text('Rs. '+price);
+      const desc = shortDescription && shortDescription.trim() ? shortDescription : 'Premium quality product perfect for you.'; $('#quickview-description').text(desc);
+      $('#quickview-qty').val('1');
+      // Populate variants
+      if(variants && variants.sizes && variants.sizes.length){
+        const $size = $('#quickview-size').empty(); variants.sizes.forEach(s=> $size.append(`<option value="${s}">${s}</option>`));
+        $('#quickview-size-block').show();
+      } else { $('#quickview-size-block').hide(); }
+      if(variants && variants.colors && variants.colors.length){
+        const $colors=$('#quickview-colors').empty();
+        variants.colors.forEach((c,i)=>{ const idc='color-'+i; $colors.append(`<div class="color-swatch" tabindex="0" role="radio" aria-checked="${i===0?'true':'false'}" data-color="${c}" style="background:${c};"></div>`); });
+        $('#quickview-color-block').show(); $('#quickview-colors .color-swatch:first').addClass('active');
+      } else { $('#quickview-color-block').hide(); }
+      $('#productQuickView').modal('show');
+      setTimeout(()=>{ $('#quickview-close-btn').focus(); }, 400);
+    }
+    // Trigger
+    $(document).on('click','.view-btn', function(){
+      const $t=$(this); let short=($t.data('short')||'').trim(); if(short){ short=short.replace(/^[✓✔☑•\-*]\s*/,''); let w=short.split(/\s+/); if(w.length>40) short=w.slice(0,40).join(' ')+'…'; }
+      // Example placeholder variants; replace with real data if available on element dataset
+      const variants = $t.data('variants') || null; // Expect object with sizes/colors arrays if provided
+      openQuickview($t.data('id'), $t.data('img'), $t.data('name'), $t.data('price'), short, $t.data('link'), variants);
     });
-    
-    $(document).on('click', '.inc-btn', function () {
-      var siblings = $(this).siblings('input');
-      siblings.val(parseInt(siblings.val(), 10) + 1);
-    });
-    
-    // Product quick view logic
-    $(document).on('click','.view-btn', function(){ var $t=$(this); viewproduct($t.data('id'), $t.data('img'), $t.data('name'), $t.data('price'), 'description', $t.data('link')); });
-    var selected; 
-    function viewproduct(id,image,name,price,description,link){ 
-      selected=id; 
-      $('#productView').modal(); 
-      $('#modal-img-link').css('background-image','url('+image+')'); 
-      $('#product-modal-title').html(name); 
-      $('#product-modal-price').html('Rs. '+price); 
-      $('#modal-img-link').attr('href',link); 
-      $('#add-to-cart').val(id);
-    } 
-    $('#add-to-cart').click(function(){ 
-      addToCart($('#add-to-cart').val(), $('#qty').val(), true); 
-      $('#productView').modal('toggle'); 
-    });
+    // Quantity
+    $('#quickview-dec').on('click', ()=>{ let v=parseInt($('#quickview-qty').val(),10)||1; v=Math.max(1,v-1); $('#quickview-qty').val(v); });
+    $('#quickview-inc').on('click', ()=>{ let v=parseInt($('#quickview-qty').val(),10)||1; v=Math.min(999,v+1); $('#quickview-qty').val(v); });
+    $('#quickview-qty').on('input', function(){ let v=this.value.replace(/[^0-9]/g,''); if(!v) v='1'; v=parseInt(v,10); if(v<1) v=1; if(v>999) v=999; this.value=v; });
+    // Color swatch interaction
+    $(document).on('click keypress','.color-swatch', function(e){ if(e.type==='click' || (e.type==='keypress' && (e.key==='Enter'|| e.key===' '))){ $('.color-swatch').removeClass('active').attr('aria-checked','false'); $(this).addClass('active').attr('aria-checked','true'); } });
+    // Trap focus basic
+    $('#productQuickView').on('shown.bs.modal', function(){ const focusable = $('#productQuickView').find('button, [href], select, input').filter(':visible'); const first=focusable.first()[0]; const last=focusable.last()[0]; $(this).on('keydown.quicktrap', function(e){ if(e.key==='Tab'){ if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); } else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); } } if(e.key==='Escape'){ $('#productQuickView').modal('hide'); } }); });
+    $('#productQuickView').on('hidden.bs.modal', function(){ $(this).off('keydown.quicktrap'); if(lastFocusedEl) $(lastFocusedEl).focus(); });
+    $('#quickview-add-to-cart').on('click', function(){ if(!quickviewSelectedId) return; addToCart(quickviewSelectedId, $('#quickview-qty').val(), true); $('#productQuickView').modal('hide'); });
     
     // Search form handler
     $('#search-form-in-navbar').submit(function(e){ e.preventDefault(); var search_term=$('#search').val(); if(search_term){ window.location=window.location.origin+'/search/all/?q='+search_term; }});

@@ -790,6 +790,77 @@ textarea.form-control {
 /* ========================================
    TABLES
    ======================================== */
+
+/* Search Container */
+.search-container {
+  margin-bottom: 1.5rem;
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--bg-primary);
+  border: none;
+  border-radius: var(--border-radius-md);
+  padding: 0.75rem 1rem;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-sm);
+}
+
+.search-box:focus-within {
+  box-shadow: var(--shadow-md);
+}
+
+.search-icon {
+  font-size: 1.25rem;
+  margin-right: 0.75rem;
+  color: var(--gray-400);
+}
+
+.search-input {
+  flex: 1;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  font-size: 15px;
+  color: var(--gray-900);
+  background: transparent;
+}
+
+.search-input:focus {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.search-input::placeholder {
+  color: var(--gray-400);
+}
+
+.search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  background: var(--gray-300);
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+}
+
+.search-input::-webkit-search-cancel-button:hover {
+  background: var(--gray-400);
+}
+
+.search-count {
+  font-size: 13px;
+  color: var(--gray-500);
+  font-weight: 500;
+  margin-left: 0.75rem;
+  white-space: nowrap;
+}
+
 .table-container {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);

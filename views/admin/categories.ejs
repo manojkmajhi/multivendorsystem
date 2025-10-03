@@ -115,9 +115,24 @@
       <!-- Categories Table -->
       <div>
         <% if(items && items.length > 0) { %>
+          <!-- Search Box -->
+          <div class="search-container">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input 
+                type="search" 
+                id="categorySearch" 
+                class="search-input" 
+                placeholder="Search categories by name..."
+                autocomplete="off"
+              />
+              <span class="search-count" id="searchCount"></span>
+            </div>
+          </div>
+
           <div class="table-container">
             <div class="table-responsive">
-              <table>
+              <table id="categoriesTable">
                 <thead>
                   <tr>
                     <th>Category Name</th>
@@ -127,7 +142,7 @@
                 </thead>
                 <tbody>
                   <% items.forEach(c => { %>
-                    <tr>
+                    <tr class="category-row" data-search="<%= c.name.toLowerCase() %>">
                       <td><strong><%= c.name %></strong></td>
                       <td>
                         <% if(c.image_url || c.image){ %>
@@ -154,6 +169,13 @@
                   <% }) %>
                 </tbody>
               </table>
+            </div>
+            
+            <!-- No Results Message -->
+            <div id="noResults" class="empty-state" style="display: none; padding: 3rem;">
+              <div class="empty-state-icon">🔍</div>
+              <h3 class="empty-state-title">No categories found</h3>
+              <p class="empty-state-text">Try adjusting your search terms.</p>
             </div>
           </div>
         <% } else { %>

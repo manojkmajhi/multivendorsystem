@@ -26,11 +26,24 @@ create table if not exists public.products (
   image text,
   type text, -- or FK to product_types.id
   category text, -- or FK to categories.name / categories.id
+  short_description text, -- <= ~30 words, plain text summary
+  long_description text, -- rich / HTML capable extended description
   tags text[] default '{}',
   active boolean default true,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+-- Ensure columns exist (idempotent for deployments)
+alter table public.products add column if not exists short_description text;
+alter table public.products add column if not exists long_description text;
+
+-- Legacy backfill helper (if an old 'description' column still exists temporarily)
+-- update public.products
+-- set long_description = coalesce(long_description, description),
+--     short_description = coalesce(short_description,
+--         regexp_replace(trim(split_part(description,'\n',1)),'\s+',' ','g'))
+-- where description is not null and description <> '';
 
 -- Hero / carousel images for homepage banners
 create table if not exists public.hero_images (

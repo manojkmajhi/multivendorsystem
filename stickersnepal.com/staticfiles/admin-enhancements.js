@@ -401,4 +401,137 @@ if (window.location.pathname.startsWith('/admin/') && !window.location.pathname.
   resetSessionTimer();
 }
 
+/* ========================================
+   LIVE SEARCH FUNCTIONALITY
+   ======================================== */
+
+// Products Search
+document.addEventListener('DOMContentLoaded', function() {
+  const productSearchInput = document.getElementById('productSearch');
+  const categorySearchInput = document.getElementById('categorySearch');
+  
+  if (productSearchInput) {
+    const searchCount = document.getElementById('searchCount');
+    const productsTable = document.getElementById('productsTable');
+    const noResults = document.getElementById('noResults');
+    const productRows = document.querySelectorAll('.product-row');
+    const totalProducts = productRows.length;
+    
+    // Update count on page load
+    if (searchCount) {
+      searchCount.textContent = `${totalProducts} products`;
+    }
+    
+    // Live search functionality
+    productSearchInput.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase().trim();
+      let visibleCount = 0;
+      
+      productRows.forEach(function(row) {
+        const searchData = row.getAttribute('data-search');
+        
+        if (searchData && searchData.includes(searchTerm)) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+      
+      // Update count
+      if (searchCount) {
+        if (searchTerm) {
+          searchCount.textContent = `${visibleCount} of ${totalProducts} products`;
+          searchCount.style.color = visibleCount === 0 ? 'var(--danger-color)' : 'var(--success-color)';
+        } else {
+          searchCount.textContent = `${totalProducts} products`;
+          searchCount.style.color = '';
+        }
+      }
+      
+      // Show/hide no results message
+      if (productsTable && noResults) {
+        if (visibleCount === 0 && searchTerm) {
+          productsTable.style.display = 'none';
+          noResults.style.display = 'block';
+        } else {
+          productsTable.style.display = '';
+          noResults.style.display = 'none';
+        }
+      }
+    });
+    
+    // Clear search on ESC
+    productSearchInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        this.value = '';
+        this.dispatchEvent(new Event('input'));
+        this.blur();
+      }
+    });
+  }
+  
+  // Categories Search
+  if (categorySearchInput) {
+    const searchCount = document.getElementById('searchCount');
+    const categoriesTable = document.getElementById('categoriesTable');
+    const noResults = document.getElementById('noResults');
+    const categoryRows = document.querySelectorAll('.category-row');
+    const totalCategories = categoryRows.length;
+    
+    // Update count on page load
+    if (searchCount) {
+      searchCount.textContent = `${totalCategories} categories`;
+    }
+    
+    // Live search functionality
+    categorySearchInput.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase().trim();
+      let visibleCount = 0;
+      
+      categoryRows.forEach(function(row) {
+        const searchData = row.getAttribute('data-search');
+        
+        if (searchData && searchData.includes(searchTerm)) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+      
+      // Update count
+      if (searchCount) {
+        if (searchTerm) {
+          searchCount.textContent = `${visibleCount} of ${totalCategories} categories`;
+          searchCount.style.color = visibleCount === 0 ? 'var(--danger-color)' : 'var(--success-color)';
+        } else {
+          searchCount.textContent = `${totalCategories} categories`;
+          searchCount.style.color = '';
+        }
+      }
+      
+      // Show/hide no results message
+      if (categoriesTable && noResults) {
+        if (visibleCount === 0 && searchTerm) {
+          categoriesTable.style.display = 'none';
+          noResults.style.display = 'block';
+        } else {
+          categoriesTable.style.display = '';
+          noResults.style.display = 'none';
+        }
+      }
+    });
+    
+    // Clear search on ESC
+    categorySearchInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        this.value = '';
+        this.dispatchEvent(new Event('input'));
+        this.blur();
+      }
+    });
+  }
+});
+
 console.log('✨ Admin Panel Enhanced - UI/UX improvements loaded successfully!');

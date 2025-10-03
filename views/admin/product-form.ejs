@@ -149,6 +149,18 @@
             </div>
 
             <div class="form-group">
+              <label class="form-label">Short Description (≤ 30 words)</label>
+              <textarea name="short_description" class="form-control" rows="2" maxlength="400" placeholder="e.g., Ultra-soft collectible pillow inspired by the One Piece universe."><%= item && item.short_description ? item.short_description : '' %></textarea>
+              <small class="form-text">Brief marketing summary. First sentence users see in modal. Keep it punchy.</small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Long Description (HTML Allowed)</label>
+              <textarea name="long_description" class="form-control" rows="8" placeholder="<p>Full rich description (HTML allowed). You can include <strong>bold</strong>, lists, and paragraphs.</p>"><%= item && item.long_description ? item.long_description : '' %></textarea>
+              <small class="form-text">Optional rich content. If provided, bullet list is still generated from lines above; this renders below them on the product page.</small>
+            </div>
+
+            <div class="form-group">
               <label class="form-label">Product Image</label>
               <div style="margin-bottom: 1rem;">
                 <input type="file" name="imageFile" id="imageFile" class="form-control" accept="image/*" onchange="previewImage(event)" />
