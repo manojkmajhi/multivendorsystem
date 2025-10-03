@@ -3,7 +3,7 @@
 ## Copy and paste this entire code into your Supabase SQL Editor:
 
 ```sql
--- Orders table schema for Stickers Nepal
+-- Orders table schema for All Strawhats
 -- Run this in Supabase SQL Editor
 
 -- Orders table to store customer orders

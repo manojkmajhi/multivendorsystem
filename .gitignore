@@ -17,5 +17,5 @@ logs
 Thumbs.db
 
 # Uploaded files (keep directory structure, ignore actual files)
-stickersnepal.com/media/uploads/*
-!stickersnepal.com/media/uploads/.gitkeep
+allstrawhats/media/uploads/*
+!allstrawhats/media/uploads/.gitkeep

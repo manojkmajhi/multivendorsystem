@@ -43,7 +43,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use((req,res,next)=>{
-  res.locals.title = 'Stickers Nepal';
+  res.locals.title = 'All Strawhats';
   next();
 });
 
@@ -71,20 +71,28 @@ app.use(async (req,res,next)=>{
 const carts = {}; // key: device id, value: array of cart line items
 
 // In-memory fallback product catalog (used only if Supabase unavailable). Real data comes from DB.
+// Brand clean-up: legacy type 'Sticker' renamed to neutral 'Product'. If DB still has 'Sticker', we normalize below.
 const products = [
-  { id: '455', name: 'Avengers Logo', price: 45, image: '/media/455_Avengers%20Logo.jpg', type: 'Sticker', category: 'Marvel-Studios', active: true },
-  { id: '516', name: 'God of Beer', price: 45, image: '/media/516_God%20of%20Beer.jpg', type: 'Sticker', category: 'Marvel-Studios', active: true },
-  { id: '722', name: 'In case of fire', price: 45, image: '/media/722_In%20case%20of%20fire%26git%2C%20github%2C%20gitlab%2C%20commit%2C%20push.jpg', type: 'Sticker', category: 'Profession', active: true },
-  { id: '739', name: 'React', price: 45, image: '/media/739_React%26frontend%2C%20mern%20stack%2C%20react%20native.jpg', type: 'Sticker', category: 'Profession', active: true },
-  { id: '485', name: 'Casette', price: 45, image: '/media/485_Casette%26starlord%2C%20awesome%20mix%20vol%201.jpg', type: 'Sticker', category: 'Music', active: true },
-  { id: '165', name: 'Mugiwara Pirates', price: 45, image: '/media/165_Mugiwara%20Pirates%26straw%20hat%2C%20pirates%2C%20pirate%20logo%2C.jpg', type: 'Sticker', category: 'Anime', active: true },
-  { id: '730', name: 'Middle Finger', price: 45, image: '/media/730_Middle%20Finger%26sql%2C%20codes%2C%20program.jpg', type: 'Sticker', category: 'Others', active: true },
-  { id: '245', name: 'Spongebob License', price: 45, image: '/media/245_Spongebob%20License%26driving%20school.jpg', type: 'Sticker', category: 'Cartoon', active: true },
-  { id: '701', name: 'Chrome Dinasour', price: 45, image: '/media/701_Chrome%20Dinasour%26no%20internet%2C%20google%20chrome%2C%20cactus.jpg', type: 'Sticker', category: 'Games', active: true },
-  { id: '735', name: 'Programmer', price: 45, image: '/media/735_Programmer%26developer%2C%20coder.jpg', type: 'Sticker', category: 'Profession', active: true },
-  { id: '464', name: 'The Scar', price: 45, image: '/media/464_The%20Scar.jpg', type: 'Sticker', category: 'Movies', active: true },
-  { id: '12', name: 'Levi Fuck You', price: 45, image: '/media/12_Levi%20Fuck%20You%26angry%2C.jpg', type: 'Sticker', category: 'Anime', active: true }
+  { id: '455', name: 'Avengers Logo', price: 45, image: '/media/455_Avengers%20Logo.jpg', type: 'Product', category: 'Marvel-Studios', active: true },
+  { id: '516', name: 'God of Beer', price: 45, image: '/media/516_God%20of%20Beer.jpg', type: 'Product', category: 'Marvel-Studios', active: true },
+  { id: '722', name: 'In case of fire', price: 45, image: '/media/722_In%20case%20of%20fire%26git%2C%20github%2C%20gitlab%2C%20commit%2C%20push.jpg', type: 'Product', category: 'Profession', active: true },
+  { id: '739', name: 'React', price: 45, image: '/media/739_React%26frontend%2C%20mern%20stack%2C%20react%20native.jpg', type: 'Product', category: 'Profession', active: true },
+  { id: '485', name: 'Casette', price: 45, image: '/media/485_Casette%26starlord%2C%20awesome%20mix%20vol%201.jpg', type: 'Product', category: 'Music', active: true },
+  { id: '165', name: 'Mugiwara Pirates', price: 45, image: '/media/165_Mugiwara%20Pirates%26straw%20hat%2C%20pirates%2C%20pirate%20logo%2C.jpg', type: 'Product', category: 'Anime', active: true },
+  { id: '730', name: 'Middle Finger', price: 45, image: '/media/730_Middle%20Finger%26sql%2C%20codes%2C%20program.jpg', type: 'Product', category: 'Others', active: true },
+  { id: '245', name: 'Spongebob License', price: 45, image: '/media/245_Spongebob%20License%26driving%20school.jpg', type: 'Product', category: 'Cartoon', active: true },
+  { id: '701', name: 'Chrome Dinasour', price: 45, image: '/media/701_Chrome%20Dinasour%26no%20internet%2C%20google%20chrome%2C%20cactus.jpg', type: 'Product', category: 'Games', active: true },
+  { id: '735', name: 'Programmer', price: 45, image: '/media/735_Programmer%26developer%2C%20coder.jpg', type: 'Product', category: 'Profession', active: true },
+  { id: '464', name: 'The Scar', price: 45, image: '/media/464_The%20Scar.jpg', type: 'Product', category: 'Movies', active: true },
+  { id: '12', name: 'Levi Fuck You', price: 45, image: '/media/12_Levi%20Fuck%20You%26angry%2C.jpg', type: 'Product', category: 'Anime', active: true }
 ];
+
+function normalizeType(t){
+  if(!t) return 'Product';
+  if(t === 'Sticker') return 'Product';
+  if(t === 'Sticker Pack') return 'Pack';
+  return t;
+}
 
 // Unified product lookup (DB first if configured, then fallback array)
 async function getAnyProductById(id){
@@ -180,13 +188,21 @@ async function dbFetchCategories(force=false){
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-// Serve static frontend (index.html) and assets
-app.use('/media', express.static(path.join(__dirname, 'stickersnepal.com', 'media')));
-app.use('/staticfiles', express.static(path.join(__dirname, 'stickersnepal.com', 'staticfiles')));
-// NOTE: root static serving moved to bottom (after dynamic routes) to avoid swallowing /details/:id/ etc.
+// Serve static frontend (index.html) and assets.
+// Dynamic root resolution so we can rename legacy folder (stickersnepal.com -> mugiwara) without code changes.
+// Add any newly renamed static bundles here; order = priority.
+const STATIC_ROOT_CANDIDATES = ['strawhats', 'mugiwara', 'stickersnepal.com', 'allstrawhats'];
+const staticRoot = STATIC_ROOT_CANDIDATES.find(dir => {
+  try { return fs.existsSync(path.join(__dirname, dir)); } catch(e){ return false; }
+}) || 'stickersnepal.com';
+console.log('✓ Static root resolved:', staticRoot);
+app.use('/media', express.static(path.join(__dirname, staticRoot, 'media')));
+app.use('/staticfiles', express.static(path.join(__dirname, staticRoot, 'staticfiles')));
+// NOTE: root static ("/") is mounted at bottom after dynamic routes.
 
 // -------- Multer Configuration for File Uploads --------
-const uploadDir = path.join(__dirname, 'stickersnepal.com', 'media', 'uploads');
+// Use dynamic staticRoot so uploaded media stays inside the active static directory
+const uploadDir = path.join(__dirname, staticRoot, 'media', 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -1067,12 +1083,12 @@ app.get('/get_cart/', async (req,res)=>{
       const p = await getAnyProductById(it.productId);
       if(p){
         // Format: [id, name, qty, price, image, type, qty_duplicate]
-        mapped.push([p.id, p.name || p.title || 'Item', it.qty, parseFloat(p.price) || 0, p.image || '', p.type || 'Sticker', it.qty]);
+  mapped.push([p.id, p.name || p.title || 'Item', it.qty, parseFloat(p.price) || 0, p.image || '', normalizeType(p.type), it.qty]);
         console.log('  ✓ Product loaded', { id: p.id, name: p.name, price: p.price });
       } else {
         console.warn('  ⚠️ Product not found in DB', { productId: it.productId });
         // Return placeholder so cart doesn't break
-        mapped.push([it.productId, 'Unknown', it.qty, 0, '', 'Sticker', it.qty]);
+  mapped.push([it.productId, 'Unknown', it.qty, 0, '', 'Product', it.qty]);
       }
     }
     
@@ -1366,7 +1382,7 @@ app.get('/set_cart_qty/', (req, res) => {
 });
 
 // Serve remaining static assets
-app.use('/', express.static(path.join(__dirname, 'stickersnepal.com'), { index:false }));
+app.use('/', express.static(path.join(__dirname, staticRoot), { index:false }));
 
 function start(port, attempt=0){
   const srv = app.listen(port, () => {

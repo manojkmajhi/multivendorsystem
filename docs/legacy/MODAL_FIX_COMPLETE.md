@@ -3,7 +3,7 @@
 ## Changes Made
 
 ### 1. (Deprecated) Modern CSS (`product-modal.css`)
-Original file: `stickersnepal.com/staticfiles/product-modal.css` (now removed).
+Original file: `allstrawhats/staticfiles/product-modal.css` (removed, replaced by product-quickview.css).
 Replaced by `product-quickview.css` which provides a smaller, fully responsive, accessible quickview.
 
 Key features:
@@ -15,7 +15,7 @@ Key features:
 - ✅ Mobile-first responsive design
 
 ### 2. Updated HTML Structure (`index.html`)
-**File**: `stickersnepal.com/index.html`
+**File**: `allstrawhats/index.html`
 
 Changes:
 - (Historical) Linked `product-modal.css` in the head section (line ~27) – now replaced with `product-quickview.css`.
@@ -101,8 +101,8 @@ Added multiple selector variations to ensure styles apply:
 
 ## Files Modified
 
-1. ✅ `stickersnepal.com/staticfiles/product-modal.css` - Complete redesign (481 lines)
-2. ✅ `stickersnepal.com/index.html` - Linked CSS + cleaned HTML structure
+1. ✅ `allstrawhats/staticfiles/product-modal.css` - Complete redesign (later deprecated)
+2. ✅ `allstrawhats/index.html` - Linked CSS + cleaned HTML structure
 
 ## To See Changes
 

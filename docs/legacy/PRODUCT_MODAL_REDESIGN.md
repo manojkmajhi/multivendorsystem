@@ -74,7 +74,7 @@
 
 ## Files Modified
 
-- (Deprecated) `stickersnepal.com/staticfiles/product-modal.css` - superseded by `product-quickview.css`.
+- (Deprecated) `allstrawhats/staticfiles/product-modal.css` - superseded by `product-quickview.css`.
 
 ## Testing Recommendations
 

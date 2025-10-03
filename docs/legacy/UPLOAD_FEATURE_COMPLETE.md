@@ -12,7 +12,7 @@
 
 ### 2. **Backend File Handling** (`server.js`)
 - Installed and configured **Multer** for file uploads
-- Created uploads directory: `stickersnepal.com/media/uploads/`
+- Created uploads directory: `allstrawhats/media/uploads/`
 - File validation:
   - Only image files allowed (jpg, png, gif, webp)
   - Maximum file size: 5MB
@@ -58,7 +58,7 @@
 
 ### Upload Directory
 ```
-stickersnepal.com/
+allstrawhats/
   └── media/
       └── uploads/          ← Images saved here
           ├── product-1234567890-123456789.jpg
@@ -86,7 +86,7 @@ Images are stored as paths in the `products.image` column:
 ```javascript
 - Max file size: 5MB
 - Allowed types: jpeg, jpg, png, gif, webp
-- Upload path: stickersnepal.com/media/uploads/
+- Upload path: allstrawhats/media/uploads/
 - Filename: [name]-[timestamp]-[random].[ext]
 ```
 
@@ -158,7 +158,7 @@ fileFilter: function (req, file, cb) {
 
 If you encounter any issues:
 
-1. **Check uploads directory exists**: `stickersnepal.com/media/uploads/`
+1. **Check uploads directory exists**: `allstrawhats/media/uploads/`
 2. **Check file permissions**: Directory must be writable
 3. **Check multer is installed**: `npm install multer`
 4. **Check server logs**: Look for error messages

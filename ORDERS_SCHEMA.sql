@@ -1,4 +1,4 @@
--- Orders table schema for Stickers Nepal
+-- Orders table schema for All Strawhats
 -- Run this in Supabase SQL Editor
 
 -- Orders table to store customer orders

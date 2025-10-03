@@ -715,7 +715,7 @@
         </div>
         <h5 id="single-h5" class="text-uppercase small"></h5>
         <div class="container-fluid mt-0">
-          <div class="row" id="single-stickers-div">
+          <div class="row" id="mini-cart-items"><!-- legacy id single-stickers-div now mini-cart-items -->
           </div>
         </div>
         <div id="nothing-in-cart" style="text-align: center; margin-top: 8em; display: none;"></div>
@@ -830,7 +830,8 @@
           if (data.cart) {
             $('#nothing-in-cart').hide();
             $('#floating-cart-table').html('');
-            $('#single-stickers-div').html('');
+            var $miniGrid = $('#mini-cart-items'); if(!$miniGrid.length){ $miniGrid = $('#single-stickers-div'); }
+            $miniGrid.html('');
             $("#show-notshow").hide();
             var total = 0;
             var single = 0;
@@ -846,10 +847,10 @@
                 single += data.cart[i][2];
                 total += data.cart[i][2];
                 if (data.cart[i][2] > 1) {
-                  $('#single-stickers-div').append('<div class="col-3 px-1 py-1"><div class="small px-1 py-0" style="position: absolute; right: 0.4rem; top: 0.4rem; background-color: #000; color:#fff; border-radius:3px;">' + data.cart[i][2] + '</div><img src="' + data.cart[i][4] + '"class="border" style="width:100%;" /></div>')
+                  $miniGrid.append('<div class="col-3 px-1 py-1"><div class="small px-1 py-0" style="position: absolute; right: 0.4rem; top: 0.4rem; background-color: #000; color:#fff; border-radius:3px;">' + data.cart[i][2] + '</div><img src="' + data.cart[i][4] + '"class="border" style="width:100%;" /></div>')
                 }
                 else {
-                  $('#single-stickers-div').append('<div class="col-3 px-1 py-1"><img src="' + data.cart[i][4] + '" class="border" style="width:100%;" /></div>')
+                  $miniGrid.append('<div class="col-3 px-1 py-1"><img src="' + data.cart[i][4] + '" class="border" style="width:100%;" /></div>')
                 }
               }
             }

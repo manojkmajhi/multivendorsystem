@@ -309,12 +309,13 @@ body {
      border-radius: 4px;
    }
    
-   #single-stickers-div img {
+   /* Renamed single-stickers-div -> mini-cart-items; keep both selectors for backward compatibility */
+   #mini-cart-items img, #single-stickers-div img {
      border-radius: 6px;
      transition: transform 0.2s;
    }
    
-   #single-stickers-div img:hover {
+   #mini-cart-items img:hover, #single-stickers-div img:hover {
      transform: scale(1.05);
    }
    

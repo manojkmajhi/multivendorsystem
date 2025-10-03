@@ -58,7 +58,7 @@ Try these troubleshooting steps:
 ### 3. Verify File Paths
 Make sure the CSS file is at:
 ```
-(Deprecated) e:\allstrawhats\stickersnepal.com\staticfiles\product-modal.css (removed)
+(Deprecated) e:\allstrawhats\allstrawhats\staticfiles\product-modal.css (removed)
 ```
 
 ### 4. Check Server Setup

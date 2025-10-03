@@ -84,8 +84,8 @@ http://localhost:3000/api/search-suggestions?q=gum
 ## 📁 Files Modified
 
 1. **server.js** - Added search routes and API endpoint
-2. **stickersnepal.com/staticfiles/front.js** - Added autocomplete functionality
-3. **stickersnepal.com/staticfiles/style.blue.css** - Added dropdown styling
+2. **allstrawhats/staticfiles/front.js** - Added autocomplete functionality
+3. **allstrawhats/staticfiles/style.blue.css** - Added dropdown styling
 4. **views/shop-category.ejs** - Display search query in heading
 
 ## 🚀 How It Works

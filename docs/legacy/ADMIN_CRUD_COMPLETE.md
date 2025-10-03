@@ -190,7 +190,7 @@ hero_images (
    - File upload overrides URL
 
 2. **File Storage**:
-   - Location: `stickersnepal.com/media/uploads/`
+   - Location: `allstrawhats/media/uploads/`
    - Format: `[name]-[timestamp]-[random].[ext]`
    - Max Size: 5MB
    - Types: jpg, png, gif, webp
@@ -314,7 +314,7 @@ POST /admin/hero-images/:id/toggle-active
 - Ensure admin-enhancements.js is loaded
 
 **Issue: Image upload fails**
-- Check uploads directory exists: `stickersnepal.com/media/uploads/`
+- Check uploads directory exists: `allstrawhats/media/uploads/`
 - Check directory is writable
 - Check file size < 5MB
 - Check file type is image

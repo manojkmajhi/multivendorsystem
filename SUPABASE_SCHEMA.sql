@@ -1,4 +1,4 @@
--- Suggested Supabase schema for Stickers Nepal
+-- Suggested Supabase schema for All Strawhats
 -- Run this in the SQL editor (ensure pgcrypto extension for UUID gen_random_uuid())
 create extension if not exists "pgcrypto";
 

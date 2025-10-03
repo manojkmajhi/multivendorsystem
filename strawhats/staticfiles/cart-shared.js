@@ -141,7 +141,10 @@ function loadCart() {
       if (data.cart && data.cart.length > 0) {
         $('#nothing-in-cart').hide();
         $('#floating-cart-table').html('');
-        $('#single-stickers-div').html('');
+  // Support new id (#mini-cart-items) while maintaining backward compatibility with legacy #single-stickers-div
+  var $miniGrid = $('#mini-cart-items');
+  if(!$miniGrid.length){ $miniGrid = $('#single-stickers-div'); }
+  $miniGrid.html('');
         $("#show-notshow").hide();
         var total = 0;
         var single = 0;
@@ -156,9 +159,9 @@ function loadCart() {
             single += data.cart[i][2];
             total += data.cart[i][2];
             if (data.cart[i][2] > 1) {
-              $('#single-stickers-div').append('<div class="col-3 px-1 py-1 position-relative"><div class="small px-1 py-0" style="position: absolute; right: 0.4rem; top: 0.4rem; background-color: #000; color:#fff; border-radius:3px; z-index: 2;">' + data.cart[i][2] + '</div><button class="btn btn-sm btn-link text-danger p-0 remove-from-cart position-absolute" data-product-id="' + data.cart[i][0] + '" style="left: 0.2rem; top: 0.2rem; z-index: 2;" title="Remove"><i class="fas fa-times-circle"></i></button><img src="' + data.cart[i][4] + '"class="border" style="width:100%;" /></div>');
+              $miniGrid.append('<div class="col-3 px-1 py-1 position-relative"><div class="small px-1 py-0" style="position: absolute; right: 0.4rem; top: 0.4rem; background-color: #000; color:#fff; border-radius:3px; z-index: 2;">' + data.cart[i][2] + '</div><button class="btn btn-sm btn-link text-danger p-0 remove-from-cart position-absolute" data-product-id="' + data.cart[i][0] + '" style="left: 0.2rem; top: 0.2rem; z-index: 2;" title="Remove"><i class="fas fa-times-circle"></i></button><img src="' + data.cart[i][4] + '"class="border" style="width:100%;" /></div>');
             } else {
-              $('#single-stickers-div').append('<div class="col-3 px-1 py-1 position-relative"><button class="btn btn-sm btn-link text-danger p-0 remove-from-cart position-absolute" data-product-id="' + data.cart[i][0] + '" style="left: 0.2rem; top: 0.2rem; z-index: 2;" title="Remove"><i class="fas fa-times-circle"></i></button><img src="' + data.cart[i][4] + '" class="border" style="width:100%;" /></div>');
+              $miniGrid.append('<div class="col-3 px-1 py-1 position-relative"><button class="btn btn-sm btn-link text-danger p-0 remove-from-cart position-absolute" data-product-id="' + data.cart[i][0] + '" style="left: 0.2rem; top: 0.2rem; z-index: 2;" title="Remove"><i class="fas fa-times-circle"></i></button><img src="' + data.cart[i][4] + '" class="border" style="width:100%;" /></div>');
             }
           }
         }
@@ -178,7 +181,9 @@ function loadCart() {
         $('#nothing-in-cart').show();
         $('#nothing-in-cart').html('<strong class="h5 text-uppercase">Cart is Empty</strong>');
         $('#floating-cart-table').html('');
-        $('#single-stickers-div').html('');
+  var $miniGrid2 = $('#mini-cart-items');
+  if(!$miniGrid2.length){ $miniGrid2 = $('#single-stickers-div'); }
+  $miniGrid2.html('');
         $('#single-h5').html('');
         $('#pack-h5').html('');
       }

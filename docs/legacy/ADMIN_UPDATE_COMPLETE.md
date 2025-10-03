@@ -185,7 +185,7 @@ Edit CSS variables in `staticfiles/admin-style.css`:
 ## 📁 File Structure
 
 ```
-stickersnepal.com/
+allstrawhats/
 ├── staticfiles/
 │   └── admin-style.css          ← Main admin stylesheet
 ├── views/admin/

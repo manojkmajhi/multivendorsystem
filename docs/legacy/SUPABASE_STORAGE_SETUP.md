@@ -2,7 +2,7 @@
 
 ## Option 1: Local File Storage (Current Implementation)
 
-The current implementation saves uploaded images to your local server in the `stickersnepal.com/media/uploads/` directory. This is already working and requires no additional setup.
+The current implementation saves uploaded images to your local server in the `allstrawhats/media/uploads/` directory. This is already working and requires no additional setup.
 
 **Pros:**
 - Simple and works immediately
@@ -269,7 +269,7 @@ npm install multer
 
 **Issue: "ENOENT: no such file or directory"**
 - The server automatically creates the `uploads` directory
-- Check that your `stickersnepal.com/media/` directory exists
+- Check that your `allstrawhats/media/` directory exists
 
 **Issue: Images not displaying**
 - Check the image path in the database

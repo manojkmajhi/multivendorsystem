@@ -1,4 +1,4 @@
-# 🗑️ File Cleanup Analysis - Stickers Nepal
+# 🗑️ File Cleanup Analysis - All Strawhats
 
 ## Files to be REMOVED (Safe to delete)
 
@@ -34,7 +34,7 @@ These are offline copies of CDN resources, but the site uses ONLINE CDN links.
 ### 4. **Empty Staticfiles Folder** ❌
 - `staticfiles/` (root level) - Only contains `admin-style.css` which was moved
 
-**Reason**: The actual staticfiles are in `stickersnepal.com/staticfiles/`
+**Reason**: The actual staticfiles are in `allstrawhats/staticfiles/` (renamed from stickersnepal.com)
 
 ---
 
@@ -58,10 +58,10 @@ These are offline copies of CDN resources, but the site uses ONLINE CDN links.
   - ✅ `views/admin/` - Admin panel templates
   - ✅ `views/partials/` - Reusable components
   - ✅ All .ejs files
-- ✅ `stickersnepal.com/` - Frontend files (essential)
-  - ✅ `stickersnepal.com/index.html` - Main frontend page
-  - ✅ `stickersnepal.com/staticfiles/` - CSS, JS, images (essential)
-  - ✅ `stickersnepal.com/media/` - Product images (if exists)
+- ✅ `allstrawhats/` - Frontend files (essential)
+  - ✅ `allstrawhats/index.html` - Main frontend page
+  - ✅ `allstrawhats/staticfiles/` - CSS, JS, images (essential)
+  - ✅ `allstrawhats/media/` - Product images (if exists)
 
 ### Git Repository
 - ✅ `.git/` - Git repository (keep if using version control)
