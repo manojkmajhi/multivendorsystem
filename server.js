@@ -62,8 +62,108 @@ async function loadSiteSetting(force=false){
     return { name: 'All Strawhats', logo_url: '/staticfiles/brand.svg' };
   }
 }
+
+// -------- Theme Management --------
+let themeCache = { value: null, fetchedAt: 0 };
+async function loadTheme(force=false){
+  if(!supabase) return 'blue';
+  if(!force && themeCache.value && Date.now() - themeCache.fetchedAt < 60_000){
+    return themeCache.value;
+  }
+  try {
+    const theme = await getSetting('theme', 'blue');
+    themeCache = { value: theme, fetchedAt: Date.now() };
+    return theme;
+  } catch(e){
+    return 'blue';
+  }
+}
+
+// Dynamic CSS endpoint - MUST be before middleware
+app.get('/custom-theme.css', async (req,res)=>{
+  const colors = await getSetting('theme_colors', { 
+    btn_bg: '#000000', btn_text: '#ffffff', btn_hover: '#333333',
+    link_color: '#007bff', link_hover: '#0056b3',
+    navbar_bg: '#ffffff', navbar_text: '#000000',
+    card_bg: '#f8f8f8', card_radius: '2',
+    footer_bg: '#343a40', footer_text: '#ffffff',
+    success_color: '#28a745', danger_color: '#dc3545'
+  });
+  console.log('🎨 Serving custom theme CSS:', colors);
+  
+  const css = `
+/* Advanced Custom Theme */
+.btn, .btn-dark, .btn-primary, button.btn-dark, button.btn-primary {
+  background-color: ${colors.btn_bg} !important;
+  border-color: ${colors.btn_bg} !important;
+  color: ${colors.btn_text} !important;
+}
+.btn:hover, .btn-dark:hover, .btn-primary:hover, button.btn-dark:hover, button.btn-primary:hover {
+  background-color: ${colors.btn_hover} !important;
+  border-color: ${colors.btn_hover} !important;
+  color: ${colors.btn_text} !important;
+}
+.btn-outline-dark, .btn-outline-primary {
+  color: ${colors.btn_bg} !important;
+  border-color: ${colors.btn_bg} !important;
+  background: transparent !important;
+}
+.btn-outline-dark:hover, .btn-outline-primary:hover {
+  background-color: ${colors.btn_bg} !important;
+  border-color: ${colors.btn_bg} !important;
+  color: ${colors.btn_text} !important;
+}
+a { color: ${colors.link_color} !important; }
+a:hover, a:focus { color: ${colors.link_hover} !important; }
+nav.navbar, .navbar { background-color: ${colors.navbar_bg} !important; }
+nav.navbar *, .navbar * { color: ${colors.navbar_text} !important; }
+.product, .product-grid .product, .card { background-color: ${colors.card_bg} !important; border-radius: ${colors.card_radius}px !important; }
+footer, .footer, .bg-dark { background-color: ${colors.footer_bg} !important; }
+footer *, .footer * { color: ${colors.footer_text} !important; }
+.btn-success { background-color: ${colors.success_color} !important; border-color: ${colors.success_color} !important; }
+.btn-success:hover { background-color: ${colors.success_color} !important; filter: brightness(0.9) !important; }
+.alert-success, .badge-success, .bg-success { background-color: ${colors.success_color} !important; }
+.text-success { color: ${colors.success_color} !important; }
+.btn-danger { background-color: ${colors.danger_color} !important; border-color: ${colors.danger_color} !important; }
+.btn-danger:hover { background-color: ${colors.danger_color} !important; filter: brightness(0.9) !important; }
+.alert-danger, .badge-danger, .bg-danger { background-color: ${colors.danger_color} !important; }
+.text-danger { color: ${colors.danger_color} !important; }
+  `;
+  
+  res.setHeader('Content-Type', 'text/css');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.send(css);
+});
+
+// Theme customizer routes
+app.get('/admin/theme-customizer', adminGuard, async (req,res)=>{
+  const colors = await getSetting('theme_colors', { 
+    btn_bg: '#000000', btn_text: '#ffffff', btn_hover: '#333333',
+    link_color: '#007bff', link_hover: '#0056b3',
+    success_color: '#28a745', danger_color: '#dc3545'
+  });
+  res.render('admin/theme-customizer', { colors, siteSetting: res.locals.siteSetting });
+});
+
+app.post('/admin/theme-customizer/save', adminGuard, async (req,res)=>{
+  try {
+    const { colors } = req.body;
+    await setSetting('theme_colors', colors);
+    res.json({ success: true });
+  } catch(e){
+    console.error('THEME_SAVE_ERROR', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 app.use(async (req,res,next)=>{
   res.locals.siteSetting = await loadSiteSetting();
+  const customColors = await getSetting('custom_colors', { primary: '#2b90d9', secondary: '#6c757d', success: '#28a745', danger: '#dc3545' });
+  res.locals.customColors = customColors;
+  const socialLinks = await getSetting('social', {});
+  res.locals.socialLinks = socialLinks;
   next();
 });
 
@@ -624,7 +724,10 @@ app.post('/admin/categories/:id/delete', adminGuard, async (req,res)=>{
 app.get('/admin/settings', adminGuard, async (req,res)=>{
   try {
     const site = await getSetting('site', { name: 'All Strawhats', logo_url: '/staticfiles/brand.svg' });
-  res.render('admin/settings', { site, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
+    const customColors = await getSetting('custom_colors', { primary: '#2b90d9', secondary: '#6c757d', success: '#28a745', danger: '#dc3545' });
+    const seo = await getSetting('seo', {});
+    const social = await getSetting('social', {});
+  res.render('admin/settings', { site, customColors, seo, social, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
   } catch(e){
     console.error(e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load settings.' });
@@ -632,11 +735,35 @@ app.get('/admin/settings', adminGuard, async (req,res)=>{
 });
 
 app.post('/admin/settings', adminGuard, async (req,res)=>{
-  const { name, logo_url, new_password } = req.body;
+  const { name, logo_url, new_password, primary_color, secondary_color, success_color, danger_color,
+    meta_description, meta_keywords, site_tagline, og_title, og_description, og_image,
+    twitter_card, twitter_handle, google_analytics, google_verification, facebook_pixel,
+    facebook_url, instagram_url, twitter_url, youtube_url, tiktok_url, contact_email, phone_number } = req.body;
   try {
     let siteOk = true;
     const siteResult = await setSetting('site', { name, logo_url });
     if(!siteResult) siteOk = false;
+    
+    // Save custom colors
+    if(primary_color){
+      const colors = {
+        primary: primary_color || '#2b90d9',
+        secondary: secondary_color || '#6c757d',
+        success: success_color || '#28a745',
+        danger: danger_color || '#dc3545'
+      };
+      await setSetting('custom_colors', colors);
+    }
+    
+    // Save SEO settings
+    const seoData = { meta_description, meta_keywords, site_tagline, og_title, og_description, og_image,
+      twitter_card, twitter_handle, google_analytics, google_verification, facebook_pixel };
+    await setSetting('seo', seoData);
+    
+    // Save social media links
+    const socialData = { facebook_url, instagram_url, twitter_url, youtube_url, tiktok_url, contact_email, phone_number };
+    await setSetting('social', socialData);
+    
     let pwChanged = false;
     if(new_password && new_password.trim().length){
       if(!supabase){
@@ -663,6 +790,17 @@ app.post('/admin/settings', adminGuard, async (req,res)=>{
     let hint = 'Failed to save settings.';
     if(e && e.code === '42501') hint = 'RLS blocked write. Use SUPABASE_SERVICE_ROLE_KEY in .env or adjust policies.';
     res.status(500).render('simple-message', { title: 'Error', message: hint });
+  }
+});
+
+// Reset theme to default
+app.post('/admin/settings/reset-theme', adminGuard, async (req,res)=>{
+  try {
+    await setSetting('custom_colors', { primary: '#2b90d9', secondary: '#6c757d', success: '#28a745', danger: '#dc3545' });
+    res.redirect('/admin/settings?msg=' + encodeURIComponent('Colors reset to default'));
+  } catch(e){
+    console.error('THEME_RESET_ERROR', e);
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to reset colors.' });
   }
 });
 

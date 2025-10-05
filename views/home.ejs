@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.css" />
   <link rel="stylesheet" href="/staticfiles/style.blue.css" />
+  <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>" />
   <link rel="stylesheet" href="/staticfiles/floating-button.css" />
   <link rel="stylesheet" href="/staticfiles/product-quickview.css?v=1" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-pbCf3Z52eQX1ZsaAJ+lZeI7IuAv89xDSHLVbkP4SRrped1IovnEwlHGawEq+y3OCAXoTr4Wr9L5xRcmRl6Vw2g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -258,6 +259,39 @@
     function getCookie(name){ var cookieValue=null; if(document.cookie && document.cookie!==''){ var cookies=document.cookie.split(';'); for(var i=0;i<cookies.length;i++){ var cookie=cookies[i].trim(); if(cookie.substring(0,name.length+1)===(name+'=')){ cookieValue=decodeURIComponent(cookie.substring(name.length+1)); break; } } } return cookieValue; }
     function uuidv4(){ return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){ var r=Math.random()*16|0,v=c=='x'?r:(r&0x3|0x8); return v.toString(16); }); }
   // cart logic now provided by shared /staticfiles/cart-shared.js
+  
+  // Theme customizer live preview support
+  window.addEventListener('message', function(e) {
+    if (e.data.type === 'updateTheme' && e.data.colors) {
+      const colors = e.data.colors;
+      let style = document.getElementById('live-theme-preview');
+      if (!style) {
+        style = document.createElement('style');
+        style.id = 'live-theme-preview';
+        document.head.appendChild(style);
+      }
+      style.textContent = `
+        .btn, .btn-dark, .btn-primary, button.btn-dark, button.btn-primary {
+          background-color: ${colors.btn_bg} !important;
+          border-color: ${colors.btn_bg} !important;
+          color: ${colors.btn_text} !important;
+        }
+        .btn:hover, .btn-dark:hover, .btn-primary:hover {
+          background-color: ${colors.btn_hover} !important;
+          color: ${colors.btn_text} !important;
+        }
+        a { color: ${colors.link_color} !important; }
+        a:hover { color: ${colors.link_hover} !important; }
+        nav.navbar, .navbar { background-color: ${colors.navbar_bg} !important; }
+        nav.navbar *, .navbar * { color: ${colors.navbar_text} !important; }
+        .product, .product-grid .product { background-color: ${colors.card_bg} !important; border-radius: ${colors.card_radius}px !important; }
+        footer, .footer, .bg-dark { background-color: ${colors.footer_bg} !important; }
+        footer *, .footer * { color: ${colors.footer_text} !important; }
+        .btn-success { background-color: ${colors.success_color} !important; }
+        .btn-danger { background-color: ${colors.danger_color} !important; }
+      `;
+    }
+  });
   </script>
 
   <footer class="bg-dark text-white shadow" style="color: #fff; margin-top: 40px;">
@@ -269,10 +303,10 @@
         </div>
         <div class="col-lg-6 text-lg-right">
           <p class="small mb-0">FIND US &nbsp;
-            <a href="https://facebook.com/allstrawhats/" target="_blank"><i class="fab fa-facebook-square mr-1" style="color: #f5f5f5;"></i></a>
-            <a href="https://instagram.com/allstrawhats/" target="_blank"><i class="fab fa-instagram" style="color: #f5f5f5;"></i></a>
+            <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.facebook_url) ? socialLinks.facebook_url : 'https://facebook.com/allstrawhats/' %>" target="_blank"><i class="fab fa-facebook-square mr-1" style="color: #f5f5f5;"></i></a>
+            <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.instagram_url) ? socialLinks.instagram_url : 'https://instagram.com/allstrawhats/' %>" target="_blank"><i class="fab fa-instagram" style="color: #f5f5f5;"></i></a>
           </p>
-          <p class="text-sm text-gray mb-0"><a class="text-gray reset-anchor" href="mailto:info@allstrawhats.com" target="_blank"><i class="fas fa-envelope"></i> &nbsp;info@allstrawhats.com</a></p>
+          <p class="text-sm text-gray mb-0"><a class="text-gray reset-anchor" href="mailto:<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@allstrawhats.com' %>" target="_blank"><i class="fas fa-envelope"></i> &nbsp;<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@allstrawhats.com' %></a></p>
         </div>
       </div>
     </div>
