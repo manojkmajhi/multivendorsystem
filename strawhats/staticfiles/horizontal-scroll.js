@@ -1,71 +1,77 @@
-var scrollDuration = 300;
-        // paddles
-        var leftPaddle = document.getElementsByClassName('left-paddle');
-        var rightPaddle = document.getElementsByClassName('right-paddle');
-        // get items dimensions
-        var itemsLength = $('.scroll-item').length;
-        var itemSize = $('.scroll-item').outerWidth(true);
-        // get some relevant size for the paddle triggering point
-        var paddleMargin = 20;
-        
-        // get wrapper width
-        var getMenuWrapperSize = function() {
-            return $('.scroll-menu-wrapper').outerWidth();
-        }
-        var menuWrapperSize = getMenuWrapperSize();
-        // the wrapper is responsive
-        $(window).on('resize', function() {
-            menuWrapperSize = getMenuWrapperSize();
-        });
-        // size of the visible part of the menu is equal as the wrapper size 
-        var menuVisibleSize = menuWrapperSize;
-        
-        // get total width of all menu items
-        var getMenuSize = function() {
-            return itemsLength * itemSize + 100;
-        };
-        var menuSize = getMenuSize();
-        // get how much of menu is invisible
-        var menuInvisibleSize = menuSize - menuWrapperSize;
-        
-        // get how much have we scrolled to the left
-        var getMenuPosition = function() {
-            return $('.menu').scrollLeft();
-        };
-        
-        // finally, what happens when we are actually scrolling the menu
-        $('.menu').on('scroll', function() {
-        
-            // get how much of menu is invisible
-            menuInvisibleSize = menuSize - menuWrapperSize;
-            // get how much have we scrolled so far
-            var menuPosition = getMenuPosition();
-        
+// Modernized horizontal scroll: reduce layout thrashing, debounce resize/scroll
+;(function(){
+    var raf = window.requestAnimationFrame.bind(window);
+    var menu = document.querySelector('.menu');
+    if(!menu) return;
+
+    var leftPaddle = document.querySelector('.left-paddle');
+    var rightPaddle = document.querySelector('.right-paddle');
+    var paddleMargin = 20;
+
+    // cache item size/count and recompute on resize
+    var itemSize = 0, itemsLength = 0, menuWrapperSize = 0, menuSize = 0, menuInvisibleSize = 0;
+    function recompute() {
+        var firstItem = menu.querySelector('.scroll-item');
+        itemSize = firstItem ? (firstItem.getBoundingClientRect().width) : 0;
+        itemsLength = menu.querySelectorAll('.scroll-item').length;
+        menuWrapperSize = document.querySelector('.scroll-menu-wrapper') ? document.querySelector('.scroll-menu-wrapper').getBoundingClientRect().width : menu.clientWidth;
+        menuSize = itemsLength * itemSize + 100;
+        menuInvisibleSize = Math.max(0, menuSize - menuWrapperSize);
+    }
+
+    var resizeTimeout;
+    window.addEventListener('resize', function(){
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(recompute, 120);
+    }, { passive: true });
+
+    recompute();
+
+    // debounce scroll handling and only update paddles using rAF
+    var scheduled = false;
+    function onScroll() {
+        if(scheduled) return;
+        scheduled = true;
+        raf(function(){
+            scheduled = false;
+            var menuPosition = menu.scrollLeft;
             var menuEndOffset = menuInvisibleSize - paddleMargin;
-        
-            // show & hide the paddles 
-            // depending on scroll position
             if (menuPosition <= paddleMargin) {
-                $(leftPaddle).addClass('hidden');
-                $(rightPaddle).removeClass('hidden');
+                leftPaddle && leftPaddle.classList.add('hidden');
+                rightPaddle && rightPaddle.classList.remove('hidden');
             } else if (menuPosition < menuEndOffset) {
-                // show both paddles in the middle
-                $(leftPaddle).removeClass('hidden');
-                $(rightPaddle).removeClass('hidden');
-            } else if (menuPosition >= menuEndOffset) {
-                $(leftPaddle).removeClass('hidden');
-                $(rightPaddle).addClass('hidden');
+                leftPaddle && leftPaddle.classList.remove('hidden');
+                rightPaddle && rightPaddle.classList.remove('hidden');
+            } else {
+                leftPaddle && leftPaddle.classList.remove('hidden');
+                rightPaddle && rightPaddle.classList.add('hidden');
+            }
+        });
+    }
+
+    menu.addEventListener('scroll', onScroll, { passive: true });
+
+    // Smooth scrolling using native API where available
+    function smoothScrollTo(x, duration) {
+        if ('scrollBehavior' in document.documentElement.style) {
+            menu.scrollTo({ left: x, behavior: 'smooth' });
+            return;
         }
-        
-        
-        });
-        
-        // scroll to left
-        $(rightPaddle).on('click', function() {
-            $('.menu').animate( { scrollLeft: menuInvisibleSize}, scrollDuration);
-        });
-        
-        // scroll to right
-        $(leftPaddle).on('click', function() {
-            $('.menu').animate( { scrollLeft: '0' }, scrollDuration);
-        });
+        // fallback: rAF based smooth scroll
+        var start = menu.scrollLeft;
+        var change = x - start;
+        var startTime = performance.now();
+        duration = duration || 300;
+        function animate(now){
+            var t = Math.min(1, (now - startTime) / duration);
+            // easeInOutQuad
+            t = t<0.5 ? 2*t*t : -1+(4-2*t)*t;
+            menu.scrollLeft = start + change * t;
+            if(t < 1) requestAnimationFrame(animate);
+        }
+        requestAnimationFrame(animate);
+    }
+
+    if(rightPaddle) rightPaddle.addEventListener('click', function(){ smoothScrollTo(menuInvisibleSize, 300); });
+    if(leftPaddle) leftPaddle.addEventListener('click', function(){ smoothScrollTo(0, 300); });
+})();

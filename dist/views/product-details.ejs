@@ -153,7 +153,7 @@
                 </div>
                 <ul class="mb-2 mt-0 list-inline">
                   <li class="list-inline-item m-0 p-0"><button class="btn btn-sm btn-dark py-1 px-2" onclick="addToCart('<%= r.id %>','1', false)">Add to Cart</button></li>
-                  <li class="list-inline-item mr-0"><a class="btn btn-sm btn-outline-dark py-1 px-2 quick-view-btn" data-id="<%= r.id %>" data-image="<%= r.image %>" data-name="<%- r.name %>" data-price="<%= r.price %>" data-short-description="<%- r.short_description || '' %>" data-link="/details/<%= r.id %>/"><i class="fas fa-expand"></i></a></li>
+                  <li class="list-inline-item mr-0"><a class="btn btn-sm btn-outline-dark py-1 px-2 quick-view-btn" data-id="<%= r.id %>" data-image="<%= r.image %>" data-name="<%- r.name %>" data-price="<%= r.price %>" data-link="/details/<%= r.id %>/"><i class="fas fa-expand"></i></a></li>
                 </ul>
                 <h5 class="mb-0 text-sm"><a class="reset-anchor" href="/details/<%= r.id %>/"><%= r.name %></a></h5>
                 <p class="small text-muted mb-2">Rs. <%= r.price %></p>
@@ -245,16 +245,7 @@
       $('#productQuickView').modal('show'); setTimeout(()=> $('#quickview-close-btn').focus(), 400);
     }
     // Trigger from related quick view buttons
-    $(document).on('click', '.quick-view-btn', function(){ 
-        const $t=$(this); 
-        const id=$t.data('id'); 
-        const image=$t.data('image'); 
-        const name=$t.data('name'); 
-        const price=$t.data('price'); 
-        const link=$t.data('link'); 
-        const shortDescription=$t.data('short-description'); 
-        openQuickview(id,image,name,price,shortDescription,link,null); 
-    });
+    $(document).on('click', '.quick-view-btn', function(){ const $t=$(this); const id=$t.data('id'); const image=$t.data('image'); const name=$t.data('name'); const price=$t.data('price'); const link=$t.data('link'); var firstBullet=$('.descripton-ul li:first').text().replace(/^\s*[✓✔☑•\-*]\s*/, '').trim(); openQuickview(id,image,name,price,firstBullet,link,null); });
     // Quantity & interactions
     $('#quickview-dec').on('click', ()=>{ let v=parseInt($('#quickview-qty').val(),10)||1; v=Math.max(1,v-1); $('#quickview-qty').val(v); });
     $('#quickview-inc').on('click', ()=>{ let v=parseInt($('#quickview-qty').val(),10)||1; v=Math.min(999,v+1); $('#quickview-qty').val(v); });

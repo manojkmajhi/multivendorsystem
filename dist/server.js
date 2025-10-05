@@ -945,16 +945,52 @@ app.get('/search/:category/', async (req, res) => {
     } else {
       allProducts = await dbFetchProducts({ category: catParam });
     }
-    
-    // Filter products based on search query
-    const searchResults = allProducts.filter(p => {
+    // Tokenize query for smarter matching (split on whitespace)
+    const queryTerms = Array.from(new Set(searchQuery.split(/\s+/).filter(Boolean)));
+
+    // Scoring helper – higher score means more relevant
+    function computeScore(p){
       const name = (p.name || '').toLowerCase();
       const category = (p.category || '').toLowerCase();
       const type = (p.type || '').toLowerCase();
-      return name.includes(searchQuery) || 
-             category.includes(searchQuery) || 
-             type.includes(searchQuery);
-    });
+      const shortDesc = (p.short_description || '').toLowerCase();
+      const longDesc = (p.long_description || '').toLowerCase();
+
+      let score = 0;
+      if(!searchQuery) return score;
+
+      // Exact / prefix / word boundary matches on name get strongest boosts
+      if(name === searchQuery) score += 250;
+      if(name.startsWith(searchQuery)) score += 140;
+      // Whole word match in name
+      if(new RegExp(`(^|\b)${searchQuery.replace(/[-/\\^$*+?.()|[\]{}]/g,'\\$&')}(\b|$)`).test(name)) score += 120;
+      if(name.includes(searchQuery)) score += 100;
+
+      // Term based partials
+      queryTerms.forEach(t=>{
+        if(!t) return;
+        if(name.includes(t)) score += 25;
+        if(shortDesc.includes(t)) score += 12;
+        if(longDesc.includes(t)) score += 8;
+        if(category.includes(t)) score += 10;
+        if(type.includes(t)) score += 10;
+      });
+
+      // Description full phrase matches
+      if(shortDesc.includes(searchQuery)) score += 55;
+      if(longDesc.includes(searchQuery)) score += 35;
+      if(category.includes(searchQuery)) score += 40;
+      if(type.includes(searchQuery)) score += 40;
+
+      return score;
+    }
+
+    // Build results with score & filter out zero score
+    const scored = allProducts.map(p=>({ product: p, score: computeScore(p) }))
+      .filter(r=> r.score > 0)
+      .sort((a,b)=> b.score - a.score)
+      .map(r=> r.product);
+    const searchResults = scored;
 
     // Pagination
     const pageSize = 32;
@@ -995,20 +1031,66 @@ app.get('/api/search-suggestions', async (req, res) => {
 
     // Fetch all products
     const allProducts = await dbFetchProducts({});
-    
-    // Filter and get top 10 matches
+    const terms = Array.from(new Set(query.split(/\s+/).filter(Boolean)));
+
+    function computeScore(p){
+      const name = (p.name || '').toLowerCase();
+      const category = (p.category || '').toLowerCase();
+      const type = (p.type || '').toLowerCase();
+      const shortDesc = (p.short_description || '').toLowerCase();
+      const longDesc = (p.long_description || '').toLowerCase();
+      let score = 0;
+      if(name === query) score += 250;
+      if(name.startsWith(query)) score += 140;
+      if(name.includes(query)) score += 100;
+      if(shortDesc.includes(query)) score += 55;
+      if(longDesc.includes(query)) score += 35;
+      if(category.includes(query)) score += 40;
+      if(type.includes(query)) score += 40;
+      terms.forEach(t=>{
+        if(name.includes(t)) score += 25;
+        if(shortDesc.includes(t)) score += 12;
+        if(longDesc.includes(t)) score += 8;
+        if(category.includes(t)) score += 10;
+        if(type.includes(t)) score += 10;
+      });
+      return score;
+    }
+
+    function buildSnippet(p){
+      const fields = [p.short_description, p.long_description];
+      for(const field of fields){
+        if(!field) continue;
+        const lower = field.toLowerCase();
+        let idx = lower.indexOf(query);
+        if(idx === -1){
+          // try individual terms
+            idx = terms.map(t=> lower.indexOf(t)).filter(i=> i>-1).sort((a,b)=>a-b)[0];
+        }
+        if(idx > -1){
+          const start = Math.max(0, idx-30);
+          const end = Math.min(field.length, idx + query.length + 30);
+          let snippet = field.substring(start, end).trim();
+          if(start>0) snippet = '…'+snippet;
+          if(end < field.length) snippet = snippet+'…';
+          return snippet.replace(/[<>]/g,'');
+        }
+      }
+      return '';
+    }
+
     const matches = allProducts
-      .filter(p => {
-        const name = (p.name || '').toLowerCase();
-        return name.includes(query);
-      })
-      .slice(0, 10)
-      .map(p => ({
-        id: p.id,
-        name: p.name,
-        price: p.price,
-        image: p.image,
-        category: p.category
+      .map(p=> ({ product: p, score: computeScore(p) }))
+      .filter(r=> r.score>0)
+      .sort((a,b)=> b.score - a.score)
+      .slice(0,10)
+      .map(r=> ({
+        id: r.product.id,
+        name: r.product.name,
+        price: r.product.price,
+        image: r.product.image,
+        category: r.product.category,
+        snippet: buildSnippet(r.product)
       }));
 
     res.json({ suggestions: matches });
@@ -1197,7 +1279,18 @@ app.get('/', async (req,res)=>{
       heroImages = data || [];
     }
     if(!heroImages.length){
-      heroImages = [{ image_url:'/staticfiles/hero-banner.jpg', title: res.locals.siteSetting.name, link_url:'/shop/All/', position:0 }];
+      // Graceful fallback: pick an existing static file if hero-banner is not present
+      let fallbackImage = '/staticfiles/hero-banner.jpg';
+      try {
+        const bannerPath = path.join(__dirname, staticRoot, 'staticfiles', 'hero-banner.jpg');
+        if(!fs.existsSync(bannerPath)){
+          // Try brand.svg; if not, pick first product image
+          const brandPath = path.join(__dirname, staticRoot, 'staticfiles', 'brand.svg');
+            if(fs.existsSync(brandPath)) fallbackImage = '/staticfiles/brand.svg';
+            else if(productsList.length) fallbackImage = productsList[0].image;
+        }
+      } catch(_){}
+      heroImages = [{ image_url: fallbackImage, title: res.locals.siteSetting.name, link_url:'/shop/All/', position:0 }];
     }
     res.render('home', { categories, products: productsList, heroImages, siteSetting: res.locals.siteSetting });
   } catch(e){
@@ -1384,17 +1477,6 @@ app.get('/set_cart_qty/', (req, res) => {
 // Serve remaining static assets
 app.use('/', express.static(path.join(__dirname, staticRoot), { index:false }));
 
-// Catch-all 404 handler: render the simple-message template so we keep the minimal Not Found UI
-app.use(function(req, res){
-  // Prefer specific messages for product/category-like routes
-  let message = 'Page not found.';
-  try{
-    if(String(req.path).startsWith('/details/') || String(req.path).startsWith('/product')) message = 'Product not found.';
-    if(String(req.path).startsWith('/shop/')) message = 'Category not found.';
-  }catch(e){}
-  return res.status(404).render('simple-message', { title: 'Not Found', message });
-});
-
 function start(port, attempt=0){
   const srv = app.listen(port, () => {
     console.log('='.repeat(60));
@@ -1418,3 +1500,6 @@ function start(port, attempt=0){
   });
 }
 start(Number(PORT));
+
+// Export the app (helps some hosting environments like Passenger identify the application)
+module.exports = app;

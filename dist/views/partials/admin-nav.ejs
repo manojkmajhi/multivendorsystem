@@ -1,0 +1,108 @@
+<!-- Navigation Bar -->
+<nav class="admin-navbar">
+  <div class="admin-navbar-container">
+    <a href="/admin/" class="admin-brand">
+      <% if(siteSetting && siteSetting.logo_url){ %>
+        <img src="<%= siteSetting.logo_url %>" alt="Logo" />
+      <% } %>
+    </a>
+    
+    <!-- Desktop Navigation Links -->
+    <div class="desktop-nav-links">
+      <a href="/admin/" class="nav-link <%= active === 'dashboard' ? 'active' : '' %>">
+        <span class="nav-icon">📊</span>
+        <span>Dashboard</span>
+      </a>
+      <a href="/admin/orders" class="nav-link <%= active === 'orders' ? 'active' : '' %>">
+        <span class="nav-icon">🛒</span>
+        <span>Orders</span>
+      </a>
+      <a href="/admin/products" class="nav-link <%= active === 'products' ? 'active' : '' %>">
+        <span class="nav-icon">📦</span>
+        <span>Products</span>
+      </a>
+      <a href="/admin/categories" class="nav-link <%= active === 'categories' ? 'active' : '' %>">
+        <span class="nav-icon">📁</span>
+        <span>Categories</span>
+      </a>
+      <a href="/admin/hero-images" class="nav-link <%= active === 'hero' ? 'active' : '' %>">
+        <span class="nav-icon">🖼️</span>
+        <span>Hero Images</span>
+      </a>
+      <a href="/admin/settings" class="nav-link <%= active === 'settings' ? 'active' : '' %>">
+        <span class="nav-icon">⚙️</span>
+        <span>Settings</span>
+      </a>
+      <form method="POST" action="/admin/logout" style="display: inline;">
+        <button type="submit" class="nav-link nav-logout-btn">
+          <span class="nav-icon">🚪</span>
+          <span>Logout</span>
+        </button>
+      </form>
+    </div>
+    
+    <!-- Mobile Hamburger Menu -->
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- Sidebar -->
+<div class="admin-sidebar" id="adminSidebar">
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="sidebar-content">
+    <div class="sidebar-header">
+      <% if(siteSetting && siteSetting.logo_url){ %>
+        <img src="<%= siteSetting.logo_url %>" alt="Logo" class="sidebar-logo" />
+      <% } %>
+      <h3 class="sidebar-title"><%= (siteSetting && siteSetting.name) || 'Admin Panel' %></h3>
+      <button class="sidebar-close" onclick="toggleSidebar()" aria-label="Close menu">&times;</button>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <a href="/admin/" class="sidebar-link <%= active === 'dashboard' ? 'active' : '' %>">
+        <span class="sidebar-icon">📊</span>
+        <span>Dashboard</span>
+      </a>
+      <a href="/admin/orders" class="sidebar-link <%= active === 'orders' ? 'active' : '' %>">
+        <span class="sidebar-icon">🛒</span>
+        <span>Orders</span>
+      </a>
+      <a href="/admin/products" class="sidebar-link <%= active === 'products' ? 'active' : '' %>">
+        <span class="sidebar-icon">📦</span>
+        <span>Products</span>
+      </a>
+      <a href="/admin/categories" class="sidebar-link <%= active === 'categories' ? 'active' : '' %>">
+        <span class="sidebar-icon">📁</span>
+        <span>Categories</span>
+      </a>
+      <a href="/admin/hero-images" class="sidebar-link <%= active === 'hero' ? 'active' : '' %>">
+        <span class="sidebar-icon">🖼️</span>
+        <span>Hero Images</span>
+      </a>
+      <a href="/admin/settings" class="sidebar-link <%= active === 'settings' ? 'active' : '' %>">
+        <span class="sidebar-icon">⚙️</span>
+        <span>Settings</span>
+      </a>
+    </nav>
+    
+    <div class="sidebar-footer">
+      <form method="POST" action="/admin/logout">
+        <button type="submit" class="sidebar-logout-btn">
+          <span class="sidebar-icon">🚪</span>
+          <span>Logout</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleSidebar() {
+    document.getElementById('adminSidebar').classList.toggle('active');
+    document.body.classList.toggle('sidebar-open');
+  }
+</script>
