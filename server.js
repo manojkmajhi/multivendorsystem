@@ -966,6 +966,31 @@ app.get('/admin/orders/:id', adminGuard, async (req,res)=>{
   }
 });
 
+// Update order tracking info
+app.post('/admin/orders/:id/tracking', adminGuard, async (req,res)=>{
+  const id = req.params.id;
+  const { status, estimated_date, note } = req.body;
+  
+  try {
+    if(supabase){
+      const { data: order, error: fetchError } = await supabase.from('orders').select('tracking_info').eq('id', id).single();
+      if(fetchError) throw fetchError;
+      
+      const trackingInfo = order.tracking_info || {};
+      trackingInfo[status] = { estimated_date, note, updated_at: new Date().toISOString() };
+      
+      const { error } = await supabase.from('orders').update({ tracking_info: trackingInfo }).eq('id', id);
+      if(error) throw error;
+      res.json({ success: true });
+    } else {
+      res.status(500).json({ error: 'Database not configured' });
+    }
+  } catch(e){
+    console.error('TRACKING_UPDATE_ERROR', e);
+    res.status(500).json({ error: 'Failed to update tracking info' });
+  }
+});
+
 // Update order status
 app.post('/admin/orders/:id/status', adminGuard, async (req,res)=>{
   const id = req.params.id;
@@ -1004,6 +1029,31 @@ app.post('/admin/orders/:id/delete', adminGuard, async (req,res)=>{
   } catch(e){
     console.error('ORDER_DELETE_ERROR', e);
     res.status(500).json({ error: 'Failed to delete order' });
+  }
+});
+
+// Public order tracking page
+app.get('/track-order', async (req,res)=>{
+  res.render('track-order', { siteSetting: res.locals.siteSetting, socialLinks: res.locals.socialLinks });
+});
+
+// API endpoint for order tracking
+app.get('/api/track-order', async (req,res)=>{
+  try {
+    const phone = req.query.phone;
+    if(!phone) return res.json({ success: false, message: 'Phone number required' });
+    
+    if(supabase){
+      const { data, error } = await supabase.from('orders').select('*').eq('customer_mobile', phone).order('created_at', { ascending: false });
+      if(error) return res.json({ success: false, message: 'Failed to fetch orders' });
+      if(!data || data.length === 0) return res.json({ success: false, message: 'No orders found for this phone number' });
+      res.json({ success: true, orders: data });
+    } else {
+      res.json({ success: false, message: 'Tracking system not available' });
+    }
+  } catch(e){
+    console.error('TRACK_ORDER_ERROR', e);
+    res.status(500).json({ success: false, message: 'Failed to track orders' });
   }
 });
 
@@ -1084,15 +1134,46 @@ app.get('/search/:category/', async (req, res) => {
       allProducts = await dbFetchProducts({ category: catParam });
     }
     
-    // Filter products based on search query
-    const searchResults = allProducts.filter(p => {
-      const name = (p.name || '').toLowerCase();
-      const category = (p.category || '').toLowerCase();
-      const type = (p.type || '').toLowerCase();
-      return name.includes(searchQuery) || 
-             category.includes(searchQuery) || 
-             type.includes(searchQuery);
+    console.log('🔍 SEARCH DEBUG:', { 
+      query: searchQuery, 
+      totalProducts: allProducts.length,
+      sampleProduct: allProducts[0] ? {
+        name: allProducts[0].name,
+        hasShortDesc: !!allProducts[0].short_description,
+        hasLongDesc: !!allProducts[0].long_description,
+        shortDescPreview: (allProducts[0].short_description || '').substring(0, 50),
+        longDescPreview: (allProducts[0].long_description || '').substring(0, 50)
+      } : null
     });
+    
+    // Filter products based on search query (name, category, type, and descriptions)
+    const searchResults = allProducts.filter(p => {
+      // Normalize text: lowercase, decode HTML entities, remove extra spaces
+      const normalize = (text) => {
+        return (text || '')
+          .toLowerCase()
+          .replace(/&#39;/g, "'")
+          .replace(/&quot;/g, '"')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/\s+/g, ' ')
+          .trim();
+      };
+      
+      const name = normalize(p.name);
+      const category = normalize(p.category);
+      const type = normalize(p.type);
+      const shortDesc = normalize(p.short_description);
+      const longDesc = normalize(p.long_description);
+      
+      // Combine all searchable text
+      const searchableText = `${name} ${category} ${type} ${shortDesc} ${longDesc}`;
+      
+      return searchableText.includes(searchQuery);
+    });
+    
+    console.log('🔍 SEARCH RESULTS:', { matchCount: searchResults.length });
 
     // Pagination
     const pageSize = 32;
@@ -1134,11 +1215,29 @@ app.get('/api/search-suggestions', async (req, res) => {
     // Fetch all products
     const allProducts = await dbFetchProducts({});
     
-    // Filter and get top 10 matches
+    // Normalize text helper
+    const normalize = (text) => {
+      return (text || '')
+        .toLowerCase()
+        .replace(/&#39;/g, "'")
+        .replace(/&quot;/g, '"')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
+    
+    // Filter and get top 10 matches (search in name, descriptions, category, type)
     const matches = allProducts
       .filter(p => {
-        const name = (p.name || '').toLowerCase();
-        return name.includes(query);
+        const name = normalize(p.name);
+        const shortDesc = normalize(p.short_description);
+        const longDesc = normalize(p.long_description);
+        const category = normalize(p.category);
+        const type = normalize(p.type);
+        const searchableText = `${name} ${shortDesc} ${longDesc} ${category} ${type}`;
+        return searchableText.includes(query);
       })
       .slice(0, 10)
       .map(p => ({

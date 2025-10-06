@@ -145,6 +145,31 @@
       margin-bottom: 15px;
       opacity: 0.3;
     }
+    .toast-notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: white;
+      padding: 16px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 9999;
+      animation: slideIn 0.3s ease;
+      min-width: 300px;
+    }
+    .toast-notification.success { border-left: 4px solid #28a745; }
+    .toast-notification.error { border-left: 4px solid #dc3545; }
+    .toast-icon { font-size: 20px; }
+    .toast-notification.success .toast-icon { color: #28a745; }
+    .toast-notification.error .toast-icon { color: #dc3545; }
+    .toast-message { flex: 1; font-size: 14px; font-weight: 500; }
+    .toast-close { cursor: pointer; color: #999; font-size: 18px; line-height: 1; }
+    .toast-close:hover { color: #333; }
+    @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(400px); opacity: 0; } }
   </style>
 </head>
 <body>
@@ -284,9 +309,29 @@
   <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
   <script>
+    function showToast(message, type = 'success') {
+      const toast = $(`
+        <div class="toast-notification ${type}">
+          <div class="toast-icon">${type === 'success' ? '✓' : '✕'}</div>
+          <div class="toast-message">${message}</div>
+          <div class="toast-close" onclick="$(this).parent().remove()">×</div>
+        </div>
+      `);
+      $('body').append(toast);
+      setTimeout(() => {
+        toast.css('animation', 'slideOut 0.3s ease');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+  </script>
+  <script>
     async function viewOrder(orderId) {
       try {
         const response = await fetch(`/admin/orders/${orderId}`);
+        if (!response.ok) {
+          showToast('Failed to load order', 'error');
+          return;
+        }
         const order = await response.json();
         
         const statusOptions = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
@@ -357,6 +402,7 @@
 
           <hr>
           <div style="margin-top: 20px;">
+            <h6 style="margin-bottom: 15px;">📦 Order Status & Tracking</h6>
             <label><strong>Update Status:</strong></label>
             <select id="statusSelect" class="form-control" style="margin-bottom: 10px;">
               ${statusDropdown}
@@ -364,8 +410,20 @@
             <button class="btn btn-primary btn-block" onclick="updateOrderStatus('${order.id}')">
               Update Status
             </button>
-            <button class="btn btn-danger btn-block mt-2" onclick="deleteOrder('${order.id}')">
-              Delete Order
+            
+            <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px;">
+              <h6 style="margin-bottom: 10px;">🚚 Set Tracking Info for Current Status</h6>
+              <label style="font-size: 13px;"><strong>Estimated Date/Days:</strong></label>
+              <input type="text" id="trackingDate" class="form-control form-control-sm" placeholder="e.g., 2-3 days or Jan 15, 2024" style="margin-bottom: 10px;">
+              <label style="font-size: 13px;"><strong>Note for Customer:</strong></label>
+              <textarea id="trackingNote" class="form-control form-control-sm" rows="2" placeholder="Add a message for the customer about this status..."></textarea>
+              <button class="btn btn-success btn-sm btn-block mt-2" onclick="updateTracking('${order.id}')">
+                💾 Save Tracking Info
+              </button>
+            </div>
+            
+            <button class="btn btn-danger btn-block mt-3" onclick="deleteOrder('${order.id}')">
+              🗑️ Delete Order
             </button>
           </div>
         `;
@@ -373,7 +431,7 @@
         document.getElementById('orderModalBody').innerHTML = html;
         $('#orderModal').modal('show');
       } catch (error) {
-        alert('Failed to load order details');
+        showToast('Failed to load order details', 'error');
         console.error(error);
       }
     }
@@ -388,13 +446,46 @@
         });
         
         if (response.ok) {
-          $('#orderModal').modal('hide');
-          location.reload();
+          showToast('Order status updated!');
+          setTimeout(() => {
+            $('#orderModal').modal('hide');
+            location.reload();
+          }, 1000);
         } else {
-          alert('Failed to update status');
+          showToast('Failed to update status', 'error');
         }
       } catch (error) {
-        alert('Error updating status');
+        showToast('Error updating status', 'error');
+        console.error(error);
+      }
+    }
+
+    async function updateTracking(orderId) {
+      const status = document.getElementById('statusSelect').value;
+      const estimatedDate = document.getElementById('trackingDate').value.trim();
+      const note = document.getElementById('trackingNote').value.trim();
+      
+      if (!estimatedDate && !note) {
+        showToast('Please enter at least an estimated date or note', 'error');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/admin/orders/${orderId}/tracking`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status, estimated_date: estimatedDate, note })
+        });
+        
+        if (response.ok) {
+          showToast('Tracking info updated successfully!');
+          document.getElementById('trackingDate').value = '';
+          document.getElementById('trackingNote').value = '';
+        } else {
+          showToast('Failed to update tracking info', 'error');
+        }
+      } catch (error) {
+        showToast('Error updating tracking info', 'error');
         console.error(error);
       }
     }
