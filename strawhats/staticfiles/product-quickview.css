@@ -12,8 +12,10 @@
 .quickview-title {font-size:16px; font-weight:600; line-height:1.25; margin:10px 0 10px;}
 .quickview-price {font-size:14px; font-weight:500; margin:-2px 0 12px;}
 .quickview-description {font-size:13px; line-height:1.45; margin:12px 0 16px; color:#1a1a1a;}
-.quickview-section-label {font-size:12px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; margin:0 0 4px; color:#222;}
-.quickview-select {display:block; width:100%; padding:6px 10px; font-size:13px; border:1px solid #c8c8c8; border-radius:4px; appearance:none; background:#ececec; font-weight:500;}
+.quickview-section-label {font-size:11px; font-weight:600; letter-spacing:.3px; text-transform:uppercase; margin:0 0 3px; color:#222; display:inline-block; min-width:45px;}
+.quickview-select {display:inline-block; width:auto; min-width:90px; padding:4px 8px; font-size:12px; border:1px solid #c8c8c8; border-radius:3px; appearance:none; background:#ececec; font-weight:500;}
+.variant-block {margin:0 8px 8px 0; display:inline-block; vertical-align:middle;}
+.variant-blocks-container {display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 10px;}
 .variant-row {display:flex; gap:12px; flex-wrap:wrap; margin:4px 0 12px;}
 .color-swatch {width:30px; height:30px; border-radius:50%; background:#000; position:relative; cursor:pointer; transition:transform .25s, box-shadow .25s; box-shadow:0 0 0 2px #fff, 0 0 0 2px rgba(0,0,0,0);}
 .color-swatch:hover {transform:translateY(-2px);}

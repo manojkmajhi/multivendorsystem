@@ -459,47 +459,84 @@ app.get('/admin/products/new', adminGuard, async (req,res)=>{
 
 app.post('/admin/products/new', adminGuard, upload.single('imageFile'), handleMulterError, async (req,res)=>{
   console.log('📝 Creating new product...');
-  console.log('Raw body fields received:', Object.keys(req.body));
-  console.log('Body preview (trimmed lengths):', {
-    short_description_len: req.body.short_description ? req.body.short_description.trim().length : 0,
-    long_description_len: req.body.long_description ? req.body.long_description.trim().length : 0
-  });
-  console.log('File:', req.file);
-
-  const { name, price, category, type, image } = req.body;
-  // Trim descriptions & coerce empty -> null
+  console.log('Body keys:', Object.keys(req.body));
+  console.log('has_variants:', req.body.has_variants);
+  console.log('variants:', req.body.variants);
+  
+  const { name, price, category, type, image, has_variants, base_sku, stock, variants } = req.body;
   const short_description = (req.body.short_description || '').trim();
   const long_description = (req.body.long_description || '').trim();
 
   let finalImage = image || '';
-
-  // If a file was uploaded, use it instead of the URL
-  if (req.file) {
-    finalImage = '/media/uploads/' + req.file.filename;
-    console.log('✅ File uploaded:', finalImage);
-  }
+  if (req.file) finalImage = '/media/uploads/' + req.file.filename;
 
   try {
-    const cleanedShort = short_description || null;
-    const cleanedLong = long_description || null;
     if (supabase) {
-      console.log('Inserting to database:', { name, price: parseFloat(price), category, type, image: finalImage, cleanedShort_len: cleanedShort ? cleanedShort.length : 0, cleanedLong_len: cleanedLong ? cleanedLong.length : 0 });
       const insertPayload = {
         name,
         price: parseFloat(price),
         category,
         type,
         image: finalImage,
-        short_description: cleanedShort,
-        long_description: cleanedLong
+        short_description: short_description || null,
+        long_description: long_description || null,
+        has_variants: has_variants === 'on',
+        base_sku: base_sku || null,
+        stock: has_variants === 'on' ? 0 : parseInt(stock || 0)
       };
-      console.log('Insert payload prepared:', insertPayload);
-      const { data: insData, error } = await supabase.from('products').insert(insertPayload).select();
-      if (error) {
-        console.error('❌ Supabase error:', error);
-        throw error;
+      console.log('Inserting product:', insertPayload);
+      const { data: product, error } = await supabase.from('products').insert(insertPayload).select().single();
+      if (error) throw error;
+      console.log('Product created:', product.id);
+
+      // Insert variants if enabled
+      if (has_variants === 'on' && variants) {
+        console.log('Processing variants...');
+        console.log('Raw variants data:', variants);
+        console.log('Is array?', Array.isArray(variants));
+        
+        // Convert object with numeric keys to array
+        let variantArray;
+        if (Array.isArray(variants)) {
+          variantArray = variants;
+        } else if (typeof variants === 'object') {
+          variantArray = Object.values(variants);
+        } else {
+          variantArray = [variants];
+        }
+        console.log('Variant array length:', variantArray.length);
+        
+        const variantsToInsert = [];
+        for (const v of variantArray) {
+          console.log('Variant data:', v);
+          if (v.sku && v.combination) {
+            const variantPayload = {
+              product_id: product.id,
+              sku: v.sku.trim(),
+              price_adjustment: parseFloat(v.price_adjustment || 0),
+              stock: parseInt(v.stock || 0),
+              image: v.image || null,
+              attribute_combination: typeof v.combination === 'string' ? JSON.parse(v.combination) : v.combination
+            };
+            console.log('Preparing variant:', variantPayload);
+            variantsToInsert.push(variantPayload);
+          } else {
+            console.log('Skipping variant - missing sku or combination');
+          }
+        }
+        
+        if (variantsToInsert.length > 0) {
+          console.log('Inserting', variantsToInsert.length, 'variants');
+          const { data: insertedVariants, error: vError } = await supabase.from('variants').insert(variantsToInsert).select();
+          if (vError) {
+            console.error('❌ Variant insert error:', vError);
+            throw new Error('Failed to save variants: ' + vError.message);
+          }
+          console.log('✓ Variants inserted:', insertedVariants?.length || 0);
+        }
+      } else {
+        console.log('No variants to process');
       }
-      console.log('Insert returned rows:', insData && insData.length, insData);
     } else {
       products.push({
         id: String(Date.now()),
@@ -512,11 +549,9 @@ app.post('/admin/products/new', adminGuard, upload.single('imageFile'), handleMu
         long_description: long_description || null
       });
     }
-    console.log('✅ Product created successfully');
     res.redirect('/admin/products?msg=' + encodeURIComponent('Product created'));
   } catch (e) {
     console.error('❌ Error creating product:', e);
-    console.error('Error details:', e.message, e.stack);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to create product: ' + e.message });
   }
 });
@@ -528,7 +563,14 @@ app.get('/admin/products/:id/edit', adminGuard, async (req,res)=>{
     let item = await dbFetchProductById(id);
     const categories = await dbFetchCategories();
     if(!item) return res.status(404).render('simple-message', { title: 'Not Found', message: 'Product not found.' });
-  res.render('admin/product-form', { item, categories, siteSetting: res.locals.siteSetting });
+    
+    // Fetch variants if product has them
+    if (item.has_variants && supabase) {
+      const { data: variants } = await supabase.from('variants').select('*').eq('product_id', id);
+      item.variants = variants || [];
+    }
+    
+    res.render('admin/product-form', { item, categories, siteSetting: res.locals.siteSetting });
   } catch(e){
     console.error(e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load product.' });
@@ -537,27 +579,11 @@ app.get('/admin/products/:id/edit', adminGuard, async (req,res)=>{
 
 app.post('/admin/products/:id/edit', adminGuard, upload.single('imageFile'), handleMulterError, async (req,res)=>{
   const id = req.params.id;
-  const { name, price, category, type, image } = req.body;
+  const { name, price, category, type, image, has_variants, base_sku, stock, variants } = req.body;
   const short_description = (req.body.short_description || '').trim();
   const long_description = (req.body.long_description || '').trim();
   let finalImage = image || '';
-
-  console.log('📝 Updating product...', {
-    id,
-    name,
-    price,
-    category,
-    type,
-    hasFile: !!req.file,
-    short_len: short_description.length,
-    long_len: long_description.length
-  });
-
-  // If a file was uploaded, use it instead of the URL
-  if (req.file) {
-    finalImage = '/media/uploads/' + req.file.filename;
-    console.log('✅ File uploaded:', finalImage);
-  }
+  if (req.file) finalImage = '/media/uploads/' + req.file.filename;
 
   try {
     if (supabase) {
@@ -568,19 +594,71 @@ app.post('/admin/products/:id/edit', adminGuard, upload.single('imageFile'), han
         type,
         image: finalImage,
         short_description: short_description || null,
-        long_description: long_description || null
+        long_description: long_description || null,
+        has_variants: has_variants === 'on',
+        base_sku: base_sku || null,
+        stock: has_variants === 'on' ? 0 : parseInt(stock || 0)
       };
-
-      // Remove keys that are strictly undefined (none should be) - keep nulls intentionally
       Object.keys(updateData).forEach(k => updateData[k] === undefined && delete updateData[k]);
-      console.log('Final update payload:', updateData);
-      const { data: updData, error } = await supabase.from('products').update(updateData).eq('id', id).select();
-      if (error) {
-        console.error('❌ Supabase update error:', error);
-        throw error;
+      const { error } = await supabase.from('products').update(updateData).eq('id', id);
+      if (error) throw error;
+
+      // Update variants
+      if (has_variants === 'on' && variants) {
+        console.log('Updating variants for product:', id);
+        console.log('Raw variants data:', variants);
+        console.log('Is array?', Array.isArray(variants));
+        
+        // Delete existing variants first
+        const { error: deleteError } = await supabase.from('variants').delete().eq('product_id', id);
+        if (deleteError) {
+          console.error('❌ Error deleting old variants:', deleteError);
+          throw new Error('Failed to delete old variants: ' + deleteError.message);
+        }
+        console.log('✓ Old variants deleted');
+        
+        // Convert object with numeric keys to array
+        let variantArray;
+        if (Array.isArray(variants)) {
+          variantArray = variants;
+        } else if (typeof variants === 'object') {
+          variantArray = Object.values(variants);
+        } else {
+          variantArray = [variants];
+        }
+        console.log('Variant array length:', variantArray.length);
+        
+        const variantsToInsert = [];
+        for (const v of variantArray) {
+          console.log('Variant data:', v);
+          if (v.sku && v.combination) {
+            const variantPayload = {
+              product_id: id,
+              sku: v.sku.trim(),
+              price_adjustment: parseFloat(v.price_adjustment || 0),
+              stock: parseInt(v.stock || 0),
+              image: v.image || null,
+              attribute_combination: typeof v.combination === 'string' ? JSON.parse(v.combination) : v.combination
+            };
+            console.log('Preparing variant:', variantPayload);
+            variantsToInsert.push(variantPayload);
+          }
+        }
+        
+        if (variantsToInsert.length > 0) {
+          console.log('Inserting', variantsToInsert.length, 'variants');
+          const { data: insertedVariants, error: vError } = await supabase.from('variants').insert(variantsToInsert).select();
+          if (vError) {
+            console.error('❌ Variant insert error:', vError);
+            throw new Error('Failed to save variants: ' + vError.message);
+          }
+          console.log('✓ Variants inserted:', insertedVariants?.length || 0);
+        }
+      } else {
+        // Remove variants if disabled
+        const { error: deleteError } = await supabase.from('variants').delete().eq('product_id', id);
+        if (deleteError) console.error('Error removing variants:', deleteError);
       }
-      console.log('✓ Updated rows:', updData && updData.length, updData);
-      console.log('✅ Product updated successfully');
     } else {
       const idx = products.findIndex(p => p.id === id);
       if (idx === -1) return res.status(404).render('simple-message', { title: 'Not Found', message: 'Product missing.' });
@@ -1104,6 +1182,13 @@ app.get('/details/:id/', async (req,res)=>{
     const id = req.params.id;
     const product = await dbFetchProductById(id);
     if(!product) return res.status(404).render('simple-message', { title:'Not Found', message:'Product not found.' });
+    
+    // Fetch variants if product has them
+    if (product.has_variants && supabase) {
+      const { data: variants } = await supabase.from('variants').select('*').eq('product_id', id).eq('active', true);
+      product.variants = variants || [];
+    }
+    
     // Related products: same category (exclude current) limit 6
     let related = await dbFetchProducts({ category: product.category, limit: 12, orderLatest: true });
     related = related.filter(p=>p.id !== product.id).slice(0,6);
@@ -1200,6 +1285,48 @@ app.get('/search/:category/', async (req, res) => {
   } catch(e){
     console.error('SEARCH_PAGE_ERROR', e);
     res.status(500).render('simple-message', { title:'Error', message:'Failed to perform search.' });
+  }
+});
+
+// API endpoint to get product variants
+app.get('/api/product-variants/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    console.log('🔍 Fetching variants for product:', id);
+    
+    if (!supabase) {
+      console.log('⚠️ No supabase connection');
+      return res.json({ variants: [], attributes: [] });
+    }
+    
+    const { data: variants, error: vError } = await supabase.from('variants').select('*').eq('product_id', id).eq('active', true);
+    console.log('📦 Variants found:', variants?.length || 0);
+    if (vError) console.error('Variant fetch error:', vError);
+    
+    // Extract unique attribute keys and values from variants (same as product details page)
+    const attrs = {};
+    if (variants && variants.length) {
+      variants.forEach(v => {
+        const combo = v.attribute_combination || {};
+        Object.keys(combo).forEach(key => {
+          if (!attrs[key]) attrs[key] = new Set();
+          attrs[key].add(combo[key]);
+        });
+      });
+    }
+    
+    // Convert to array format
+    const attributes = Object.keys(attrs).map(key => ({
+      name: key.charAt(0).toUpperCase() + key.slice(1),
+      slug: key,
+      values: Array.from(attrs[key]).map(v => ({ value: v }))
+    }));
+    
+    console.log('📤 Sending response:', { variantCount: variants?.length || 0, attributeCount: attributes.length });
+    res.json({ variants: variants || [], attributes });
+  } catch (e) {
+    console.error('💥 VARIANT_FETCH_ERROR', e);
+    res.status(500).json({ error: 'Failed to fetch variants' });
   }
 });
 

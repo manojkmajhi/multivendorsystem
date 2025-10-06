@@ -186,8 +186,12 @@
                   <a class="d-block" href="/details/<%= p.id %>/"><img class="img-fluid" src="<%= p.image %>" alt="<%- p.name.replace(/"/g,'&quot;') %>" loading="lazy"></a>
                 </div>
                 <ul class="mb-2 mt-0 list-inline">
-                  <li class="list-inline-item m-0 p-0"><button class="btn btn-sm btn-dark py-1 px-2" onclick="addToCart('<%= p.id %>', '1', false)">Add to Cart</button></li>
-                  <li class="list-inline-item mr-0"><a class="btn btn-sm btn-outline-dark py-1 px-2 view-btn" data-id="<%= p.id %>" data-img="<%= p.image %>" data-name="<%- p.name.replace(/"/g,'&quot;') %>" data-price="<%= p.price %>" data-link="/details/<%= p.id %>/" data-short="<%- (p.short_description || '').replace(/"/g,'&quot;') %>"><i class="fas fa-expand"></i></a></li>
+                  <% if(p.has_variants) { %>
+                    <li class="list-inline-item m-0 p-0"><a href="/details/<%= p.id %>/" class="btn btn-sm btn-dark py-1 px-2" style="min-width:90px;">Select Options</a></li>
+                  <% } else { %>
+                    <li class="list-inline-item m-0 p-0"><button class="btn btn-sm btn-dark py-1 px-2" style="min-width:90px;" onclick="addToCart('<%= p.id %>', '1', false)">Add to Cart</button></li>
+                  <% } %>
+                  <li class="list-inline-item mr-0"><a class="btn btn-sm btn-outline-dark py-1 px-2 view-btn" data-id="<%= p.id %>" data-img="<%= p.image %>" data-name="<%- p.name.replace(/"/g,'&quot;') %>" data-price="<%= p.price %>" data-link="/details/<%= p.id %>/" data-short="<%- (p.short_description || '').replace(/"/g,'&quot;') %>" data-has-variants="<%= p.has_variants ? 'true' : 'false' %>"><i class="fas fa-expand"></i></a></li>
                 </ul>
                 <h5 class="mb-0 text-sm"><a class="reset-anchor" href="/details/<%= p.id %>/"><%= p.name %></a></h5>
                 <p class="small text-muted mb-2">Rs. <%= p.price %></p>
@@ -254,9 +258,9 @@
   <script>
     // Product quick view logic retained
   // Quickview logic
-  let quickviewSelectedId = null;
-  function openQuickview(id,image,name,price,shortDescription,link){
-    quickviewSelectedId = id;
+  let quickviewSelectedId = null; let quickviewVariants=null; let quickviewSelectedVariant=null;
+  function openQuickview(id,image,name,price,shortDescription,link,variantData){
+    quickviewSelectedId = id; quickviewVariants=variantData; quickviewSelectedVariant=null;
     $('#quickview-img').attr('src', image);
     $('#quickview-img-link').attr('href', link);
     $('#quickview-title').text(name);
@@ -264,17 +268,90 @@
     const desc = (shortDescription && shortDescription.trim()) ? shortDescription : 'Premium quality product perfect for you.';
     $('#quickview-description').text(desc);
     $('#quickview-qty').val('1');
+    
+    console.log('🛠️ Opening quickview with variant data:', variantData);
+    $('.variant-blocks-container').remove();
+    
+    if(variantData && variantData.attributes && variantData.attributes.length){
+      console.log('✅ Creating variant selectors for', variantData.attributes.length, 'attributes');
+      const $container = $('<div class="variant-blocks-container"></div>');
+      
+      variantData.attributes.forEach(attr => {
+        console.log('  ➡️ Adding attribute:', attr.name, 'with', attr.values?.length, 'values');
+        const $block = $('<div class="variant-block"></div>');
+        $block.append('<span class="quickview-section-label">' + attr.name + ':</span> ');
+        
+        const $select = $('<select class="quickview-select variant-selector" data-attr="' + attr.slug + '"></select>');
+        $select.append('<option value="">Select</option>');
+        attr.values.forEach(v => $select.append('<option value="' + v.value + '">' + v.value + '</option>'));
+        $block.append($select);
+        $container.append($block);
+      });
+      
+      $('#quickview-description').after($container);
+      $('.variant-selector').on('change', updateQuickviewVariant);
+      $('#quickview-add-to-cart').prop('disabled', true).text('Select Options');
+      console.log('✅ Variant selectors created');
+    } else {
+      console.log('⚠️ No variant data, showing regular add to cart');
+      $('#quickview-add-to-cart').prop('disabled', false).text('Add to Cart');
+    }
+    
     $('#productQuickView').modal('show');
+  }
+  
+  function updateQuickviewVariant(){
+    if(!quickviewVariants) return;
+    
+    const selections = {};
+    let allSelected = true;
+    $('.variant-selector').each(function(){
+      const val = $(this).val();
+      if(val) selections[$(this).data('attr')] = val;
+      else allSelected = false;
+    });
+    
+    if(allSelected && quickviewVariants.variants){
+      quickviewSelectedVariant = quickviewVariants.variants.find(v => {
+        const combo = v.attribute_combination || {};
+        return Object.keys(selections).every(k => combo[k] === selections[k]);
+      });
+      
+      if(quickviewSelectedVariant){
+        const finalPrice = quickviewVariants.basePrice + parseFloat(quickviewSelectedVariant.price_adjustment || 0);
+        $('#quickview-price').text('Rs. ' + finalPrice.toFixed(2));
+        $('#quickview-add-to-cart').prop('disabled', quickviewSelectedVariant.stock === 0).text(quickviewSelectedVariant.stock === 0 ? 'Out of Stock' : 'Add to Cart');
+      }
+    } else {
+      $('#quickview-add-to-cart').prop('disabled', true).text('Select Options');
+    }
   }
   $(document).on('click','.view-btn', function(){
     const $t=$(this);
+    const hasVariants = $t.data('has-variants') === 'true' || $t.data('has-variants') === true;
+    const productId = $t.data('id');
     let shortLine = ($t.data('short')||'').trim();
     if(shortLine){
       shortLine = shortLine.replace(/^[✓✔☑•\-*]\s*/, '');
       const words = shortLine.split(/\s+/);
       if(words.length>40){ shortLine = words.slice(0,40).join(' ')+'…'; }
     }
-    openQuickview($t.data('id'), $t.data('img'), $t.data('name'), $t.data('price'), shortLine, $t.data('link'));
+    
+    console.log('👁️ Quick view clicked:', { productId, hasVariants });
+    
+    if(hasVariants){
+      console.log('🔄 Fetching variants for:', productId);
+      $.get('/api/product-variants/' + productId, function(data){
+        console.log('✅ Variant data received:', data);
+        const variantData = { attributes: data.attributes, variants: data.variants, basePrice: parseFloat($t.data('price')) };
+        openQuickview(productId, $t.data('img'), $t.data('name'), $t.data('price'), shortLine, $t.data('link'), variantData);
+      }).fail(function(err){
+        console.error('❌ Failed to fetch variants:', err);
+        openQuickview(productId, $t.data('img'), $t.data('name'), $t.data('price'), shortLine, $t.data('link'), null);
+      });
+    } else {
+      openQuickview(productId, $t.data('img'), $t.data('name'), $t.data('price'), shortLine, $t.data('link'), null);
+    }
   });
   $('#quickview-dec').on('click', function(){ let v=parseInt($('#quickview-qty').val(),10)||1; v=Math.max(1,v-1); $('#quickview-qty').val(v); });
   $('#quickview-inc').on('click', function(){ let v=parseInt($('#quickview-qty').val(),10)||1; v=Math.min(999,v+1); $('#quickview-qty').val(v); });

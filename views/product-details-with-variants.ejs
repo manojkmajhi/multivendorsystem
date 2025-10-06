@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title><%= product.name %> | All Strawhats</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/staticfiles/style.blue.css">
+  <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>">
+  <link rel="stylesheet" href="/staticfiles/floating-button.css" />
+  <link rel="stylesheet" href="/staticfiles/product-quickview.css?v=1" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <style>
+    .variant-selector { margin: 1.5rem 0; }
+    .variant-attribute { margin-bottom: 1rem; }
+    .variant-label { display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 14px; }
+    .variant-select { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+    .variant-info { background: #f8f9fa; padding: 1rem; border-radius: 4px; margin: 1rem 0; }
+    .variant-price { font-size: 1.5rem; font-weight: 700; color: #000; }
+    .variant-stock { color: #28a745; font-size: 14px; margin-top: 0.5rem; }
+    .variant-sku { color: #666; font-size: 12px; margin-top: 0.25rem; }
+  </style>
+</head>
+<body>
+  <div class="main-content">
+  <nav class="navbar navbar-light fixed-top py-0 px-2">
+    <div class="container px-0 px-lg-3">
+      <a class="navbar-brand" href="/"><img src="<%= (siteSetting && siteSetting.logo_url) || '/staticfiles/brand.svg' %>" height="60"></a>
+      <form method="POST" id="search-form-in-navbar">
+        <div class="input-group search-input-group">
+          <input class="form-control form-control-lg search" id="search" name="search" type="text" placeholder="Search Products">
+          <div class="input-group-append">
+            <button class="input-group-text search-icon" id="search-icon-id"><i class="fas fa-search"></i></button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </nav>
+
+  <%- include('partials/floating-cart') %>
+
+  <div class="container-fluid" style="margin-top: 80px;">
+  <section class="py-2 py-md-5">
+    <div class="container px-0 px-sm-2 px-md-3">
+      <div class="row mb-5">
+        <div class="col-lg-6">
+          <div class="row m-sm-0">
+            <div class="col-sm-12">
+              <img class="img-fluid product-main-image" src="<%= product.image %>" style="width: 100%;">
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-lg-6 details-texts">
+          <h1 class="mt-3 mb-1 mb-md-2"><%= product.name %></h1>
+          
+          <% if(!product.has_variants) { %>
+            <p class="lead mb-2">Rs. <%= product.price %></p>
+          <% } %>
+          
+          <% if(product.short_description){ %>
+            <p class="text-muted" style="font-size:14px; line-height:1.45;">
+              <%= product.short_description %>
+            </p>
+          <% } %>
+
+          <!-- Variant Selector Container -->
+          <div id="variantSelector"></div>
+
+          <% if(!product.has_variants) { %>
+            <div class="row align-items-stretch mb-4">
+              <div class="col-sm-5 pr-sm-0">
+                <div class="border d-flex align-items-center justify-content-between py-1 px-3 bg-white border-white">
+                  <span class="small text-uppercase text-gray mr-4 no-select">Quantity</span>
+                  <div class="quantity">
+                    <button class="dec-btn p-0"><i class="fas fa-caret-left"></i></button>
+                    <input class="form-control border-0 shadow-0 p-0" type="text" id="product_qty" value="1">
+                    <button class="inc-btn p-0"><i class="fas fa-caret-right"></i></button>
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-3 pl-sm-0">
+                <button class="btn btn-dark btn-sm btn-block h-100" id="product-add-to-cart" value="<%= product.id %>">Add to cart</button>
+              </div>
+            </div>
+          <% } %>
+
+          <ul class="list-unstyled small d-inline-block">
+            <li class="px-3 py-2 mb-1 bg-white text-muted">
+              <strong class="text-uppercase text-dark">Category:</strong>
+              <a class="reset-anchor ml-2" href="/shop/<%= product.category %>/"><%= product.category %></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+  </div>
+  </div>
+
+  <footer class="bg-dark text-white shadow">
+    <div class="container py-4">
+      <div class="row">
+        <div class="col-lg-6">
+          <p class="small text-gray mb-0">© <%= new Date().getFullYear() %> All rights reserved.</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+  <script src="/staticfiles/variant-selector.js"></script>
+  <script src="/staticfiles/cart-shared.js?v=4"></script>
+  <script>
+    const productData = <%- JSON.stringify(product) %>;
+    
+    $(document).ready(function(){
+      initVariantSelector(productData);
+      
+      $('#product-add-to-cart').click(function(){
+        addToCart($('#product-add-to-cart').val(), $('#product_qty').val(), true);
+      });
+
+      $("#search-form-in-navbar").submit(function(e){
+        e.preventDefault();
+        var search_term = $("#search").val();
+        if(search_term){
+          window.location = window.location.origin+"/search/all/?q="+search_term;
+        }
+      });
+    });
+  </script>
+</body>
+</html>

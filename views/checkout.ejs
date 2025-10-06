@@ -87,7 +87,7 @@
             </div>
             <div class="col-md-6 form-group">
               <label class="sr-only" for="mobile">Mobile Number *</label>
-              <input id="mobile" class="form-control" placeholder="Mobile Number *" required />
+              <input id="mobile" class="form-control" placeholder="Mobile Number *" type="tel" pattern="[0-9]{10}" maxlength="10" required />
             </div>
             <div class="col-md-6 form-group">
               <label class="sr-only" for="region">Region</label>
@@ -173,6 +173,11 @@
       document.getElementById('grand-total').textContent=subtotal+fee; 
     }
     document.getElementById('area').addEventListener('change', recalc);
+
+    // Mobile validation: only numbers, max 10 digits
+    document.getElementById('mobile').addEventListener('input', function(e) {
+      this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+    });
 
     // Celebration + confetti instead of alert
     const celebrateEl=document.getElementById('celebrate');
