@@ -3,12 +3,23 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const multer = require('multer');
 const fs = require('fs');
+const compression = require('compression');
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
 
 const app = express();
+
+// Enable gzip compression for all responses
+app.use(compression());
 const PORT = process.env.PORT || 3000;
+const NODE_ENV = process.env.NODE_ENV || 'development';
+
+// Production optimizations
+if (NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+  app.disable('x-powered-by');
+}
 
 // Supabase client (service role if performing admin ops server-side)
 let supabase = null;
@@ -42,8 +53,25 @@ async function setSetting(key, value){
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Performance and security headers
 app.use((req,res,next)=>{
   res.locals.title = 'All Strawhats';
+  // Security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // Performance headers
+  res.setHeader('X-DNS-Prefetch-Control', 'on');
+  res.setHeader('Accept-CH', 'DPR, Viewport-Width, Width, Save-Data');
+  
+  // Enable compression for all responses
+  if (req.headers['accept-encoding'] && req.headers['accept-encoding'].includes('gzip')) {
+    res.setHeader('Vary', 'Accept-Encoding');
+  }
+  
   next();
 });
 
@@ -62,8 +90,108 @@ async function loadSiteSetting(force=false){
     return { name: 'All Strawhats', logo_url: '/staticfiles/brand.svg' };
   }
 }
+
+// -------- Theme Management --------
+let themeCache = { value: null, fetchedAt: 0 };
+async function loadTheme(force=false){
+  if(!supabase) return 'blue';
+  if(!force && themeCache.value && Date.now() - themeCache.fetchedAt < 60_000){
+    return themeCache.value;
+  }
+  try {
+    const theme = await getSetting('theme', 'blue');
+    themeCache = { value: theme, fetchedAt: Date.now() };
+    return theme;
+  } catch(e){
+    return 'blue';
+  }
+}
+
+// Dynamic CSS endpoint - MUST be before middleware
+app.get('/custom-theme.css', async (req,res)=>{
+  const colors = await getSetting('theme_colors', { 
+    btn_bg: '#000000', btn_text: '#ffffff', btn_hover: '#333333',
+    link_color: '#007bff', link_hover: '#0056b3',
+    navbar_bg: '#ffffff', navbar_text: '#000000',
+    card_bg: '#f8f8f8', card_radius: '2',
+    footer_bg: '#343a40', footer_text: '#ffffff',
+    success_color: '#28a745', danger_color: '#dc3545'
+  });
+  console.log('🎨 Serving custom theme CSS:', colors);
+  
+  const css = `
+/* Advanced Custom Theme */
+.btn, .btn-dark, .btn-primary, button.btn-dark, button.btn-primary {
+  background-color: ${colors.btn_bg} !important;
+  border-color: ${colors.btn_bg} !important;
+  color: ${colors.btn_text} !important;
+}
+.btn:hover, .btn-dark:hover, .btn-primary:hover, button.btn-dark:hover, button.btn-primary:hover {
+  background-color: ${colors.btn_hover} !important;
+  border-color: ${colors.btn_hover} !important;
+  color: ${colors.btn_text} !important;
+}
+.btn-outline-dark, .btn-outline-primary {
+  color: ${colors.btn_bg} !important;
+  border-color: ${colors.btn_bg} !important;
+  background: transparent !important;
+}
+.btn-outline-dark:hover, .btn-outline-primary:hover {
+  background-color: ${colors.btn_bg} !important;
+  border-color: ${colors.btn_bg} !important;
+  color: ${colors.btn_text} !important;
+}
+a { color: ${colors.link_color} !important; }
+a:hover, a:focus { color: ${colors.link_hover} !important; }
+nav.navbar, .navbar { background-color: ${colors.navbar_bg} !important; }
+nav.navbar *, .navbar * { color: ${colors.navbar_text} !important; }
+.product, .product-grid .product, .card { background-color: ${colors.card_bg} !important; border-radius: ${colors.card_radius}px !important; }
+footer, .footer, .bg-dark { background-color: ${colors.footer_bg} !important; }
+footer *, .footer * { color: ${colors.footer_text} !important; }
+.btn-success { background-color: ${colors.success_color} !important; border-color: ${colors.success_color} !important; }
+.btn-success:hover { background-color: ${colors.success_color} !important; filter: brightness(0.9) !important; }
+.alert-success, .badge-success, .bg-success { background-color: ${colors.success_color} !important; }
+.text-success { color: ${colors.success_color} !important; }
+.btn-danger { background-color: ${colors.danger_color} !important; border-color: ${colors.danger_color} !important; }
+.btn-danger:hover { background-color: ${colors.danger_color} !important; filter: brightness(0.9) !important; }
+.alert-danger, .badge-danger, .bg-danger { background-color: ${colors.danger_color} !important; }
+.text-danger { color: ${colors.danger_color} !important; }
+  `;
+  
+  res.setHeader('Content-Type', 'text/css');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.send(css);
+});
+
+// Theme customizer routes
+app.get('/admin/theme-customizer', adminGuard, async (req,res)=>{
+  const colors = await getSetting('theme_colors', { 
+    btn_bg: '#000000', btn_text: '#ffffff', btn_hover: '#333333',
+    link_color: '#007bff', link_hover: '#0056b3',
+    success_color: '#28a745', danger_color: '#dc3545'
+  });
+  res.render('admin/theme-customizer', { colors, siteSetting: res.locals.siteSetting });
+});
+
+app.post('/admin/theme-customizer/save', adminGuard, async (req,res)=>{
+  try {
+    const { colors } = req.body;
+    await setSetting('theme_colors', colors);
+    res.json({ success: true });
+  } catch(e){
+    console.error('THEME_SAVE_ERROR', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 app.use(async (req,res,next)=>{
   res.locals.siteSetting = await loadSiteSetting();
+  const customColors = await getSetting('custom_colors', { primary: '#2b90d9', secondary: '#6c757d', success: '#28a745', danger: '#dc3545' });
+  res.locals.customColors = customColors;
+  const socialLinks = await getSetting('social', {});
+  res.locals.socialLinks = socialLinks;
   next();
 });
 
@@ -196,8 +324,41 @@ const staticRoot = STATIC_ROOT_CANDIDATES.find(dir => {
   try { return fs.existsSync(path.join(__dirname, dir)); } catch(e){ return false; }
 }) || 'stickersnepal.com';
 console.log('✓ Static root resolved:', staticRoot);
-app.use('/media', express.static(path.join(__dirname, staticRoot, 'media')));
-app.use('/staticfiles', express.static(path.join(__dirname, staticRoot, 'staticfiles')));
+// Serve static files with aggressive caching and optimization headers
+app.use('/media', express.static(path.join(__dirname, staticRoot, 'media'), {
+  maxAge: '365d',
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') || filePath.endsWith('.png') || filePath.endsWith('.webp') || filePath.endsWith('.gif')) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      // Add image optimization hints
+      res.setHeader('Accept-CH', 'DPR, Viewport-Width, Width');
+      // Enable compression for images
+      if (filePath.endsWith('.svg')) {
+        res.setHeader('Content-Encoding', 'gzip');
+      }
+    }
+  }
+}));
+app.use('/staticfiles', express.static(path.join(__dirname, staticRoot, 'staticfiles'), {
+  maxAge: '365d',
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      // Enable compression for CSS/JS
+      if (filePath.endsWith('.css')) {
+        res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      } else if (filePath.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      }
+    }
+  }
+}));
 // NOTE: root static ("/") is mounted at bottom after dynamic routes.
 
 // -------- Multer Configuration for File Uploads --------
@@ -290,15 +451,41 @@ async function adminGuard(req,res,next){
 // -------- Admin Routes (CRUD skeleton) --------
 app.get('/admin/', adminGuard, async (req,res)=>{
   try {
-    let stats = { products: products.length, categories: fallbackCategories.length };
+    let stats = { 
+      products: products.length, 
+      categories: fallbackCategories.length,
+      heroImages: 0,
+      orders: { total: 0, pending: 0, delivered: 0, revenue: 0 },
+      recentOrders: [],
+      lowStock: []
+    };
+    
     if (supabase) {
-      const [{ count: pCount }, { count: cCount }] = await Promise.all([
-        supabase.from('products').select('*', { count: 'exact', head: true }),
-        supabase.from('categories').select('*', { count: 'exact', head: true })
+      const [productsRes, categoriesRes, heroRes, ordersRes] = await Promise.all([
+        supabase.from('products').select('*', { count: 'exact' }),
+        supabase.from('categories').select('*', { count: 'exact', head: true }),
+        supabase.from('hero_images').select('*', { count: 'exact', head: true }),
+        supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(5)
       ]);
-      stats = { products: pCount || 0, categories: cCount || 0 };
+      
+      const allOrders = ordersRes.data || [];
+      stats = { 
+        products: productsRes.count || 0,
+        activeProducts: (productsRes.data || []).filter(p => p.active).length,
+        categories: categoriesRes.count || 0,
+        heroImages: heroRes.count || 0,
+        orders: {
+          total: allOrders.length,
+          pending: allOrders.filter(o => o.status === 'pending').length,
+          delivered: allOrders.filter(o => o.status === 'delivered').length,
+          revenue: allOrders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + parseFloat(o.total || 0), 0)
+        },
+        recentOrders: allOrders.slice(0, 5),
+        lowStock: (productsRes.data || []).filter(p => !p.has_variants && p.stock < 10).slice(0, 5)
+      };
     }
-  res.render('admin/dashboard', { stats, siteSetting: res.locals.siteSetting });
+    
+    res.render('admin/dashboard', { stats, siteSetting: res.locals.siteSetting });
   } catch (e) {
     console.error(e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load dashboard.' });
@@ -359,47 +546,84 @@ app.get('/admin/products/new', adminGuard, async (req,res)=>{
 
 app.post('/admin/products/new', adminGuard, upload.single('imageFile'), handleMulterError, async (req,res)=>{
   console.log('📝 Creating new product...');
-  console.log('Raw body fields received:', Object.keys(req.body));
-  console.log('Body preview (trimmed lengths):', {
-    short_description_len: req.body.short_description ? req.body.short_description.trim().length : 0,
-    long_description_len: req.body.long_description ? req.body.long_description.trim().length : 0
-  });
-  console.log('File:', req.file);
-
-  const { name, price, category, type, image } = req.body;
-  // Trim descriptions & coerce empty -> null
+  console.log('Body keys:', Object.keys(req.body));
+  console.log('has_variants:', req.body.has_variants);
+  console.log('variants:', req.body.variants);
+  
+  const { name, price, category, type, image, has_variants, base_sku, stock, variants } = req.body;
   const short_description = (req.body.short_description || '').trim();
   const long_description = (req.body.long_description || '').trim();
 
   let finalImage = image || '';
-
-  // If a file was uploaded, use it instead of the URL
-  if (req.file) {
-    finalImage = '/media/uploads/' + req.file.filename;
-    console.log('✅ File uploaded:', finalImage);
-  }
+  if (req.file) finalImage = '/media/uploads/' + req.file.filename;
 
   try {
-    const cleanedShort = short_description || null;
-    const cleanedLong = long_description || null;
     if (supabase) {
-      console.log('Inserting to database:', { name, price: parseFloat(price), category, type, image: finalImage, cleanedShort_len: cleanedShort ? cleanedShort.length : 0, cleanedLong_len: cleanedLong ? cleanedLong.length : 0 });
       const insertPayload = {
         name,
         price: parseFloat(price),
         category,
         type,
         image: finalImage,
-        short_description: cleanedShort,
-        long_description: cleanedLong
+        short_description: short_description || null,
+        long_description: long_description || null,
+        has_variants: has_variants === 'on',
+        base_sku: base_sku || null,
+        stock: has_variants === 'on' ? 0 : parseInt(stock || 0)
       };
-      console.log('Insert payload prepared:', insertPayload);
-      const { data: insData, error } = await supabase.from('products').insert(insertPayload).select();
-      if (error) {
-        console.error('❌ Supabase error:', error);
-        throw error;
+      console.log('Inserting product:', insertPayload);
+      const { data: product, error } = await supabase.from('products').insert(insertPayload).select().single();
+      if (error) throw error;
+      console.log('Product created:', product.id);
+
+      // Insert variants if enabled
+      if (has_variants === 'on' && variants) {
+        console.log('Processing variants...');
+        console.log('Raw variants data:', variants);
+        console.log('Is array?', Array.isArray(variants));
+        
+        // Convert object with numeric keys to array
+        let variantArray;
+        if (Array.isArray(variants)) {
+          variantArray = variants;
+        } else if (typeof variants === 'object') {
+          variantArray = Object.values(variants);
+        } else {
+          variantArray = [variants];
+        }
+        console.log('Variant array length:', variantArray.length);
+        
+        const variantsToInsert = [];
+        for (const v of variantArray) {
+          console.log('Variant data:', v);
+          if (v.sku && v.combination) {
+            const variantPayload = {
+              product_id: product.id,
+              sku: v.sku.trim(),
+              price_adjustment: parseFloat(v.price_adjustment || 0),
+              stock: parseInt(v.stock || 0),
+              image: v.image || null,
+              attribute_combination: typeof v.combination === 'string' ? JSON.parse(v.combination) : v.combination
+            };
+            console.log('Preparing variant:', variantPayload);
+            variantsToInsert.push(variantPayload);
+          } else {
+            console.log('Skipping variant - missing sku or combination');
+          }
+        }
+        
+        if (variantsToInsert.length > 0) {
+          console.log('Inserting', variantsToInsert.length, 'variants');
+          const { data: insertedVariants, error: vError } = await supabase.from('variants').insert(variantsToInsert).select();
+          if (vError) {
+            console.error('❌ Variant insert error:', vError);
+            throw new Error('Failed to save variants: ' + vError.message);
+          }
+          console.log('✓ Variants inserted:', insertedVariants?.length || 0);
+        }
+      } else {
+        console.log('No variants to process');
       }
-      console.log('Insert returned rows:', insData && insData.length, insData);
     } else {
       products.push({
         id: String(Date.now()),
@@ -412,11 +636,9 @@ app.post('/admin/products/new', adminGuard, upload.single('imageFile'), handleMu
         long_description: long_description || null
       });
     }
-    console.log('✅ Product created successfully');
     res.redirect('/admin/products?msg=' + encodeURIComponent('Product created'));
   } catch (e) {
     console.error('❌ Error creating product:', e);
-    console.error('Error details:', e.message, e.stack);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to create product: ' + e.message });
   }
 });
@@ -428,7 +650,14 @@ app.get('/admin/products/:id/edit', adminGuard, async (req,res)=>{
     let item = await dbFetchProductById(id);
     const categories = await dbFetchCategories();
     if(!item) return res.status(404).render('simple-message', { title: 'Not Found', message: 'Product not found.' });
-  res.render('admin/product-form', { item, categories, siteSetting: res.locals.siteSetting });
+    
+    // Fetch variants if product has them
+    if (item.has_variants && supabase) {
+      const { data: variants } = await supabase.from('variants').select('*').eq('product_id', id);
+      item.variants = variants || [];
+    }
+    
+    res.render('admin/product-form', { item, categories, siteSetting: res.locals.siteSetting });
   } catch(e){
     console.error(e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load product.' });
@@ -437,27 +666,11 @@ app.get('/admin/products/:id/edit', adminGuard, async (req,res)=>{
 
 app.post('/admin/products/:id/edit', adminGuard, upload.single('imageFile'), handleMulterError, async (req,res)=>{
   const id = req.params.id;
-  const { name, price, category, type, image } = req.body;
+  const { name, price, category, type, image, has_variants, base_sku, stock, variants } = req.body;
   const short_description = (req.body.short_description || '').trim();
   const long_description = (req.body.long_description || '').trim();
   let finalImage = image || '';
-
-  console.log('📝 Updating product...', {
-    id,
-    name,
-    price,
-    category,
-    type,
-    hasFile: !!req.file,
-    short_len: short_description.length,
-    long_len: long_description.length
-  });
-
-  // If a file was uploaded, use it instead of the URL
-  if (req.file) {
-    finalImage = '/media/uploads/' + req.file.filename;
-    console.log('✅ File uploaded:', finalImage);
-  }
+  if (req.file) finalImage = '/media/uploads/' + req.file.filename;
 
   try {
     if (supabase) {
@@ -468,19 +681,71 @@ app.post('/admin/products/:id/edit', adminGuard, upload.single('imageFile'), han
         type,
         image: finalImage,
         short_description: short_description || null,
-        long_description: long_description || null
+        long_description: long_description || null,
+        has_variants: has_variants === 'on',
+        base_sku: base_sku || null,
+        stock: has_variants === 'on' ? 0 : parseInt(stock || 0)
       };
-
-      // Remove keys that are strictly undefined (none should be) - keep nulls intentionally
       Object.keys(updateData).forEach(k => updateData[k] === undefined && delete updateData[k]);
-      console.log('Final update payload:', updateData);
-      const { data: updData, error } = await supabase.from('products').update(updateData).eq('id', id).select();
-      if (error) {
-        console.error('❌ Supabase update error:', error);
-        throw error;
+      const { error } = await supabase.from('products').update(updateData).eq('id', id);
+      if (error) throw error;
+
+      // Update variants
+      if (has_variants === 'on' && variants) {
+        console.log('Updating variants for product:', id);
+        console.log('Raw variants data:', variants);
+        console.log('Is array?', Array.isArray(variants));
+        
+        // Delete existing variants first
+        const { error: deleteError } = await supabase.from('variants').delete().eq('product_id', id);
+        if (deleteError) {
+          console.error('❌ Error deleting old variants:', deleteError);
+          throw new Error('Failed to delete old variants: ' + deleteError.message);
+        }
+        console.log('✓ Old variants deleted');
+        
+        // Convert object with numeric keys to array
+        let variantArray;
+        if (Array.isArray(variants)) {
+          variantArray = variants;
+        } else if (typeof variants === 'object') {
+          variantArray = Object.values(variants);
+        } else {
+          variantArray = [variants];
+        }
+        console.log('Variant array length:', variantArray.length);
+        
+        const variantsToInsert = [];
+        for (const v of variantArray) {
+          console.log('Variant data:', v);
+          if (v.sku && v.combination) {
+            const variantPayload = {
+              product_id: id,
+              sku: v.sku.trim(),
+              price_adjustment: parseFloat(v.price_adjustment || 0),
+              stock: parseInt(v.stock || 0),
+              image: v.image || null,
+              attribute_combination: typeof v.combination === 'string' ? JSON.parse(v.combination) : v.combination
+            };
+            console.log('Preparing variant:', variantPayload);
+            variantsToInsert.push(variantPayload);
+          }
+        }
+        
+        if (variantsToInsert.length > 0) {
+          console.log('Inserting', variantsToInsert.length, 'variants');
+          const { data: insertedVariants, error: vError } = await supabase.from('variants').insert(variantsToInsert).select();
+          if (vError) {
+            console.error('❌ Variant insert error:', vError);
+            throw new Error('Failed to save variants: ' + vError.message);
+          }
+          console.log('✓ Variants inserted:', insertedVariants?.length || 0);
+        }
+      } else {
+        // Remove variants if disabled
+        const { error: deleteError } = await supabase.from('variants').delete().eq('product_id', id);
+        if (deleteError) console.error('Error removing variants:', deleteError);
       }
-      console.log('✓ Updated rows:', updData && updData.length, updData);
-      console.log('✅ Product updated successfully');
     } else {
       const idx = products.findIndex(p => p.id === id);
       if (idx === -1) return res.status(404).render('simple-message', { title: 'Not Found', message: 'Product missing.' });
@@ -624,7 +889,10 @@ app.post('/admin/categories/:id/delete', adminGuard, async (req,res)=>{
 app.get('/admin/settings', adminGuard, async (req,res)=>{
   try {
     const site = await getSetting('site', { name: 'All Strawhats', logo_url: '/staticfiles/brand.svg' });
-  res.render('admin/settings', { site, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
+    const customColors = await getSetting('custom_colors', { primary: '#2b90d9', secondary: '#6c757d', success: '#28a745', danger: '#dc3545' });
+    const seo = await getSetting('seo', {});
+    const social = await getSetting('social', {});
+  res.render('admin/settings', { site, customColors, seo, social, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
   } catch(e){
     console.error(e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load settings.' });
@@ -632,11 +900,35 @@ app.get('/admin/settings', adminGuard, async (req,res)=>{
 });
 
 app.post('/admin/settings', adminGuard, async (req,res)=>{
-  const { name, logo_url, new_password } = req.body;
+  const { name, logo_url, new_password, primary_color, secondary_color, success_color, danger_color,
+    meta_description, meta_keywords, site_tagline, og_title, og_description, og_image,
+    twitter_card, twitter_handle, google_analytics, google_verification, facebook_pixel,
+    facebook_url, instagram_url, twitter_url, youtube_url, tiktok_url, contact_email, phone_number } = req.body;
   try {
     let siteOk = true;
     const siteResult = await setSetting('site', { name, logo_url });
     if(!siteResult) siteOk = false;
+    
+    // Save custom colors
+    if(primary_color){
+      const colors = {
+        primary: primary_color || '#2b90d9',
+        secondary: secondary_color || '#6c757d',
+        success: success_color || '#28a745',
+        danger: danger_color || '#dc3545'
+      };
+      await setSetting('custom_colors', colors);
+    }
+    
+    // Save SEO settings
+    const seoData = { meta_description, meta_keywords, site_tagline, og_title, og_description, og_image,
+      twitter_card, twitter_handle, google_analytics, google_verification, facebook_pixel };
+    await setSetting('seo', seoData);
+    
+    // Save social media links
+    const socialData = { facebook_url, instagram_url, twitter_url, youtube_url, tiktok_url, contact_email, phone_number };
+    await setSetting('social', socialData);
+    
     let pwChanged = false;
     if(new_password && new_password.trim().length){
       if(!supabase){
@@ -663,6 +955,17 @@ app.post('/admin/settings', adminGuard, async (req,res)=>{
     let hint = 'Failed to save settings.';
     if(e && e.code === '42501') hint = 'RLS blocked write. Use SUPABASE_SERVICE_ROLE_KEY in .env or adjust policies.';
     res.status(500).render('simple-message', { title: 'Error', message: hint });
+  }
+});
+
+// Reset theme to default
+app.post('/admin/settings/reset-theme', adminGuard, async (req,res)=>{
+  try {
+    await setSetting('custom_colors', { primary: '#2b90d9', secondary: '#6c757d', success: '#28a745', danger: '#dc3545' });
+    res.redirect('/admin/settings?msg=' + encodeURIComponent('Colors reset to default'));
+  } catch(e){
+    console.error('THEME_RESET_ERROR', e);
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to reset colors.' });
   }
 });
 
@@ -828,6 +1131,31 @@ app.get('/admin/orders/:id', adminGuard, async (req,res)=>{
   }
 });
 
+// Update order tracking info
+app.post('/admin/orders/:id/tracking', adminGuard, async (req,res)=>{
+  const id = req.params.id;
+  const { status, estimated_date, note } = req.body;
+  
+  try {
+    if(supabase){
+      const { data: order, error: fetchError } = await supabase.from('orders').select('tracking_info').eq('id', id).single();
+      if(fetchError) throw fetchError;
+      
+      const trackingInfo = order.tracking_info || {};
+      trackingInfo[status] = { estimated_date, note, updated_at: new Date().toISOString() };
+      
+      const { error } = await supabase.from('orders').update({ tracking_info: trackingInfo }).eq('id', id);
+      if(error) throw error;
+      res.json({ success: true });
+    } else {
+      res.status(500).json({ error: 'Database not configured' });
+    }
+  } catch(e){
+    console.error('TRACKING_UPDATE_ERROR', e);
+    res.status(500).json({ error: 'Failed to update tracking info' });
+  }
+});
+
 // Update order status
 app.post('/admin/orders/:id/status', adminGuard, async (req,res)=>{
   const id = req.params.id;
@@ -866,6 +1194,31 @@ app.post('/admin/orders/:id/delete', adminGuard, async (req,res)=>{
   } catch(e){
     console.error('ORDER_DELETE_ERROR', e);
     res.status(500).json({ error: 'Failed to delete order' });
+  }
+});
+
+// Public order tracking page
+app.get('/track-order', async (req,res)=>{
+  res.render('track-order', { siteSetting: res.locals.siteSetting, socialLinks: res.locals.socialLinks });
+});
+
+// API endpoint for order tracking
+app.get('/api/track-order', async (req,res)=>{
+  try {
+    const phone = req.query.phone;
+    if(!phone) return res.json({ success: false, message: 'Phone number required' });
+    
+    if(supabase){
+      const { data, error } = await supabase.from('orders').select('*').eq('customer_mobile', phone).order('created_at', { ascending: false });
+      if(error) return res.json({ success: false, message: 'Failed to fetch orders' });
+      if(!data || data.length === 0) return res.json({ success: false, message: 'No orders found for this phone number' });
+      res.json({ success: true, orders: data });
+    } else {
+      res.json({ success: false, message: 'Tracking system not available' });
+    }
+  } catch(e){
+    console.error('TRACK_ORDER_ERROR', e);
+    res.status(500).json({ success: false, message: 'Failed to track orders' });
   }
 });
 
@@ -916,6 +1269,13 @@ app.get('/details/:id/', async (req,res)=>{
     const id = req.params.id;
     const product = await dbFetchProductById(id);
     if(!product) return res.status(404).render('simple-message', { title:'Not Found', message:'Product not found.' });
+    
+    // Fetch variants if product has them
+    if (product.has_variants && supabase) {
+      const { data: variants } = await supabase.from('variants').select('*').eq('product_id', id).eq('active', true);
+      product.variants = variants || [];
+    }
+    
     // Related products: same category (exclude current) limit 6
     let related = await dbFetchProducts({ category: product.category, limit: 12, orderLatest: true });
     related = related.filter(p=>p.id !== product.id).slice(0,6);
@@ -945,52 +1305,47 @@ app.get('/search/:category/', async (req, res) => {
     } else {
       allProducts = await dbFetchProducts({ category: catParam });
     }
-    // Tokenize query for smarter matching (split on whitespace)
-    const queryTerms = Array.from(new Set(searchQuery.split(/\s+/).filter(Boolean)));
-
-    // Scoring helper – higher score means more relevant
-    function computeScore(p){
-      const name = (p.name || '').toLowerCase();
-      const category = (p.category || '').toLowerCase();
-      const type = (p.type || '').toLowerCase();
-      const shortDesc = (p.short_description || '').toLowerCase();
-      const longDesc = (p.long_description || '').toLowerCase();
-
-      let score = 0;
-      if(!searchQuery) return score;
-
-      // Exact / prefix / word boundary matches on name get strongest boosts
-      if(name === searchQuery) score += 250;
-      if(name.startsWith(searchQuery)) score += 140;
-      // Whole word match in name
-      if(new RegExp(`(^|\b)${searchQuery.replace(/[-/\\^$*+?.()|[\]{}]/g,'\\$&')}(\b|$)`).test(name)) score += 120;
-      if(name.includes(searchQuery)) score += 100;
-
-      // Term based partials
-      queryTerms.forEach(t=>{
-        if(!t) return;
-        if(name.includes(t)) score += 25;
-        if(shortDesc.includes(t)) score += 12;
-        if(longDesc.includes(t)) score += 8;
-        if(category.includes(t)) score += 10;
-        if(type.includes(t)) score += 10;
-      });
-
-      // Description full phrase matches
-      if(shortDesc.includes(searchQuery)) score += 55;
-      if(longDesc.includes(searchQuery)) score += 35;
-      if(category.includes(searchQuery)) score += 40;
-      if(type.includes(searchQuery)) score += 40;
-
-      return score;
-    }
-
-    // Build results with score & filter out zero score
-    const scored = allProducts.map(p=>({ product: p, score: computeScore(p) }))
-      .filter(r=> r.score > 0)
-      .sort((a,b)=> b.score - a.score)
-      .map(r=> r.product);
-    const searchResults = scored;
+    
+    console.log('🔍 SEARCH DEBUG:', { 
+      query: searchQuery, 
+      totalProducts: allProducts.length,
+      sampleProduct: allProducts[0] ? {
+        name: allProducts[0].name,
+        hasShortDesc: !!allProducts[0].short_description,
+        hasLongDesc: !!allProducts[0].long_description,
+        shortDescPreview: (allProducts[0].short_description || '').substring(0, 50),
+        longDescPreview: (allProducts[0].long_description || '').substring(0, 50)
+      } : null
+    });
+    
+    // Filter products based on search query (name, category, type, and descriptions)
+    const searchResults = allProducts.filter(p => {
+      // Normalize text: lowercase, decode HTML entities, remove extra spaces
+      const normalize = (text) => {
+        return (text || '')
+          .toLowerCase()
+          .replace(/&#39;/g, "'")
+          .replace(/&quot;/g, '"')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/\s+/g, ' ')
+          .trim();
+      };
+      
+      const name = normalize(p.name);
+      const category = normalize(p.category);
+      const type = normalize(p.type);
+      const shortDesc = normalize(p.short_description);
+      const longDesc = normalize(p.long_description);
+      
+      // Combine all searchable text
+      const searchableText = `${name} ${category} ${type} ${shortDesc} ${longDesc}`;
+      
+      return searchableText.includes(searchQuery);
+    });
+    
+    console.log('🔍 SEARCH RESULTS:', { matchCount: searchResults.length });
 
     // Pagination
     const pageSize = 32;
@@ -1020,6 +1375,48 @@ app.get('/search/:category/', async (req, res) => {
   }
 });
 
+// API endpoint to get product variants
+app.get('/api/product-variants/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    console.log('🔍 Fetching variants for product:', id);
+    
+    if (!supabase) {
+      console.log('⚠️ No supabase connection');
+      return res.json({ variants: [], attributes: [] });
+    }
+    
+    const { data: variants, error: vError } = await supabase.from('variants').select('*').eq('product_id', id).eq('active', true);
+    console.log('📦 Variants found:', variants?.length || 0);
+    if (vError) console.error('Variant fetch error:', vError);
+    
+    // Extract unique attribute keys and values from variants (same as product details page)
+    const attrs = {};
+    if (variants && variants.length) {
+      variants.forEach(v => {
+        const combo = v.attribute_combination || {};
+        Object.keys(combo).forEach(key => {
+          if (!attrs[key]) attrs[key] = new Set();
+          attrs[key].add(combo[key]);
+        });
+      });
+    }
+    
+    // Convert to array format
+    const attributes = Object.keys(attrs).map(key => ({
+      name: key.charAt(0).toUpperCase() + key.slice(1),
+      slug: key,
+      values: Array.from(attrs[key]).map(v => ({ value: v }))
+    }));
+    
+    console.log('📤 Sending response:', { variantCount: variants?.length || 0, attributeCount: attributes.length });
+    res.json({ variants: variants || [], attributes });
+  } catch (e) {
+    console.error('💥 VARIANT_FETCH_ERROR', e);
+    res.status(500).json({ error: 'Failed to fetch variants' });
+  }
+});
+
 // API endpoint for search suggestions/autocomplete
 app.get('/api/search-suggestions', async (req, res) => {
   try {
@@ -1031,66 +1428,38 @@ app.get('/api/search-suggestions', async (req, res) => {
 
     // Fetch all products
     const allProducts = await dbFetchProducts({});
-    const terms = Array.from(new Set(query.split(/\s+/).filter(Boolean)));
-
-    function computeScore(p){
-      const name = (p.name || '').toLowerCase();
-      const category = (p.category || '').toLowerCase();
-      const type = (p.type || '').toLowerCase();
-      const shortDesc = (p.short_description || '').toLowerCase();
-      const longDesc = (p.long_description || '').toLowerCase();
-      let score = 0;
-      if(name === query) score += 250;
-      if(name.startsWith(query)) score += 140;
-      if(name.includes(query)) score += 100;
-      if(shortDesc.includes(query)) score += 55;
-      if(longDesc.includes(query)) score += 35;
-      if(category.includes(query)) score += 40;
-      if(type.includes(query)) score += 40;
-      terms.forEach(t=>{
-        if(name.includes(t)) score += 25;
-        if(shortDesc.includes(t)) score += 12;
-        if(longDesc.includes(t)) score += 8;
-        if(category.includes(t)) score += 10;
-        if(type.includes(t)) score += 10;
-      });
-      return score;
-    }
-
-    function buildSnippet(p){
-      const fields = [p.short_description, p.long_description];
-      for(const field of fields){
-        if(!field) continue;
-        const lower = field.toLowerCase();
-        let idx = lower.indexOf(query);
-        if(idx === -1){
-          // try individual terms
-            idx = terms.map(t=> lower.indexOf(t)).filter(i=> i>-1).sort((a,b)=>a-b)[0];
-        }
-        if(idx > -1){
-          const start = Math.max(0, idx-30);
-          const end = Math.min(field.length, idx + query.length + 30);
-          let snippet = field.substring(start, end).trim();
-          if(start>0) snippet = '…'+snippet;
-          if(end < field.length) snippet = snippet+'…';
-          return snippet.replace(/[<>]/g,'');
-        }
-      }
-      return '';
-    }
-
+    
+    // Normalize text helper
+    const normalize = (text) => {
+      return (text || '')
+        .toLowerCase()
+        .replace(/&#39;/g, "'")
+        .replace(/&quot;/g, '"')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
+    
+    // Filter and get top 10 matches (search in name, descriptions, category, type)
     const matches = allProducts
-      .map(p=> ({ product: p, score: computeScore(p) }))
-      .filter(r=> r.score>0)
-      .sort((a,b)=> b.score - a.score)
-      .slice(0,10)
-      .map(r=> ({
-        id: r.product.id,
-        name: r.product.name,
-        price: r.product.price,
-        image: r.product.image,
-        category: r.product.category,
-        snippet: buildSnippet(r.product)
+      .filter(p => {
+        const name = normalize(p.name);
+        const shortDesc = normalize(p.short_description);
+        const longDesc = normalize(p.long_description);
+        const category = normalize(p.category);
+        const type = normalize(p.type);
+        const searchableText = `${name} ${shortDesc} ${longDesc} ${category} ${type}`;
+        return searchableText.includes(query);
+      })
+      .slice(0, 10)
+      .map(p => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        image: p.image,
+        category: p.category
       }));
 
     res.json({ suggestions: matches });
@@ -1279,18 +1648,7 @@ app.get('/', async (req,res)=>{
       heroImages = data || [];
     }
     if(!heroImages.length){
-      // Graceful fallback: pick an existing static file if hero-banner is not present
-      let fallbackImage = '/staticfiles/hero-banner.jpg';
-      try {
-        const bannerPath = path.join(__dirname, staticRoot, 'staticfiles', 'hero-banner.jpg');
-        if(!fs.existsSync(bannerPath)){
-          // Try brand.svg; if not, pick first product image
-          const brandPath = path.join(__dirname, staticRoot, 'staticfiles', 'brand.svg');
-            if(fs.existsSync(brandPath)) fallbackImage = '/staticfiles/brand.svg';
-            else if(productsList.length) fallbackImage = productsList[0].image;
-        }
-      } catch(_){}
-      heroImages = [{ image_url: fallbackImage, title: res.locals.siteSetting.name, link_url:'/shop/All/', position:0 }];
+      heroImages = [{ image_url:'/staticfiles/hero-banner.jpg', title: res.locals.siteSetting.name, link_url:'/shop/All/', position:0 }];
     }
     res.render('home', { categories, products: productsList, heroImages, siteSetting: res.locals.siteSetting });
   } catch(e){
@@ -1474,18 +1832,37 @@ app.get('/set_cart_qty/', (req, res) => {
   return res.json({ ok:true });
 });
 
-// Serve remaining static assets
-app.use('/', express.static(path.join(__dirname, staticRoot), { index:false }));
+// Serve remaining static assets with caching
+app.use('/', express.static(path.join(__dirname, staticRoot), { 
+  index: false,
+  maxAge: '1d',
+  etag: true,
+  lastModified: true
+}));
+
+// Catch-all 404 handler: render the simple-message template so we keep the minimal Not Found UI
+app.use(function(req, res){
+  // Prefer specific messages for product/category-like routes
+  let message = 'Page not found.';
+  try{
+    if(String(req.path).startsWith('/details/') || String(req.path).startsWith('/product')) message = 'Product not found.';
+    if(String(req.path).startsWith('/shop/')) message = 'Category not found.';
+  }catch(e){}
+  return res.status(404).render('simple-message', { title: 'Not Found', message });
+});
 
 function start(port, attempt=0){
   const srv = app.listen(port, () => {
     console.log('='.repeat(60));
-    console.log(`✓ Server running on http://localhost:${port}`);
+    console.log(`✓ All Strawhats Server [${NODE_ENV.toUpperCase()}]`);
+    console.log(`✓ Running on http://localhost:${port}`);
     console.log(`✓ Admin panel: http://localhost:${port}/admin/`);
-    console.log(`✓ Debug endpoints:`);
-    console.log(`  - http://localhost:${port}/__debug_env`);
-    console.log(`  - http://localhost:${port}/__debug_products`);
-    console.log(`  - http://localhost:${port}/__debug_lookup?productid=YOUR_ID`);
+    if (NODE_ENV !== 'production') {
+      console.log(`✓ Debug endpoints:`);
+      console.log(`  - http://localhost:${port}/__debug_env`);
+      console.log(`  - http://localhost:${port}/__debug_products`);
+      console.log(`  - http://localhost:${port}/__debug_lookup?productid=YOUR_ID`);
+    }
     console.log('='.repeat(60));
   });
   srv.on('error', (err)=>{
@@ -1500,6 +1877,3 @@ function start(port, attempt=0){
   });
 }
 start(Number(PORT));
-
-// Export the app (helps some hosting environments like Passenger identify the application)
-module.exports = app;

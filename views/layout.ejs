@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/staticfiles/style.blue.css">
   <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>">
   <link rel="stylesheet" href="/staticfiles/floating-button.css">
+  <link rel="stylesheet" href="/staticfiles/performance-animations.css">
   <!-- Product modal styles - Minimal Design -->
   <link rel="stylesheet" href="/staticfiles/product-modal-minimal.css">
 </head>
@@ -41,8 +42,17 @@
   <footer class="text-center text-muted py-4">
   <small>&copy; <%= new Date().getFullYear() %> <%= (siteSetting && siteSetting.name) || 'All Strawhats' %></small>
   </footer>
-  <script src="/staticfiles/perf.js" defer></script>
+  <!-- Performance optimizations -->
+  <script src="/staticfiles/performance-optimized.js" defer></script>
+  <script src="/staticfiles/image-optimizer.js" defer></script>
+  
+  <!-- Core libraries -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script src="/staticfiles/cart-shared.js?v=6" defer></script>
+  
+  <!-- Optimized cart functionality -->
+  <script src="/staticfiles/cart-optimized.js?v=1" defer></script>
+  
+  <!-- Legacy support -->
+  <script src="/staticfiles/perf.js" defer></script>
 </body>
 </html>

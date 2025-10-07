@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="/staticfiles/admin-style.css?v=3.0" />
 </head>
 <body>
-  <!-- Navigation Bar -->
   <nav class="admin-navbar">
     <div class="admin-navbar-container">
       <a href="/admin/" class="admin-brand">
@@ -15,138 +14,302 @@
           <img src="<%= siteSetting.logo_url %>" alt="Logo" />
         <% } %>
       </a>
-      
-      <!-- Desktop Navigation Links -->
       <div class="desktop-nav-links">
-        <a href="/admin/" class="nav-link">
-          <span class="nav-icon">📊</span>
-          <span>Dashboard</span>
-        </a>
-        <a href="/admin/products" class="nav-link">
-          <span class="nav-icon">📦</span>
-          <span>Products</span>
-        </a>
-        <a href="/admin/categories" class="nav-link">
-          <span class="nav-icon">📁</span>
-          <span>Categories</span>
-        </a>
-        <a href="/admin/hero-images" class="nav-link">
-          <span class="nav-icon">🖼️</span>
-          <span>Hero Images</span>
-        </a>
-        <a href="/admin/settings" class="nav-link active">
-          <span class="nav-icon">⚙️</span>
-          <span>Settings</span>
-        </a>
+        <a href="/admin/" class="nav-link"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+        <a href="/admin/orders" class="nav-link"><span class="nav-icon">🛒</span><span>Orders</span></a>
+        <a href="/admin/products" class="nav-link"><span class="nav-icon">📦</span><span>Products</span></a>
+        <a href="/admin/categories" class="nav-link"><span class="nav-icon">📁</span><span>Categories</span></a>
+        <a href="/admin/hero-images" class="nav-link"><span class="nav-icon">🖼️</span><span>Hero Images</span></a>
+        <a href="/admin/settings" class="nav-link active"><span class="nav-icon">⚙️</span><span>Settings</span></a>
         <form method="POST" action="/admin/logout" style="display: inline;">
-          <button type="submit" class="nav-link nav-logout-btn">
-            <span class="nav-icon">🚪</span>
-            <span>Logout</span>
-          </button>
+          <button type="submit" class="nav-link nav-logout-btn"><span class="nav-icon">🚪</span><span>Logout</span></button>
         </form>
       </div>
-      
-      <!-- Mobile Hamburger Menu -->
-      <button class="mobile-menu-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
+      <button class="mobile-menu-toggle" onclick="toggleSidebar()" aria-label="Toggle menu"><span></span><span></span><span></span></button>
     </div>
   </nav>
 
-  <!-- Sidebar -->
   <div class="admin-sidebar" id="adminSidebar">
     <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
     <div class="sidebar-content">
       <div class="sidebar-header">
-        <% if(siteSetting && siteSetting.logo_url){ %>
-          <img src="<%= siteSetting.logo_url %>" alt="Logo" class="sidebar-logo" />
-        <% } %>
+        <% if(siteSetting && siteSetting.logo_url){ %><img src="<%= siteSetting.logo_url %>" alt="Logo" class="sidebar-logo" /><% } %>
         <h3 class="sidebar-title"><%= (siteSetting && siteSetting.name) || 'Admin Panel' %></h3>
         <button class="sidebar-close" onclick="toggleSidebar()" aria-label="Close menu">&times;</button>
       </div>
-      
       <nav class="sidebar-nav">
-        <a href="/admin/" class="sidebar-link">
-          <span class="sidebar-icon">📊</span>
-          <span>Dashboard</span>
-        </a>
-        <a href="/admin/products" class="sidebar-link">
-          <span class="sidebar-icon">📦</span>
-          <span>Products</span>
-        </a>
-        <a href="/admin/categories" class="sidebar-link">
-          <span class="sidebar-icon">📁</span>
-          <span>Categories</span>
-        </a>
-        <a href="/admin/hero-images" class="sidebar-link">
-          <span class="sidebar-icon">🖼️</span>
-          <span>Hero Images</span>
-        </a>
-        <a href="/admin/settings" class="sidebar-link active">
-          <span class="sidebar-icon">⚙️</span>
-          <span>Settings</span>
-        </a>
+        <a href="/admin/" class="sidebar-link"><span class="sidebar-icon">📊</span><span>Dashboard</span></a>
+        <a href="/admin/orders" class="sidebar-link"><span class="sidebar-icon">🛒</span><span>Orders</span></a>
+        <a href="/admin/products" class="sidebar-link"><span class="sidebar-icon">📦</span><span>Products</span></a>
+        <a href="/admin/categories" class="sidebar-link"><span class="sidebar-icon">📁</span><span>Categories</span></a>
+        <a href="/admin/hero-images" class="sidebar-link"><span class="sidebar-icon">🖼️</span><span>Hero Images</span></a>
+        <a href="/admin/settings" class="sidebar-link active"><span class="sidebar-icon">⚙️</span><span>Settings</span></a>
       </nav>
-      
       <div class="sidebar-footer">
-        <form method="POST" action="/admin/logout">
-          <button type="submit" class="sidebar-logout-btn">
-            <span class="sidebar-icon">🚪</span>
-            <span>Logout</span>
-          </button>
-        </form>
+        <form method="POST" action="/admin/logout"><button type="submit" class="sidebar-logout-btn"><span class="sidebar-icon">🚪</span><span>Logout</span></button></form>
       </div>
     </div>
   </div>
 
-  <!-- Main Content -->
   <div class="admin-container">
-    <div class="page-header">
-      <h1 class="page-title">Settings</h1>
-    </div>
-
-    <% if(msg){ %>
-      <div class="alert alert-success"><%= msg %></div>
-    <% } %>
+    <div class="page-header"><h1 class="page-title">Settings</h1></div>
+    <% if(msg){ %><div class="alert alert-success"><%= msg %></div><% } %>
 
     <div style="max-width: 700px;">
       <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">Site Configuration</h2>
-        </div>
+        <div class="card-header"><h2 class="card-title">Site Configuration</h2></div>
         <div class="card-body">
           <form method="POST">
             <div class="form-group">
               <label class="form-label">Site Name *</label>
               <input name="name" class="form-control" value="<%= site.name %>" required placeholder="e.g., All Strawhats" />
-              <small class="form-text">Your store's name that appears in the admin panel</small>
+              <small class="form-text">Your store's name</small>
             </div>
-
             <div class="form-group">
               <label class="form-label">Logo URL *</label>
-              <input name="logo_url" class="form-control" value="<%= site.logo_url %>" required placeholder="/staticfiles/logo.png or https://..." />
+              <input name="logo_url" class="form-control" value="<%= site.logo_url %>" required placeholder="/staticfiles/logo.png" />
               <small class="form-text">URL to your store logo</small>
             </div>
-
             <% if(site.logo_url) { %>
               <div class="form-group">
                 <label class="form-label">Logo Preview</label>
-                <div style="padding: 1rem; background: var(--gray-100); border-radius: var(--border-radius-sm); display: inline-block;">
-                  <img src="<%= site.logo_url %>" style="height: 50px; max-width: 200px; object-fit: contain;" alt="Logo preview">
+                <div style="padding: 1rem; background: #f8f9fa; border-radius: 4px; display: inline-block;">
+                  <img src="<%= site.logo_url %>" style="height: 50px; max-width: 200px; object-fit: contain;" alt="Logo">
                 </div>
               </div>
             <% } %>
 
-            <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--gray-200);">
+            <hr style="margin: 2rem 0; border: none; border-top: 1px solid #dee2e6;">
+            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 1rem;">🎨 Theme Customization</h3>
+            <div style="padding: 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; margin-bottom: 1.5rem;">
+              <h4 style="color: white; font-size: 18px; margin-bottom: 0.5rem; font-weight: 600;">WordPress-Style Theme Customizer</h4>
+              <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin-bottom: 1rem;">Customize every aspect of your website's appearance with live preview</p>
+              <a href="/admin/theme-customizer" class="btn" style="background: white; color: #667eea; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block; font-weight: 600; font-size: 14px;">Open Theme Customizer →</a>
+            </div>
+            
+            <p style="font-size: 13px; color: #666; margin-bottom: 1.5rem;">Or use the basic color settings below:</p>
+            
+            <div class="form-group" style="display: none;">
+              <label class="form-label">Primary Color *</label>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <input type="color" name="primary_color" id="primary_color" value="<%= typeof customColors !== 'undefined' && customColors.primary ? customColors.primary : '#2b90d9' %>" style="width: 60px; height: 40px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;" />
+                <input type="text" id="primary_color_text" readonly class="form-control" value="<%= typeof customColors !== 'undefined' && customColors.primary ? customColors.primary : '#2b90d9' %>" />
+              </div>
+              <small class="form-text">Main brand color (buttons, links)</small>
+            </div>
 
-            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 1rem; color: var(--gray-900);">Security</h3>
+            <div class="form-group">
+              <label class="form-label">Secondary Color</label>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <input type="color" name="secondary_color" id="secondary_color" value="<%= typeof customColors !== 'undefined' && customColors.secondary ? customColors.secondary : '#6c757d' %>" style="width: 60px; height: 40px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;" />
+                <input type="text" id="secondary_color_text" readonly class="form-control" value="<%= typeof customColors !== 'undefined' && customColors.secondary ? customColors.secondary : '#6c757d' %>" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Success Color</label>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <input type="color" name="success_color" id="success_color" value="<%= typeof customColors !== 'undefined' && customColors.success ? customColors.success : '#28a745' %>" style="width: 60px; height: 40px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;" />
+                <input type="text" id="success_color_text" readonly class="form-control" value="<%= typeof customColors !== 'undefined' && customColors.success ? customColors.success : '#28a745' %>" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Danger Color</label>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <input type="color" name="danger_color" id="danger_color" value="<%= typeof customColors !== 'undefined' && customColors.danger ? customColors.danger : '#dc3545' %>" style="width: 60px; height: 40px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;" />
+                <input type="text" id="danger_color_text" readonly class="form-control" value="<%= typeof customColors !== 'undefined' && customColors.danger ? customColors.danger : '#dc3545' %>" />
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+              <button type="button" onclick="applyPreset('blue')" style="background: #2b90d9; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: 500;">Blue</button>
+              <button type="button" onclick="applyPreset('red')" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: 500;">Red</button>
+              <button type="button" onclick="applyPreset('green')" style="background: #28a745; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: 500;">Green</button>
+              <button type="button" onclick="applyPreset('purple')" style="background: #6f42c1; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: 500;">Purple</button>
+              <button type="button" onclick="applyPreset('orange')" style="background: #fd7e14; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: 500;">Orange</button>
+            </div>
+
+            <div style="padding: 1rem; background: #e7f3ff; border-left: 4px solid #2b90d9; border-radius: 4px; margin-bottom: 1.5rem;">
+              <strong style="display: block; margin-bottom: 0.5rem; color: #004085;">💡 Live Preview</strong>
+              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
+                <button id="preview_btn" type="button" style="padding: 0.4rem 0.8rem; border: none; border-radius: 4px; color: white; font-weight: 500;">Primary</button>
+                <button id="preview_success" type="button" style="padding: 0.4rem 0.8rem; border: none; border-radius: 4px; color: white; font-weight: 500;">Success</button>
+                <button id="preview_danger" type="button" style="padding: 0.4rem 0.8rem; border: none; border-radius: 4px; color: white; font-weight: 500;">Danger</button>
+              </div>
+              <small style="color: #004085;">Colors update in real-time</small>
+            </div>
+
+            <script>
+              const presets = {
+                blue: { primary: '#2b90d9', secondary: '#6c757d', success: '#28a745', danger: '#dc3545' },
+                red: { primary: '#dc3545', secondary: '#6c757d', success: '#28a745', danger: '#c82333' },
+                green: { primary: '#28a745', secondary: '#6c757d', success: '#218838', danger: '#dc3545' },
+                purple: { primary: '#6f42c1', secondary: '#6c757d', success: '#28a745', danger: '#dc3545' },
+                orange: { primary: '#fd7e14', secondary: '#6c757d', success: '#28a745', danger: '#dc3545' }
+              };
+
+              function updatePreview() {
+                document.getElementById('preview_btn').style.backgroundColor = document.getElementById('primary_color').value;
+                document.getElementById('preview_success').style.backgroundColor = document.getElementById('success_color').value;
+                document.getElementById('preview_danger').style.backgroundColor = document.getElementById('danger_color').value;
+              }
+
+              function applyPreset(name) {
+                const c = presets[name];
+                document.getElementById('primary_color').value = c.primary;
+                document.getElementById('primary_color_text').value = c.primary;
+                document.getElementById('secondary_color').value = c.secondary;
+                document.getElementById('secondary_color_text').value = c.secondary;
+                document.getElementById('success_color').value = c.success;
+                document.getElementById('success_color_text').value = c.success;
+                document.getElementById('danger_color').value = c.danger;
+                document.getElementById('danger_color_text').value = c.danger;
+                updatePreview();
+              }
+
+              ['primary', 'secondary', 'success', 'danger'].forEach(color => {
+                const picker = document.getElementById(color + '_color');
+                const text = document.getElementById(color + '_color_text');
+                picker.addEventListener('input', function() {
+                  text.value = this.value;
+                  updatePreview();
+                });
+              });
+
+              updatePreview();
+            </script>
+
+            <hr style="margin: 2rem 0; border: none; border-top: 1px solid #dee2e6;">
+            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 1rem;">🔍 Advanced SEO Settings</h3>
+            
+            <div class="form-group">
+              <label class="form-label">Meta Description</label>
+              <textarea name="meta_description" class="form-control" rows="3" maxlength="160" placeholder="Premium anime merchandise store in Nepal. Shop authentic anime products, figures, posters, and more."><%= typeof seo !== 'undefined' && seo.meta_description ? seo.meta_description : '' %></textarea>
+              <small class="form-text">Recommended: 150-160 characters. Appears in search results.</small>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Meta Keywords</label>
+              <input name="meta_keywords" class="form-control" value="<%= typeof seo !== 'undefined' && seo.meta_keywords ? seo.meta_keywords : '' %>" placeholder="anime, merchandise, nepal, anime store, figures" />
+              <small class="form-text">Comma-separated keywords (e.g., anime, merchandise, nepal)</small>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Site Tagline</label>
+              <input name="site_tagline" class="form-control" value="<%= typeof seo !== 'undefined' && seo.site_tagline ? seo.site_tagline : '' %>" placeholder="Premium Anime Store in Nepal" />
+              <small class="form-text">Short tagline for your store</small>
+            </div>
+            
+            <h4 style="font-size: 14px; font-weight: 600; margin: 1.5rem 0 1rem; color: #495057;">👥 Open Graph (Facebook/LinkedIn)</h4>
+            
+            <div class="form-group">
+              <label class="form-label">OG Title</label>
+              <input name="og_title" class="form-control" value="<%= typeof seo !== 'undefined' && seo.og_title ? seo.og_title : '' %>" placeholder="All Strawhats - Premium Anime Store" />
+              <small class="form-text">Title when shared on Facebook/LinkedIn</small>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">OG Description</label>
+              <textarea name="og_description" class="form-control" rows="2" placeholder="Shop authentic anime merchandise in Nepal. Best prices, fast delivery."><%= typeof seo !== 'undefined' && seo.og_description ? seo.og_description : '' %></textarea>
+              <small class="form-text">Description when shared on social media</small>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">OG Image URL</label>
+              <input name="og_image" class="form-control" value="<%= typeof seo !== 'undefined' && seo.og_image ? seo.og_image : '' %>" placeholder="https://yoursite.com/og-image.jpg" />
+              <small class="form-text">Recommended: 1200x630px. Full URL required.</small>
+            </div>
+            
+            <h4 style="font-size: 14px; font-weight: 600; margin: 1.5rem 0 1rem; color: #495057;">🐦 Twitter Card</h4>
+            
+            <div class="form-group">
+              <label class="form-label">Twitter Card Type</label>
+              <select name="twitter_card" class="form-control">
+                <option value="summary" <%= typeof seo !== 'undefined' && seo.twitter_card === 'summary' ? 'selected' : '' %>>Summary</option>
+                <option value="summary_large_image" <%= typeof seo !== 'undefined' && seo.twitter_card === 'summary_large_image' ? 'selected' : '' %>>Summary Large Image</option>
+              </select>
+              <small class="form-text">How your site appears on Twitter</small>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Twitter Handle</label>
+              <input name="twitter_handle" class="form-control" value="<%= typeof seo !== 'undefined' && seo.twitter_handle ? seo.twitter_handle : '' %>" placeholder="@allstrawhats" />
+              <small class="form-text">Your Twitter username (with @)</small>
+            </div>
+            
+            <h4 style="font-size: 14px; font-weight: 600; margin: 1.5rem 0 1rem; color: #495057;">📊 Analytics & Verification</h4>
+            
+            <div class="form-group">
+              <label class="form-label">Google Analytics ID</label>
+              <input name="google_analytics" class="form-control" value="<%= typeof seo !== 'undefined' && seo.google_analytics ? seo.google_analytics : '' %>" placeholder="G-XXXXXXXXXX or UA-XXXXXXXXX-X" />
+              <small class="form-text">Your Google Analytics tracking ID</small>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Google Site Verification</label>
+              <input name="google_verification" class="form-control" value="<%= typeof seo !== 'undefined' && seo.google_verification ? seo.google_verification : '' %>" placeholder="google-site-verification code" />
+              <small class="form-text">Meta tag content for Google Search Console</small>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Facebook Pixel ID</label>
+              <input name="facebook_pixel" class="form-control" value="<%= typeof seo !== 'undefined' && seo.facebook_pixel ? seo.facebook_pixel : '' %>" placeholder="123456789012345" />
+              <small class="form-text">Your Facebook Pixel ID for tracking</small>
+            </div>
+
+            <hr style="margin: 2rem 0; border: none; border-top: 1px solid #dee2e6;">
+            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 1rem;">👥 Social Media Links</h3>
+            
+            <div class="form-group">
+              <label class="form-label">Facebook URL</label>
+              <input name="facebook_url" class="form-control" value="<%= typeof social !== 'undefined' && social.facebook_url ? social.facebook_url : '' %>" placeholder="https://facebook.com/allstrawhats/" />
+              <small class="form-text">Your Facebook page URL</small>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Instagram URL</label>
+              <input name="instagram_url" class="form-control" value="<%= typeof social !== 'undefined' && social.instagram_url ? social.instagram_url : '' %>" placeholder="https://instagram.com/allstrawhats/" />
+              <small class="form-text">Your Instagram profile URL</small>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Twitter URL</label>
+              <input name="twitter_url" class="form-control" value="<%= typeof social !== 'undefined' && social.twitter_url ? social.twitter_url : '' %>" placeholder="https://twitter.com/allstrawhats" />
+              <small class="form-text">Your Twitter profile URL</small>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">YouTube URL</label>
+              <input name="youtube_url" class="form-control" value="<%= typeof social !== 'undefined' && social.youtube_url ? social.youtube_url : '' %>" placeholder="https://youtube.com/@allstrawhats" />
+              <small class="form-text">Your YouTube channel URL</small>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">TikTok URL</label>
+              <input name="tiktok_url" class="form-control" value="<%= typeof social !== 'undefined' && social.tiktok_url ? social.tiktok_url : '' %>" placeholder="https://tiktok.com/@allstrawhats" />
+              <small class="form-text">Your TikTok profile URL</small>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Contact Email</label>
+              <input name="contact_email" type="email" class="form-control" value="<%= typeof social !== 'undefined' && social.contact_email ? social.contact_email : '' %>" placeholder="info@allstrawhats.com" />
+              <small class="form-text">Public contact email displayed in footer</small>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <input name="phone_number" class="form-control" value="<%= typeof social !== 'undefined' && social.phone_number ? social.phone_number : '' %>" placeholder="9814789009" />
+              <small class="form-text">Contact phone number</small>
+            </div>
+
+            <hr style="margin: 2rem 0; border: none; border-top: 1px solid #dee2e6;">
+            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 1rem;">Security</h3>
 
             <div class="form-group">
               <label class="form-label">New Admin Password</label>
               <input name="new_password" type="password" class="form-control" minlength="6" placeholder="••••••••" autocomplete="new-password" />
-              <small class="form-text">Leave blank to keep your current password. Minimum 6 characters.</small>
+              <small class="form-text">Leave blank to keep current password. Minimum 6 characters.</small>
             </div>
 
             <div style="margin-top: 2rem;">
@@ -156,39 +319,10 @@
           </form>
         </div>
       </div>
-
-      <!-- Additional Information Card -->
-      <div class="card mt-3">
-        <div class="card-header">
-          <h2 class="card-title">System Information</h2>
-        </div>
-        <div class="card-body">
-          <table style="width: 100%;">
-            <tr style="border-bottom: 1px solid var(--gray-200);">
-              <td style="padding: 0.75rem 0; font-weight: 500; color: var(--gray-700);">Admin Version</td>
-              <td style="padding: 0.75rem 0; text-align: right; color: var(--gray-900);">1.0.0</td>
-            </tr>
-            <tr style="border-bottom: 1px solid var(--gray-200);">
-              <td style="padding: 0.75rem 0; font-weight: 500; color: var(--gray-700);">Last Updated</td>
-              <td style="padding: 0.75rem 0; text-align: right; color: var(--gray-900);"><%= new Date().toLocaleDateString() %></td>
-            </tr>
-            <tr>
-              <td style="padding: 0.75rem 0; font-weight: 500; color: var(--gray-700);">Status</td>
-              <td style="padding: 0.75rem 0; text-align: right;">
-                <span class="badge badge-success">Active</span>
-              </td>
-            </tr>
-          </table>
-        </div>
-      </div>
     </div>
   </div>
 
-  <!-- Footer -->
-  <footer class="admin-footer">
-    &copy; <%= new Date().getFullYear() %> <%= (siteSetting && siteSetting.name) || 'Admin' %>. All rights reserved.
-  </footer>
-
+  <footer class="admin-footer">&copy; <%= new Date().getFullYear() %> <%= (siteSetting && siteSetting.name) || 'Admin' %>. All rights reserved.</footer>
   <script src="/staticfiles/admin-enhancements.js?v=3.0"></script>
 </body>
 </html>

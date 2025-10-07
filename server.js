@@ -3,12 +3,23 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const multer = require('multer');
 const fs = require('fs');
+const compression = require('compression');
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
 
 const app = express();
+
+// Enable gzip compression for all responses
+app.use(compression());
 const PORT = process.env.PORT || 3000;
+const NODE_ENV = process.env.NODE_ENV || 'development';
+
+// Production optimizations
+if (NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+  app.disable('x-powered-by');
+}
 
 // Supabase client (service role if performing admin ops server-side)
 let supabase = null;
@@ -42,8 +53,25 @@ async function setSetting(key, value){
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Performance and security headers
 app.use((req,res,next)=>{
   res.locals.title = 'All Strawhats';
+  // Security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // Performance headers
+  res.setHeader('X-DNS-Prefetch-Control', 'on');
+  res.setHeader('Accept-CH', 'DPR, Viewport-Width, Width, Save-Data');
+  
+  // Enable compression for all responses
+  if (req.headers['accept-encoding'] && req.headers['accept-encoding'].includes('gzip')) {
+    res.setHeader('Vary', 'Accept-Encoding');
+  }
+  
   next();
 });
 
@@ -296,8 +324,41 @@ const staticRoot = STATIC_ROOT_CANDIDATES.find(dir => {
   try { return fs.existsSync(path.join(__dirname, dir)); } catch(e){ return false; }
 }) || 'stickersnepal.com';
 console.log('✓ Static root resolved:', staticRoot);
-app.use('/media', express.static(path.join(__dirname, staticRoot, 'media')));
-app.use('/staticfiles', express.static(path.join(__dirname, staticRoot, 'staticfiles')));
+// Serve static files with aggressive caching and optimization headers
+app.use('/media', express.static(path.join(__dirname, staticRoot, 'media'), {
+  maxAge: '365d',
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') || filePath.endsWith('.png') || filePath.endsWith('.webp') || filePath.endsWith('.gif')) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      // Add image optimization hints
+      res.setHeader('Accept-CH', 'DPR, Viewport-Width, Width');
+      // Enable compression for images
+      if (filePath.endsWith('.svg')) {
+        res.setHeader('Content-Encoding', 'gzip');
+      }
+    }
+  }
+}));
+app.use('/staticfiles', express.static(path.join(__dirname, staticRoot, 'staticfiles'), {
+  maxAge: '365d',
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      // Enable compression for CSS/JS
+      if (filePath.endsWith('.css')) {
+        res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      } else if (filePath.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      }
+    }
+  }
+}));
 // NOTE: root static ("/") is mounted at bottom after dynamic routes.
 
 // -------- Multer Configuration for File Uploads --------
@@ -1771,8 +1832,13 @@ app.get('/set_cart_qty/', (req, res) => {
   return res.json({ ok:true });
 });
 
-// Serve remaining static assets
-app.use('/', express.static(path.join(__dirname, staticRoot), { index:false }));
+// Serve remaining static assets with caching
+app.use('/', express.static(path.join(__dirname, staticRoot), { 
+  index: false,
+  maxAge: '1d',
+  etag: true,
+  lastModified: true
+}));
 
 // Catch-all 404 handler: render the simple-message template so we keep the minimal Not Found UI
 app.use(function(req, res){
@@ -1788,12 +1854,15 @@ app.use(function(req, res){
 function start(port, attempt=0){
   const srv = app.listen(port, () => {
     console.log('='.repeat(60));
-    console.log(`✓ Server running on http://localhost:${port}`);
+    console.log(`✓ All Strawhats Server [${NODE_ENV.toUpperCase()}]`);
+    console.log(`✓ Running on http://localhost:${port}`);
     console.log(`✓ Admin panel: http://localhost:${port}/admin/`);
-    console.log(`✓ Debug endpoints:`);
-    console.log(`  - http://localhost:${port}/__debug_env`);
-    console.log(`  - http://localhost:${port}/__debug_products`);
-    console.log(`  - http://localhost:${port}/__debug_lookup?productid=YOUR_ID`);
+    if (NODE_ENV !== 'production') {
+      console.log(`✓ Debug endpoints:`);
+      console.log(`  - http://localhost:${port}/__debug_env`);
+      console.log(`  - http://localhost:${port}/__debug_products`);
+      console.log(`  - http://localhost:${port}/__debug_lookup?productid=YOUR_ID`);
+    }
     console.log('='.repeat(60));
   });
   srv.on('error', (err)=>{

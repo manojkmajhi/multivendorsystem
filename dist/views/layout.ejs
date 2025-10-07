@@ -7,10 +7,11 @@
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="/staticfiles/style.blue.css">
+  <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>">
   <link rel="stylesheet" href="/staticfiles/floating-button.css">
+  <link rel="stylesheet" href="/staticfiles/performance-animations.css">
   <!-- Product modal styles - Minimal Design -->
   <link rel="stylesheet" href="/staticfiles/product-modal-minimal.css">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 <body>
   <nav class="navbar navbar-light fixed-top py-0 px-2">
@@ -41,6 +42,17 @@
   <footer class="text-center text-muted py-4">
   <small>&copy; <%= new Date().getFullYear() %> <%= (siteSetting && siteSetting.name) || 'All Strawhats' %></small>
   </footer>
-  <script src="/staticfiles/cart-shared.js?v=6"></script>
+  <!-- Performance optimizations -->
+  <script src="/staticfiles/performance-optimized.js" defer></script>
+  <script src="/staticfiles/image-optimizer.js" defer></script>
+  
+  <!-- Core libraries -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  
+  <!-- Optimized cart functionality -->
+  <script src="/staticfiles/cart-optimized.js?v=1" defer></script>
+  
+  <!-- Legacy support -->
+  <script src="/staticfiles/perf.js" defer></script>
 </body>
 </html>

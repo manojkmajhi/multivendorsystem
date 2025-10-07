@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title><%= title %> - Admin</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="/staticfiles/admin-style.css?v=3.0" />
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="admin-navbar">
+    <div class="admin-navbar-container">
+      <a href="/admin/" class="admin-brand">
+        <% if(siteSetting && siteSetting.logo_url){ %>
+          <img src="<%= siteSetting.logo_url %>" alt="Logo" />
+        <% } %>
+      </a>
+      
+      <button class="mobile-menu-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Sidebar -->
+  <div class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar-content">
+      <div class="sidebar-header">
+        <% if(siteSetting && siteSetting.logo_url){ %>
+          <img src="<%= siteSetting.logo_url %>" alt="Logo" class="sidebar-logo" />
+        <% } %>
+        <h3 class="sidebar-title"><%= (siteSetting && siteSetting.name) || 'Admin Panel' %></h3>
+        <button class="sidebar-close" onclick="toggleSidebar()" aria-label="Close menu">&times;</button>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <a href="/admin/" class="sidebar-link">
+          <span class="sidebar-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="/admin/products" class="sidebar-link">
+          <span class="sidebar-icon">📦</span>
+          <span>Products</span>
+        </a>
+        <a href="/admin/categories" class="sidebar-link active">
+          <span class="sidebar-icon">📁</span>
+          <span>Categories</span>
+        </a>
+        <a href="/admin/hero-images" class="sidebar-link">
+          <span class="sidebar-icon">🖼️</span>
+          <span>Hero Images</span>
+        </a>
+        <a href="/admin/settings" class="sidebar-link">
+          <span class="sidebar-icon">⚙️</span>
+          <span>Settings</span>
+        </a>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <form method="POST" action="/admin/logout">
+          <button type="submit" class="sidebar-logout-btn">
+            <span class="sidebar-icon">🚪</span>
+            <span>Logout</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="admin-container">
+    <div class="page-header">
+      <h1 class="page-title"><%= title %></h1>
+    </div>
+
+    <% if(items && items.length > 0) { %>
+      <div class="table-container">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:60px;">#</th>
+                <th><%= field || 'Name' %></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% items.forEach((it, idx) => { %>
+                <tr>
+                  <td><%= idx+1 %></td>
+                  <td><%= it[field] || it.name || JSON.stringify(it) %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="card">
+        <div class="card-body">
+          <div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <h3 class="empty-state-title">No Items Found</h3>
+            <p class="empty-state-text">There are no items to display at this time.</p>
+          </div>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Footer -->
+  <footer class="admin-footer">
+    &copy; <%= new Date().getFullYear() %> <%= (siteSetting && siteSetting.name) || 'Admin' %>. All rights reserved.
+  </footer>
+
+  <script src="/staticfiles/admin-enhancements.js?v=3.0"></script>
+</body>
+</html>
