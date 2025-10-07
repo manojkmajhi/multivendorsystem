@@ -390,15 +390,41 @@ async function adminGuard(req,res,next){
 // -------- Admin Routes (CRUD skeleton) --------
 app.get('/admin/', adminGuard, async (req,res)=>{
   try {
-    let stats = { products: products.length, categories: fallbackCategories.length };
+    let stats = { 
+      products: products.length, 
+      categories: fallbackCategories.length,
+      heroImages: 0,
+      orders: { total: 0, pending: 0, delivered: 0, revenue: 0 },
+      recentOrders: [],
+      lowStock: []
+    };
+    
     if (supabase) {
-      const [{ count: pCount }, { count: cCount }] = await Promise.all([
-        supabase.from('products').select('*', { count: 'exact', head: true }),
-        supabase.from('categories').select('*', { count: 'exact', head: true })
+      const [productsRes, categoriesRes, heroRes, ordersRes] = await Promise.all([
+        supabase.from('products').select('*', { count: 'exact' }),
+        supabase.from('categories').select('*', { count: 'exact', head: true }),
+        supabase.from('hero_images').select('*', { count: 'exact', head: true }),
+        supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(5)
       ]);
-      stats = { products: pCount || 0, categories: cCount || 0 };
+      
+      const allOrders = ordersRes.data || [];
+      stats = { 
+        products: productsRes.count || 0,
+        activeProducts: (productsRes.data || []).filter(p => p.active).length,
+        categories: categoriesRes.count || 0,
+        heroImages: heroRes.count || 0,
+        orders: {
+          total: allOrders.length,
+          pending: allOrders.filter(o => o.status === 'pending').length,
+          delivered: allOrders.filter(o => o.status === 'delivered').length,
+          revenue: allOrders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + parseFloat(o.total || 0), 0)
+        },
+        recentOrders: allOrders.slice(0, 5),
+        lowStock: (productsRes.data || []).filter(p => !p.has_variants && p.stock < 10).slice(0, 5)
+      };
     }
-  res.render('admin/dashboard', { stats, siteSetting: res.locals.siteSetting });
+    
+    res.render('admin/dashboard', { stats, siteSetting: res.locals.siteSetting });
   } catch (e) {
     console.error(e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load dashboard.' });
