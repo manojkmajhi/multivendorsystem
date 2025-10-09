@@ -321,6 +321,10 @@
         const finalPrice = quickviewVariants.basePrice + parseFloat(quickviewSelectedVariant.price_adjustment || 0);
         $('#quickview-price').text('Rs. ' + finalPrice.toFixed(2));
         $('#quickview-add-to-cart').prop('disabled', quickviewSelectedVariant.stock === 0).text(quickviewSelectedVariant.stock === 0 ? 'Out of Stock' : 'Add to Cart');
+        if(quickviewSelectedVariant.image && quickviewSelectedVariant.image.trim()) {
+          $('#quickview-img').attr('src', quickviewSelectedVariant.image);
+          console.log('✅ Updated quickview image:', quickviewSelectedVariant.image);
+        }
       }
     } else {
       $('#quickview-add-to-cart').prop('disabled', true).text('Select Options');
@@ -356,7 +360,7 @@
   $('#quickview-dec').on('click', function(){ let v=parseInt($('#quickview-qty').val(),10)||1; v=Math.max(1,v-1); $('#quickview-qty').val(v); });
   $('#quickview-inc').on('click', function(){ let v=parseInt($('#quickview-qty').val(),10)||1; v=Math.min(999,v+1); $('#quickview-qty').val(v); });
   $('#quickview-qty').on('input', function(){ let v=this.value.replace(/[^0-9]/g,''); if(!v) v='1'; v=parseInt(v,10); if(v<1) v=1; if(v>999) v=999; this.value=v; });
-  $('#quickview-add-to-cart').on('click', function(){ if(!quickviewSelectedId) return; addToCart(quickviewSelectedId, $('#quickview-qty').val(), true); $('#productQuickView').modal('hide'); });
+  $('#quickview-add-to-cart').on('click', function(){ if(!quickviewSelectedId) return; const variantId = quickviewSelectedVariant ? quickviewSelectedVariant.id : null; addToCart(quickviewSelectedId, $('#quickview-qty').val(), true, variantId); $('#productQuickView').modal('hide'); });
     $('#search-form-in-navbar').submit(function(e){ e.preventDefault(); var search_term=$('#search').val(); if(search_term){ window.location=window.location.origin+'/search/all/?q='+search_term; }});
     // Custom mobile category panel logic
     var $panel = $('#mobileCatPanel');

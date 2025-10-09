@@ -209,7 +209,10 @@
       
       // Update cache immediately
       if (this.cartCache) {
-        this.cartCache.cart = this.cartCache.cart.filter(item => item[0] !== productId);
+        this.cartCache.cart = this.cartCache.cart.filter(item => {
+          const itemVariantId = item[7] || null;
+          return !(item[0] === productId && itemVariantId === variantId);
+        });
         setTimeout(() => this.renderCartOptimized(this.cartCache), 200);
       }
       

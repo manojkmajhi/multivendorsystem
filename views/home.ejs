@@ -279,7 +279,10 @@
           const finalPrice = quickviewVariants.basePrice + parseFloat(quickviewSelectedVariant.price_adjustment || 0);
           $('#quickview-price').text('Rs. ' + finalPrice.toFixed(2));
           $('#quickview-add-to-cart').prop('disabled', quickviewSelectedVariant.stock === 0).text(quickviewSelectedVariant.stock === 0 ? 'Out of Stock' : 'Add to Cart');
-          if(quickviewSelectedVariant.image) $('#quickview-img').attr('src', quickviewSelectedVariant.image);
+          if(quickviewSelectedVariant.image && quickviewSelectedVariant.image.trim()) {
+            $('#quickview-img').attr('src', quickviewSelectedVariant.image);
+            console.log('✅ Updated quickview image:', quickviewSelectedVariant.image);
+          }
         }
       } else {
         $('#quickview-add-to-cart').prop('disabled', true).text('Select Options');

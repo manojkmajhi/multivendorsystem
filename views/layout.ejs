@@ -12,6 +12,51 @@
   <link rel="stylesheet" href="/staticfiles/performance-animations.css">
   <!-- Product modal styles - Minimal Design -->
   <link rel="stylesheet" href="/staticfiles/product-modal-minimal.css">
+  <style>
+    .user-icon-wrapper {
+      display: flex;
+      align-items: center;
+      margin-left: 12px;
+    }
+    .user-icon-btn {
+      background: none;
+      border: none;
+      font-size: 28px;
+      color: #333;
+      cursor: pointer;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .user-icon-btn:hover {
+      background: #f5f5f5;
+      transform: scale(1.05);
+    }
+    .user-icon-btn.logged-in {
+      color: #28a745;
+    }
+    .user-icon-btn.logged-in::after {
+      content: '';
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      width: 8px;
+      height: 8px;
+      background: #28a745;
+      border: 2px solid white;
+      border-radius: 50%;
+    }
+    @media (max-width: 768px) {
+      .user-icon-btn {
+        font-size: 24px;
+        padding: 6px;
+      }
+    }
+  </style>
 </head>
 <body>
   <nav class="navbar navbar-light fixed-top py-0 px-2">
@@ -27,6 +72,11 @@
           </div>
         </div>
       </form>
+      <div class="user-icon-wrapper">
+        <button id="userIcon" class="user-icon-btn" title="My Account" onclick="openUserModal()">
+          <i class="fas fa-user-circle"></i>
+        </button>
+      </div>
       <ul class="navbar-nav ml-auto phone-in-navbar" style="display: none;">
         <li class="nav-item"><a class="nav-link" href="tel:9814789009"> <i class="fas fa-phone-alt"></i> 9814789009<sup><small> NP</small></sup></a></li>
       </ul>
@@ -39,6 +89,7 @@
   <% if(!(title && (title.toLowerCase().includes('cart') || title.toLowerCase().includes('checkout')))) { %>
     <%- include('partials/floating-cart') %>
   <% } %>
+  <%- include('partials/user-auth-popup') %>
   <footer class="text-center text-muted py-4">
   <small>&copy; <%= new Date().getFullYear() %> <%= (siteSetting && siteSetting.name) || 'All Strawhats' %></small>
   </footer>

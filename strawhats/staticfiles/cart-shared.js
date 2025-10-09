@@ -24,21 +24,26 @@ function uuidv4() {
 }
 
 // Main add to cart function
-function addToCart(product_id, product_qty, show_cart) {
+function addToCart(product_id, product_qty, show_cart, variant_id) {
   var device = getCookie('device');
   if (device == null || device == undefined) {
     device = uuidv4();
   }
   document.cookie = 'device=' + device + ";domain=;path=/";
 
+  var requestData = {
+    'productid': product_id,
+    'qty': product_qty
+  };
+  if (variant_id) {
+    requestData.variantid = variant_id;
+  }
+
   $.ajax({
     url: '/add_to_cart/',
-    data: {
-      'productid': product_id,
-      'qty': product_qty
-    },
+    data: requestData,
     success: function(data) {
-      console.log('✓ Added to cart:', data);
+      console.log('✓ Added to cart:', {productId: product_id, variantId: variant_id, data: data});
       if (show_cart) {
         $("#triggerButton").click();
         $("#triggerButton").prop('checked', true);
@@ -114,12 +119,13 @@ function closeButton() {
 }
 
 // Remove from cart function
-function removeFromCart(productId) {
+function removeFromCart(productId, variantId) {
+  var requestData = { 'productid': productId };
+  if (variantId) requestData.variantid = variantId;
+  
   $.ajax({
     url: '/remove_from_cart/',
-    data: {
-      'productid': productId
-    },
+    data: requestData,
     success: function(data) {
       console.log('✓ Removed from cart:', data);
       // Simply reload the cart content without closing/reopening
@@ -154,14 +160,14 @@ function loadCart() {
           if (data.cart[i][5] == "Sticker Pack") {
             pack += data.cart[i][2];
             total += data.cart[i][2] * 8;
-            $('#floating-cart-table').append('<tr style="background-color: #fff; border-bottom: 5px solid #f4f5f9;"> <td class="px-1 py-1 border-0" scope="row"><div class="media align-items-center"><img src="' + data.cart[i][4] + '" width="60"/><div class="media-body ml-1" style="line-height: 14px;"><small>' + data.cart[i][1] + '<br><span class="px-1 small text-uppercase" style="color:#fff; background-color: #28a745;">' + data.cart[i][6] + ' PACK</span></small></div></div></td><td class="border-0 px-1 text-center" style="vertical-align:middle;"><small>' + data.cart[i][2] + '</small></td><td class="align-middle border-0"><p class="mb-0 ml-0 small">Rs.' + data.cart[i][2] * data.cart[i][3] + '</p></td><td class="border-0 text-center" style="vertical-align:middle;"><button class="btn btn-sm btn-link text-danger p-0 remove-from-cart" data-product-id="' + data.cart[i][0] + '" title="Remove"><i class="fas fa-times"></i></button></td></tr>');
+            $('#floating-cart-table').append('<tr style="background-color: #fff; border-bottom: 5px solid #f4f5f9;"> <td class="px-1 py-1 border-0" scope="row"><div class="media align-items-center"><img src="' + data.cart[i][4] + '" width="60"/><div class="media-body ml-1" style="line-height: 14px;"><small>' + data.cart[i][1] + '<br><span class="px-1 small text-uppercase" style="color:#fff; background-color: #28a745;">' + data.cart[i][6] + ' PACK</span></small></div></div></td><td class="border-0 px-1 text-center" style="vertical-align:middle;"><small>' + data.cart[i][2] + '</small></td><td class="align-middle border-0"><p class="mb-0 ml-0 small">Rs.' + data.cart[i][2] * data.cart[i][3] + '</p></td><td class="border-0 text-center" style="vertical-align:middle;"><button class="btn btn-sm btn-link text-danger p-0 remove-from-cart" data-product-id="' + data.cart[i][0] + '" data-variant-id="' + (data.cart[i][7] || '') + '" title="Remove"><i class="fas fa-times"></i></button></td></tr>');
           } else {
             single += data.cart[i][2];
             total += data.cart[i][2];
             if (data.cart[i][2] > 1) {
-              $miniGrid.append('<div class="col-3 px-1 py-1 position-relative"><div class="small px-1 py-0" style="position: absolute; right: 0.4rem; top: 0.4rem; background-color: #000; color:#fff; border-radius:3px; z-index: 2;">' + data.cart[i][2] + '</div><button class="btn btn-sm btn-link text-danger p-0 remove-from-cart position-absolute" data-product-id="' + data.cart[i][0] + '" style="left: 0.2rem; top: 0.2rem; z-index: 2;" title="Remove"><i class="fas fa-times-circle"></i></button><img src="' + data.cart[i][4] + '"class="border" style="width:100%;" /></div>');
+              $miniGrid.append('<div class="col-3 px-1 py-1 position-relative"><div class="small px-1 py-0" style="position: absolute; right: 0.4rem; top: 0.4rem; background-color: #000; color:#fff; border-radius:3px; z-index: 2;">' + data.cart[i][2] + '</div><button class="btn btn-sm btn-link text-danger p-0 remove-from-cart position-absolute" data-product-id="' + data.cart[i][0] + '" data-variant-id="' + (data.cart[i][7] || '') + '" style="left: 0.2rem; top: 0.2rem; z-index: 2;" title="Remove"><i class="fas fa-times-circle"></i></button><img src="' + data.cart[i][4] + '"class="border" style="width:100%;" /></div>');
             } else {
-              $miniGrid.append('<div class="col-3 px-1 py-1 position-relative"><button class="btn btn-sm btn-link text-danger p-0 remove-from-cart position-absolute" data-product-id="' + data.cart[i][0] + '" style="left: 0.2rem; top: 0.2rem; z-index: 2;" title="Remove"><i class="fas fa-times-circle"></i></button><img src="' + data.cart[i][4] + '" class="border" style="width:100%;" /></div>');
+              $miniGrid.append('<div class="col-3 px-1 py-1 position-relative"><button class="btn btn-sm btn-link text-danger p-0 remove-from-cart position-absolute" data-product-id="' + data.cart[i][0] + '" data-variant-id="' + (data.cart[i][7] || '') + '" style="left: 0.2rem; top: 0.2rem; z-index: 2;" title="Remove"><i class="fas fa-times-circle"></i></button><img src="' + data.cart[i][4] + '" class="border" style="width:100%;" /></div>');
             }
           }
         }
@@ -198,7 +204,8 @@ function loadCart() {
 $(document).on('click', '.remove-from-cart', function(e) {
   e.preventDefault();
   var productId = $(this).data('product-id');
-  removeFromCart(productId);
+  var variantId = $(this).data('variant-id') || null;
+  removeFromCart(productId, variantId);
 });
 
 // Initialize cart count on page load

@@ -1481,6 +1481,62 @@ function getCart(device) {
   return carts[device];
 }
 
+// OTP API endpoints
+app.post('/api/send-otp', async (req, res) => {
+  try {
+    const { phone } = req.body;
+    const response = await fetch('https://auth.otpless.app/auth/otp/v1/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'clientId': process.env.OTPLESS_CLIENT_ID,
+        'clientSecret': process.env.OTPLESS_CLIENT_SECRET
+      },
+      body: JSON.stringify({
+        phoneNumber: phone,
+        otpLength: 6,
+        channel: 'WHATSAPP',
+        expiry: 300
+      })
+    });
+    const data = await response.json();
+    console.log('OTPless send response:', data);
+    res.json(data);
+  } catch(e) {
+    console.error('Send OTP error:', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+app.post('/api/verify-otp', async (req, res) => {
+  try {
+    const { phone, otp, orderId } = req.body;
+    const response = await fetch('https://auth.otpless.app/auth/otp/v1/verify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'clientId': process.env.OTPLESS_CLIENT_ID,
+        'clientSecret': process.env.OTPLESS_CLIENT_SECRET
+      },
+      body: JSON.stringify({
+        orderId: orderId,
+        otp: otp,
+        phoneNumber: phone
+      })
+    });
+    const data = await response.json();
+    console.log('OTPless verify response:', data);
+    res.json(data);
+  } catch(e) {
+    console.error('Verify OTP error:', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+app.get('/api/otpless-config', (req, res) => {
+  res.json({ appId: process.env.OTPLESS_APP_ID });
+});
+
 // Add to cart endpoint (front-end calls /add_to_cart/?productid=..&qty=..&variantid=..)
 app.get('/add_to_cart/', async (req, res) => {
   try {

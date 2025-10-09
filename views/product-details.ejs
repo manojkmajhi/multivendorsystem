@@ -346,6 +346,10 @@
           const finalPrice = quickviewVariants.basePrice + parseFloat(quickviewSelectedVariant.price_adjustment || 0);
           $('#quickview-price').text('Rs. ' + finalPrice.toFixed(2));
           $('#quickview-add-to-cart').prop('disabled', quickviewSelectedVariant.stock === 0).text(quickviewSelectedVariant.stock === 0 ? 'Out of Stock' : 'Add to Cart');
+          if(quickviewSelectedVariant.image && quickviewSelectedVariant.image.trim()) {
+            $('#quickview-img').attr('src', quickviewSelectedVariant.image);
+            console.log('✅ Updated quickview image:', quickviewSelectedVariant.image);
+          }
         }
       } else {
         $('#quickview-add-to-cart').prop('disabled', true).text('Select Options');
@@ -385,7 +389,7 @@
     $(document).on('click keypress','.color-swatch', function(e){ if(e.type==='click' || (e.type==='keypress' && (e.key==='Enter'|| e.key===' '))){ $('.color-swatch').removeClass('active').attr('aria-checked','false'); $(this).addClass('active').attr('aria-checked','true'); } });
     $('#productQuickView').on('shown.bs.modal', function(){ const focusable=$('#productQuickView').find('button, [href], select, input').filter(':visible'); const first=focusable.first()[0]; const last=focusable.last()[0]; $(this).on('keydown.quicktrap', function(e){ if(e.key==='Tab'){ if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); } else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); } } if(e.key==='Escape'){ $('#productQuickView').modal('hide'); } }); });
     $('#productQuickView').on('hidden.bs.modal', function(){ $(this).off('keydown.quicktrap'); if(lastFocusedEl) $(lastFocusedEl).focus(); });
-    $('#quickview-add-to-cart').on('click', function(){ if(!quickviewSelectedId) return; addToCart(quickviewSelectedId, $('#quickview-qty').val(), true); $('#productQuickView').modal('hide'); });
+    $('#quickview-add-to-cart').on('click', function(){ if(!quickviewSelectedId) return; const variantId = quickviewSelectedVariant ? quickviewSelectedVariant.id : null; addToCart(quickviewSelectedId, $('#quickview-qty').val(), true, variantId); $('#productQuickView').modal('hide'); });
 
     $(document).ready(function(){
       if ($('#content').prop('scrollHeight') > $('#content').prop('clientHeight')){ $(".caret").show(); } else { $(".caret").hide(); }
