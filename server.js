@@ -1481,11 +1481,11 @@ function getCart(device) {
   return carts[device];
 }
 
-// Add to cart endpoint (front-end calls /add_to_cart/?productid=..&qty=..)
+// Add to cart endpoint (front-end calls /add_to_cart/?productid=..&qty=..&variantid=..)
 app.get('/add_to_cart/', async (req, res) => {
   try {
-    const { productid, qty } = req.query;
-    console.log('🛒 ADD_TO_CART request', { productid, qty, cookies: req.cookies });
+    const { productid, qty, variantid } = req.query;
+    console.log('🛒 ADD_TO_CART request', { productid, qty, variantid, cookies: req.cookies });
     
     if (!productid || !qty) {
       console.warn('❌ Missing params');
@@ -1501,14 +1501,15 @@ app.get('/add_to_cart/', async (req, res) => {
     }
     
     const device = req.cookies.device || 'anonymous';
-    console.log('✓ Product found, adding to cart', { productid: trimmed, device, productName: product.name });
+    console.log('✓ Product found, adding to cart', { productid: trimmed, device, productName: product.name, variantid });
     
     const cart = getCart(device);
-    const existing = cart.find(i => i.productId === trimmed);
+    const cartKey = variantid ? `${trimmed}_${variantid}` : trimmed;
+    const existing = cart.find(i => i.productId === trimmed && i.variantId === (variantid || null));
     if (existing) {
       existing.qty += parseInt(qty, 10);
     } else {
-      cart.push({ productId: trimmed, qty: parseInt(qty, 10) });
+      cart.push({ productId: trimmed, variantId: variantid || null, qty: parseInt(qty, 10) });
     }
     
     const totalCount = cart.reduce((a,c)=>a+c.qty,0);
@@ -1528,22 +1529,48 @@ app.get('/get_cart/', async (req,res)=>{
     const cart = getCart(device);
     console.log('📋 GET_CART request', { device, itemCount: cart.length });
     
-    // Look up each product properly (including DB)
+    // Look up each product properly (including DB and variants)
     const mapped = [];
     for(const it of cart){
       const p = await getAnyProductById(it.productId);
       if(p){
-        // Format: [id, name, qty, price, image, type, qty_duplicate]
-  mapped.push([p.id, p.name || p.title || 'Item', it.qty, parseFloat(p.price) || 0, p.image || '', normalizeType(p.type), it.qty]);
-        console.log('  ✓ Product loaded', { id: p.id, name: p.name, price: p.price });
+        let finalPrice = parseFloat(p.price) || 0;
+        let finalImage = p.image || '';
+        let finalName = p.name || p.title || 'Item';
+        
+        // If variant specified, fetch variant details
+        if(it.variantId && supabase){
+          const { data: variant, error: vErr } = await supabase.from('variants').select('*').eq('id', it.variantId).single();
+          if(vErr) console.error('❌ Variant fetch error:', vErr);
+          if(variant){
+            finalPrice += parseFloat(variant.price_adjustment || 0);
+            // Use variant image if set, otherwise keep product image
+            if(variant.image && variant.image.trim()) {
+              finalImage = variant.image;
+              console.log('✅ Using variant image:', variant.image);
+            } else {
+              console.log('⚠️ Variant has no image, using product image:', finalImage);
+            }
+            const combo = variant.attribute_combination || {};
+            const variantLabel = Object.values(combo).filter(v => v).join(' / ');
+            if(variantLabel) finalName += ` (${variantLabel})`;
+            console.log('✅ Variant processed:', { id: variant.id, name: finalName, image: finalImage, price: finalPrice });
+          } else {
+            console.warn('⚠️ Variant not found for ID:', it.variantId);
+          }
+        }
+        
+        // Format: [id, name, qty, price, image, type, qty_duplicate, variantId]
+        mapped.push([p.id, finalName, it.qty, finalPrice, finalImage, normalizeType(p.type), it.qty, it.variantId || null]);
+        console.log('  ✓ Product loaded', { id: p.id, name: finalName, price: finalPrice, variantId: it.variantId });
       } else {
         console.warn('  ⚠️ Product not found in DB', { productId: it.productId });
         // Return placeholder so cart doesn't break
-  mapped.push([it.productId, 'Unknown', it.qty, 0, '', 'Product', it.qty]);
+        mapped.push([it.productId, 'Unknown', it.qty, 0, '', 'Product', it.qty, null]);
       }
     }
     
-    console.log('✓ GET_CART response', { mappedCount: mapped.length });
+    console.log('✓ GET_CART response', { mappedCount: mapped.length, sample: mapped[0] });
     res.json({ cart: mapped });
   } catch(e){
     console.error('GET_CART_ERROR', e);
@@ -1556,21 +1583,22 @@ app.get('/remove_from_cart/', async (req, res) => {
   try {
     const device = req.cookies.device || 'anonymous';
     const productId = req.query.productid;
+    const variantId = req.query.variantid || null;
     
     if (!productId) {
       return res.status(400).json({ error: 'Product ID required' });
     }
     
     const cart = getCart(device);
-    const index = cart.findIndex(item => item.productId === productId);
+    const index = cart.findIndex(item => item.productId === productId && item.variantId === variantId);
     
     if (index !== -1) {
       cart.splice(index, 1);
       // Cart is modified in place since getCart returns the reference
-      console.log('✓ Removed from cart', { device, productId, remainingItems: cart.length });
+      console.log('✓ Removed from cart', { device, productId, variantId, remainingItems: cart.length });
       res.json({ success: true, message: 'Item removed from cart' });
     } else {
-      console.log('⚠️ Item not found in cart', { device, productId });
+      console.log('⚠️ Item not found in cart', { device, productId, variantId });
       res.json({ success: false, message: 'Item not found in cart' });
     }
   } catch(e) {
@@ -1664,23 +1692,40 @@ app.get('/cart/', async (req,res)=>{
     const cart = getCart(device);
     console.log('🛒 CART_PAGE request', { device, itemCount: cart.length });
     
-    // Look up each product properly (including DB)
+    // Look up each product properly (including DB and variants)
     const items = [];
     for(const item of cart){
       const p = await getAnyProductById(item.productId);
       if(p){
+        let finalPrice = parseFloat(p.price) || 0;
+        let finalImage = p.image || '';
+        let finalName = p.name || p.title || 'Item';
+        
+        // If variant specified, fetch variant details
+        if(item.variantId && supabase){
+          const { data: variant } = await supabase.from('variants').select('*').eq('id', item.variantId).single();
+          if(variant){
+            finalPrice += parseFloat(variant.price_adjustment || 0);
+            if(variant.image && variant.image.trim()) finalImage = variant.image;
+            const combo = variant.attribute_combination || {};
+            const variantLabel = Object.values(combo).filter(v => v).join(' / ');
+            if(variantLabel) finalName += ` (${variantLabel})`;
+          }
+        }
+        
         items.push({ 
           id: p.id, 
-          name: p.name || p.title || 'Item', 
-          price: parseFloat(p.price) || 0, 
-          image: p.image || '', 
+          variantId: item.variantId || null,
+          name: finalName, 
+          price: finalPrice, 
+          image: finalImage, 
           qty: item.qty, 
-          subtotal: (parseFloat(p.price) || 0) * item.qty 
+          subtotal: finalPrice * item.qty 
         });
-        console.log('  ✓ Cart item', { id: p.id, name: p.name, price: p.price, qty: item.qty });
+        console.log('  ✓ Cart item', { id: p.id, name: finalName, price: finalPrice, qty: item.qty, variantId: item.variantId });
       } else {
         console.warn('  ⚠️ Product not found', { productId: item.productId });
-        items.push({ id: item.productId, name: 'Unknown', price: 0, image: '', qty: item.qty, subtotal: 0 });
+        items.push({ id: item.productId, variantId: null, name: 'Unknown', price: 0, image: '', qty: item.qty, subtotal: 0 });
       }
     }
     
@@ -1701,18 +1746,35 @@ app.get('/checkout/', async (req, res) => {
     const device = req.cookies.device || 'anonymous';
     const cart = getCart(device);
     
-    // Look up each product properly
+    // Look up each product properly (including variants)
     const items = [];
     for(const item of cart){
       const p = await getAnyProductById(item.productId);
       if(p){
+        let finalPrice = parseFloat(p.price) || 0;
+        let finalImage = p.image || '';
+        let finalName = p.name || p.title || 'Item';
+        
+        // If variant specified, fetch variant details
+        if(item.variantId && supabase){
+          const { data: variant } = await supabase.from('variants').select('*').eq('id', item.variantId).single();
+          if(variant){
+            finalPrice += parseFloat(variant.price_adjustment || 0);
+            if(variant.image && variant.image.trim()) finalImage = variant.image;
+            const combo = variant.attribute_combination || {};
+            const variantLabel = Object.values(combo).filter(v => v).join(' / ');
+            if(variantLabel) finalName += ` (${variantLabel})`;
+          }
+        }
+        
         items.push({ 
-          id: p.id, 
-          name: p.name || p.title || 'Item', 
-          price: parseFloat(p.price) || 0, 
-          image: p.image || '', 
+          id: p.id,
+          variantId: item.variantId || null,
+          name: finalName, 
+          price: finalPrice, 
+          image: finalImage, 
           qty: item.qty, 
-          subtotal: (parseFloat(p.price) || 0) * item.qty 
+          subtotal: finalPrice * item.qty 
         });
       }
     }
@@ -1743,18 +1805,37 @@ app.post('/checkout/', async (req, res) => {
       return res.status(400).json({ error: 'Cart is empty' });
     }
     
-    // Build order items from cart
+    // Build order items from cart (including variant info)
     const orderItems = [];
     for(const item of cart){
       const p = await getAnyProductById(item.productId);
       if(p){
+        let finalPrice = parseFloat(p.price) || 0;
+        let finalImage = p.image || '';
+        let finalName = p.name || 'Item';
+        let variantInfo = null;
+        
+        // If variant specified, fetch variant details
+        if(item.variantId && supabase){
+          const { data: variant } = await supabase.from('variants').select('*').eq('id', item.variantId).single();
+          if(variant){
+            finalPrice += parseFloat(variant.price_adjustment || 0);
+            if(variant.image && variant.image.trim()) finalImage = variant.image;
+            variantInfo = variant.attribute_combination || {};
+            const variantLabel = Object.values(variantInfo).filter(v => v).join(' / ');
+            if(variantLabel) finalName += ` (${variantLabel})`;
+          }
+        }
+        
         orderItems.push({
           productId: p.id,
-          productName: p.name || 'Item',
-          price: parseFloat(p.price) || 0,
+          variantId: item.variantId || null,
+          variantInfo,
+          productName: finalName,
+          price: finalPrice,
           qty: item.qty,
-          subtotal: (parseFloat(p.price) || 0) * item.qty,
-          image: p.image || ''
+          subtotal: finalPrice * item.qty,
+          image: finalImage
         });
       }
     }
@@ -1816,12 +1897,12 @@ app.post('/checkout/', async (req, res) => {
 
 // Set cart quantity (allows decreasing / removing)
 app.get('/set_cart_qty/', (req, res) => {
-  const { productid, qty } = req.query;
+  const { productid, qty, variantid } = req.query;
   if(!productid || typeof qty === 'undefined') return res.status(400).json({ error:'productid and qty required'});
   const q = parseInt(qty,10);
   const device = req.cookies.device || 'anonymous';
   const cart = getCart(device);
-  const entry = cart.find(i=>i.productId===productid);
+  const entry = cart.find(i=>i.productId===productid && i.variantId === (variantid || null));
   if(!entry) return res.status(404).json({ error:'Item not in cart'});
   if(q <= 0){
     const idx = cart.indexOf(entry);

@@ -448,7 +448,8 @@
         alert('Please select all options');
         return;
       }
-      addToCart($('#product-add-to-cart').val(), $('#product_qty').val(), true); 
+      const variantId = selectedVariant ? selectedVariant.id : null;
+      addToCart($('#product-add-to-cart').val(), $('#product_qty').val(), true, variantId); 
     });
 
     // Use shared cart-shared.js for cart logic; keep only product view + search submit

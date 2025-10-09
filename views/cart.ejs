@@ -123,7 +123,7 @@
               </thead>
               <tbody>
                 <% items.forEach(i=>{ %>
-                  <tr data-id="<%= i.id %>">
+                  <tr data-id="<%= i.id %>" data-variant-id="<%= i.variantId || '' %>">
                     <td><img src="<%= i.image %>" alt="<%- i.name.replace(/\"/g,'&quot;') %>" class="border" /></td>
                     <td style="line-height:18px; font-size:14px; font-weight:600;"> <a href="/details/<%= i.id %>/" class="text-dark"><%= i.name %></a> </td>
                     <td class="text-center">
@@ -189,12 +189,12 @@
     function getCookie(name){ var cookieValue=null; if(document.cookie && document.cookie!==''){ var cookies=document.cookie.split(';'); for(var i=0;i<cookies.length;i++){ var cookie=cookies[i].trim(); if(cookie.substring(0,name.length+1)===(name+'=')){ cookieValue=decodeURIComponent(cookie.substring(name.length+1)); break; }}} return cookieValue; }
     function uuidv4(){ return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){ var r=Math.random()*16|0,v=c=='x'?r:(r&0x3|0x8); return v.toString(16); }); }
   function animateQty(row){ const input=$(row).find('.qty-input'); input.addClass('qty-pulse'); setTimeout(()=>input.removeClass('qty-pulse'),600); }
-  function setQty(id, qty){ if(qty<0) qty=0; $.get('/set_cart_qty/', {productid:id, qty:qty}, function(){ if(qty===0){ const tr=$('tr[data-id="'+id+'"]').addClass('removing'); tr.css('opacity','0'); setTimeout(()=>tr.remove(),350); } else { const row=$('tr[data-id="'+id+'"]').get(0); const price=parseInt($(row).find('td').eq(3).text().replace(/[^0-9]/g,''),10); $(row).find('.line-subtotal').text(price*qty); $(row).find('.qty-input').val(qty); animateQty(row); } recalcTotals(); if($('.cart-table tbody tr').length===0){ setTimeout(()=>location.reload(),360); } }); }
+  function setQty(id, qty, variantId){ if(qty<0) qty=0; const params = {productid:id, qty:qty}; if(variantId) params.variantid = variantId; $.get('/set_cart_qty/', params, function(){ if(qty===0){ const selector = variantId ? 'tr[data-id="'+id+'"][data-variant-id="'+variantId+'"]' : 'tr[data-id="'+id+'"]'; const tr=$(selector).addClass('removing'); tr.css('opacity','0'); setTimeout(()=>tr.remove(),350); } else { const selector = variantId ? 'tr[data-id="'+id+'"][data-variant-id="'+variantId+'"]' : 'tr[data-id="'+id+'"]'; const row=$(selector).get(0); const price=parseInt($(row).find('td').eq(3).text().replace(/[^0-9]/g,''),10); $(row).find('.line-subtotal').text(price*qty); $(row).find('.qty-input').val(qty); animateQty(row); } recalcTotals(); if($('.cart-table tbody tr').length===0){ setTimeout(()=>location.reload(),360); } }); }
     function recalcTotals(){ var total=0, count=0; $('.cart-table tbody tr').each(function(){ var qty=parseInt($(this).find('.qty-input').val(),10); var subtotal=parseInt($(this).find('.line-subtotal').text(),10); total+=subtotal; count+=qty; }); $('#cart-total').text(total); $('#mobile-total').text(total); if(total>0){ $('.mobile-total-bar').show(); } }
-  $(document).on('click','.inc-btn',function(e){ e.preventDefault(); var row=$(this).closest('tr'); var id=row.data('id'); var qty=parseInt(row.find('.qty-input').val(),10)+1; setQty(id, qty); });
-  $(document).on('click','.dec-btn',function(e){ e.preventDefault(); var row=$(this).closest('tr'); var id=row.data('id'); var qty=parseInt(row.find('.qty-input').val(),10)-1; setQty(id, qty); });
-  $(document).on('blur','.qty-input',function(){ var row=$(this).closest('tr'); var id=row.data('id'); var val=parseInt($(this).val(),10); if(isNaN(val)||val<0) val=0; setQty(id,val); });
-    $(document).on('click','.remove-btn',function(e){ e.preventDefault(); var row=$(this).closest('tr'); var id=row.data('id'); setQty(id,0); });
+  $(document).on('click','.inc-btn',function(e){ e.preventDefault(); var row=$(this).closest('tr'); var id=row.data('id'); var variantId=row.data('variant-id')||null; var qty=parseInt(row.find('.qty-input').val(),10)+1; setQty(id, qty, variantId); });
+  $(document).on('click','.dec-btn',function(e){ e.preventDefault(); var row=$(this).closest('tr'); var id=row.data('id'); var variantId=row.data('variant-id')||null; var qty=parseInt(row.find('.qty-input').val(),10)-1; setQty(id, qty, variantId); });
+  $(document).on('blur','.qty-input',function(){ var row=$(this).closest('tr'); var id=row.data('id'); var variantId=row.data('variant-id')||null; var val=parseInt($(this).val(),10); if(isNaN(val)||val<0) val=0; setQty(id,val,variantId); });
+    $(document).on('click','.remove-btn',function(e){ e.preventDefault(); var row=$(this).closest('tr'); var id=row.data('id'); var variantId=row.data('variant-id')||null; setQty(id,0,variantId); });
     $('#search-form-in-navbar').submit(function(e){ e.preventDefault(); var search_term=$('#search').val(); if(search_term){ window.location=window.location.origin+'/search/all/?q='+search_term; }});
     recalcTotals();
   </script>

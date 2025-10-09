@@ -52,7 +52,8 @@
           e.preventDefault();
           const button = e.target.closest('.remove-from-cart');
           const productId = button.dataset.productId;
-          this.removeFromCartOptimized(productId);
+          const variantId = button.dataset.variantId || null;
+          this.removeFromCartOptimized(productId, variantId);
         }
       });
     },
@@ -128,12 +129,29 @@
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
+        
+        .spinner-border {
+          display: inline-block;
+          width: 1.5rem;
+          height: 1.5rem;
+          vertical-align: text-bottom;
+          border: 0.2em solid currentColor;
+          border-right-color: transparent;
+          border-radius: 50%;
+          animation: spin 0.75s linear infinite;
+        }
+        
+        .spinner-border-sm {
+          width: 1rem;
+          height: 1rem;
+          border-width: 0.15em;
+        }
       `;
       document.head.appendChild(style);
     },
 
     // Optimized add to cart with immediate feedback
-    addToCartOptimized(productId, qty = 1, showCart = false) {
+    addToCartOptimized(productId, qty = 1, showCart = false, variantId = null) {
       // Immediate UI update
       this.showAddingState(productId);
       
@@ -157,7 +175,8 @@
       }
       
       // Background sync with server
-      fetch(`/add_to_cart/?productid=${productId}&qty=${qty}`, {
+      const url = `/add_to_cart/?productid=${productId}&qty=${qty}${variantId ? `&variantid=${variantId}` : ''}`;
+      fetch(url, {
         method: 'GET',
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
         credentials: 'same-origin'
@@ -177,8 +196,9 @@
     },
 
     // Optimized remove from cart
-    removeFromCartOptimized(productId) {
-      const button = document.querySelector(`[data-product-id="${productId}"]`);
+    removeFromCartOptimized(productId, variantId = null) {
+      const selector = variantId ? `[data-product-id="${productId}"][data-variant-id="${variantId}"]` : `[data-product-id="${productId}"]`;
+      const button = document.querySelector(selector);
       const element = button ? button.closest('.cart-item, .col-3, tr') : null;
       
       // Immediate UI update
@@ -198,7 +218,8 @@
       this.updateCartDisplay(Math.max(0, currentCount - 1));
       
       // Background sync
-      fetch(`/remove_from_cart/?productid=${productId}`, {
+      const url = `/remove_from_cart/?productid=${productId}${variantId ? `&variantid=${variantId}` : ''}`;
+      fetch(url, {
         method: 'GET',
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
         credentials: 'same-origin'
@@ -218,6 +239,11 @@
 
     // Optimized cart loading with caching
     loadCartOptimized() {
+      // Show loading state immediately
+      if (this.elements.miniCartItems) {
+        this.elements.miniCartItems.innerHTML = '<div style="text-align:center;padding:20px;"><div class="spinner-border spinner-border-sm" role="status"></div></div>';
+      }
+      
       // Use cache if available for instant display
       if (this.cartCache) {
         this.renderCartOptimized(this.cartCache);
@@ -260,9 +286,10 @@
       const gridFragment = document.createDocumentFragment();
 
       data.cart.forEach((item, index) => {
-        const [id, name, qty, price, image, type] = item;
+        const [id, name, qty, price, image, type, qtyDup, variantId] = item;
+        console.log('Cart item:', { id, name, image, variantId });
         
-        if (type === "Sticker Pack") {
+        if (type === "Sticker Pack" || type === "Pack") {
           pack += qty;
           total += qty * 8;
           
@@ -289,7 +316,7 @@
 
     // Create optimized pack row element
     createPackRow(item) {
-      const [id, name, qty, price, image] = item;
+      const [id, name, qty, price, image, type, qtyDup, variantId] = item;
       const row = document.createElement('tr');
       row.className = 'cart-item-enter';
       row.style.cssText = 'background-color: #fff; border-bottom: 5px solid #f4f5f9;';
@@ -312,7 +339,7 @@
           <p class="mb-0 ml-0 small">Rs.${qty * price}</p>
         </td>
         <td class="border-0 text-center" style="vertical-align:middle;">
-          <button class="btn btn-sm btn-link text-danger p-0 remove-from-cart" data-product-id="${id}" title="Remove">
+          <button class="btn btn-sm btn-link text-danger p-0 remove-from-cart" data-product-id="${id}" data-variant-id="${variantId || ''}" title="Remove">
             <i class="fas fa-times"></i>
           </button>
         </td>
@@ -323,7 +350,7 @@
 
     // Create optimized grid item element
     createGridItem(item) {
-      const [id, name, qty, price, image] = item;
+      const [id, name, qty, price, image, type, qtyDup, variantId] = item;
       const div = document.createElement('div');
       div.className = 'col-3 px-1 py-1 position-relative cart-item-enter';
       
@@ -334,6 +361,7 @@
         ${qtyBadge}
         <button class="btn btn-sm btn-link text-danger p-0 remove-from-cart position-absolute" 
                 data-product-id="${id}" 
+                data-variant-id="${variantId || ''}" 
                 style="left: 0.2rem; top: 0.2rem; z-index: 2;" 
                 title="Remove">
           <i class="fas fa-times-circle"></i>
@@ -517,8 +545,8 @@
   };
 
   // Override global functions with optimized versions
-  window.addToCart = function(productId, qty, showCart) {
-    return CartOptimized.addToCartOptimized(productId, qty, showCart);
+  window.addToCart = function(productId, qty, showCart, variantId) {
+    return CartOptimized.addToCartOptimized(productId, qty, showCart, variantId);
   };
 
   window.updateCartCount = function() {
@@ -529,8 +557,8 @@
     return CartOptimized.loadCartOptimized();
   };
 
-  window.removeFromCart = function(productId) {
-    return CartOptimized.removeFromCartOptimized(productId);
+  window.removeFromCart = function(productId, variantId) {
+    return CartOptimized.removeFromCartOptimized(productId, variantId);
   };
 
   // Close button function for floating cart
