@@ -32,7 +32,7 @@
       <% products.forEach(p => { %>
         <div class="col-md-3 col-6 mb-3">
           <div class="border p-2 h-100 d-flex flex-column">
-            <img src="<%= p.image %>" alt="<%= p.name %>" class="img-fluid mb-2" style="max-height:160px;object-fit:contain;" />
+            <img class="img-fluid mb-2 blur-up lazy-image" data-src="<%= p.image %>" src="/staticfiles/placeholder-blur.jpg" alt="<%= p.name %>" style="max-height:160px;object-fit:contain;" loading="lazy" decoding="async" />
             <h6 class="mb-1"><%= p.name %></h6>
             <p class="text-muted mb-2">Rs. <%= p.price %></p>
             <button class="btn btn-sm btn-dark mt-auto" onclick="addToCart('<%= p.id %>', 1, true)">Add to Cart</button>
@@ -44,9 +44,32 @@
   <footer class="text-center text-muted py-4">
     <small>&copy; <%= new Date().getFullYear() %> All Strawhats</small>
   </footer>
+  <script src="/staticfiles/cart-optimized.js?v=3" defer></script>
   <script>
     function addToCart(id, qty){
-      $.get('/add_to_cart/', { productid:id, qty:qty }).done(()=>console.log('Added to cart')); }
+      window.addToCart(id, qty, true);
+    }
+    (function(){
+      function minimalInit(){
+        var imgs = document.querySelectorAll('img.lazy-image');
+        imgs.forEach(function(img){ img.classList.add('blur-up');
+          if ('loading' in HTMLImageElement.prototype) {
+            img.addEventListener('load', function(){ img.classList.add('loaded'); });
+            var ds = img.getAttribute('data-src'); if (ds && (!img.src || img.src.indexOf('placeholder-blur') !== -1)) img.src = ds;
+          } else {
+            var onScroll = function(){ if (img.getBoundingClientRect().top < window.innerHeight + 200 && !img.classList.contains('loaded')){ var s=img.getAttribute('data-src'); if(s){ var t=new Image(); t.onload=function(){ img.src=s; img.classList.add('loaded'); }; t.src=s; } window.removeEventListener('scroll', onScroll);} };
+            window.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+          }
+        });
+      }
+      if (window.ImageOptimizer && typeof window.ImageOptimizer.init === 'function') {
+        try{ window.ImageOptimizer.addOptimizationCSS(); }catch(e){}
+        try{ window.ImageOptimizer.init(); }catch(e){}
+      } else {
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', minimalInit);
+        else minimalInit();
+      }
+    })();
   </script>
 </body>
 </html>

@@ -185,6 +185,10 @@
       .then(data => {
         this.cartCache = null; // Invalidate cache
         this.updateCartDisplay(data.count);
+        // If cart popup is open, force reload to show latest cart
+        if (showCart && this.elements.triggerButton && this.elements.triggerButton.checked) {
+          this.loadCartOptimized();
+        }
       })
       .catch(error => {
         console.error('Add to cart error:', error);

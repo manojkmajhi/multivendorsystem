@@ -103,35 +103,43 @@
       const originalSrc = img.dataset.src || img.src;
       if (!originalSrc) return;
 
-      // Create optimized image URL
-      const optimizedSrc = this.getOptimizedImageUrl(originalSrc);
-      
-      // Preload image
-      const tempImg = new Image();
-      
-      tempImg.onload = () => {
-        // Image loaded successfully
-        img.src = optimizedSrc;
-        img.removeAttribute('data-src');
-        img.removeAttribute('data-loading');
-        img.classList.add('lazy-loaded');
-        
-        // Fade in animation
-        requestAnimationFrame(() => {
-          img.style.opacity = '1';
-        });
-        
-        // Dispatch custom event
-        img.dispatchEvent(new CustomEvent('imageLoaded', {
-          detail: { src: optimizedSrc, originalSrc }
-        }));
+      // Create optimized image URL (responsive)
+      const optimizedSrc = this.getResponsiveImageUrl(this.getOptimizedImageUrl(originalSrc), img);
+
+      // Concurrency control
+      if (!this._loadQueue) this._loadQueue = [];
+      if (!this._activeLoads) this._activeLoads = 0;
+      const maxParallel = 4;
+
+      const startLoad = () => {
+        this._activeLoads = (this._activeLoads || 0) + 1;
+        const tempImg = new Image();
+        tempImg.onload = () => {
+          img.src = optimizedSrc;
+          img.removeAttribute('data-src');
+          img.removeAttribute('data-loading');
+          img.classList.add('lazy-loaded');
+          requestAnimationFrame(() => { img.style.opacity = '1'; });
+          img.dispatchEvent(new CustomEvent('imageLoaded', { detail: { src: optimizedSrc, originalSrc } }));
+          this._activeLoads = Math.max(0, this._activeLoads - 1);
+          // start next in queue
+          const next = this._loadQueue.shift(); if (next) setTimeout(next, 40);
+        };
+        tempImg.onerror = () => {
+          this._activeLoads = Math.max(0, this._activeLoads - 1);
+          this.handleImageError(img, originalSrc);
+          const next = this._loadQueue.shift(); if (next) setTimeout(next, 40);
+        };
+        // Start with a tiny stagger to avoid bursts
+        setTimeout(() => { tempImg.src = optimizedSrc; }, Math.random() * 120);
       };
-      
-      tempImg.onerror = () => {
-        this.handleImageError(img, originalSrc);
+
+      const enqueue = () => {
+        if (this._activeLoads < maxParallel) startLoad();
+        else this._loadQueue.push(startLoad);
       };
-      
-      tempImg.src = optimizedSrc;
+
+      enqueue();
     },
 
     // Get optimized image URL (add WebP support, compression, etc.)
@@ -234,21 +242,19 @@
       );
     },
 
-    // Preload critical images (above the fold)
+    // Preload only truly critical images to avoid bandwidth spikes
     preloadCriticalImages() {
       const criticalImages = [
         '/staticfiles/brand.svg',
         '/staticfiles/hero-banner.jpg'
       ];
 
-      // Also preload first few product images
-      const productImages = Array.from(document.querySelectorAll('.product img, .hero img'))
-        .slice(0, this.config.preloadCount)
-        .map(img => img.src || img.dataset.src)
-        .filter(src => src && !src.startsWith('data:'));
+      // Optionally preload the very first product image if present
+      const firstProduct = document.querySelector('.product img, .hero img');
+      const productImages = firstProduct ? [firstProduct.src || firstProduct.dataset.src] : [];
 
       [...criticalImages, ...productImages].forEach(src => {
-        if (src) {
+        if (src && !src.startsWith('data:')) {
           const link = document.createElement('link');
           link.rel = 'preload';
           link.as = 'image';

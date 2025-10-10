@@ -183,7 +183,7 @@
               <div class="product text-center pt-2 bg-light" style="border:1px solid #f8f8f8; height:100%!important;">
                 <div class="position-relative mb-1">
                   <div class="<%= p.id %>-added-message show-added-message"></div>
-                  <a class="d-block" href="/details/<%= p.id %>/"><img class="img-fluid" src="<%= p.image %>" alt="<%- p.name.replace(/"/g,'&quot;') %>" loading="lazy"></a>
+                  <a class="d-block" href="/details/<%= p.id %>/"><img class="img-fluid blur-up lazy-image" data-src="<%= p.image %>" src="/staticfiles/placeholder-blur.jpg" alt="<%- p.name.replace(/"/g,'&quot;') %>" loading="lazy" decoding="async"></a>
                 </div>
                 <ul class="mb-2 mt-0 list-inline">
                   <% if(p.has_variants) { %>
@@ -400,8 +400,31 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
   <script src="/staticfiles/owl.carousel2.thumbs.min.js"></script>
-  <script src="/staticfiles/cart-shared.js?v=4"></script>
+  <script src="/staticfiles/cart-optimized.js?v=3" defer></script>
   <script src="/staticfiles/front.js"></script>
   <script src="https://kit.fontawesome.com/d6db3c2373.js" crossorigin="anonymous"></script>
+  <script>
+    (function(){
+      function minimalInit(){
+        var imgs = document.querySelectorAll('img.lazy-image');
+        imgs.forEach(function(img){ img.classList.add('blur-up');
+          if ('loading' in HTMLImageElement.prototype) {
+            img.addEventListener('load', function(){ img.classList.add('loaded'); });
+            var ds = img.getAttribute('data-src'); if (ds && (!img.src || img.src.indexOf('placeholder-blur') !== -1)) img.src = ds;
+          } else {
+            var onScroll = function(){ if (img.getBoundingClientRect().top < window.innerHeight + 200 && !img.classList.contains('loaded')){ var s=img.getAttribute('data-src'); if(s){ var t=new Image(); t.onload=function(){ img.src=s; img.classList.add('loaded'); }; t.src=s; } window.removeEventListener('scroll', onScroll);} };
+            window.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+          }
+        });
+      }
+      if (window.ImageOptimizer && typeof window.ImageOptimizer.init === 'function') {
+        try{ window.ImageOptimizer.addOptimizationCSS(); }catch(e){}
+        try{ window.ImageOptimizer.init(); }catch(e){}
+      } else {
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', minimalInit);
+        else minimalInit();
+      }
+    })();
+  </script>
 </body>
 </html>
