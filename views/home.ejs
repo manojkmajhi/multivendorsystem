@@ -4,16 +4,23 @@
   <meta charset="utf-8" />
   <title><%= siteSetting.name %> | Premium Anime Store in Nepal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.css" />
+  <link rel="preconnect" href="https://maxcdn.bootstrapcdn.com" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="preconnect" href="https://ajax.googleapis.com" crossorigin>
+  <link rel="dns-prefetch" href="https://kit.fontawesome.com">
+  <link rel="preload" href="/staticfiles/style.blue.css" as="style">
+  <link rel="preload" href="/staticfiles/image-loading.css" as="style">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.css" media="print" onload="this.media='all'" />
   <link rel="stylesheet" href="/staticfiles/style.blue.css" />
   <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>" />
   <link rel="stylesheet" href="/staticfiles/floating-button.css" />
   <link rel="stylesheet" href="/staticfiles/product-quickview.css?v=1" />
   <link rel="stylesheet" href="/staticfiles/image-loading.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <noscript><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"></noscript>
+  <link rel="preload" href="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js" as="script">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js" defer></script>
   <style>
     html{overflow-y:scroll;}
     html, body {
@@ -21,10 +28,13 @@
       margin: 0;
     }
     body {
-      font-family: 'Libre Franklin', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
+    }
+    .fonts-loaded body {
+      font-family: 'Libre Franklin', Arial, sans-serif;
     }
     .main-content {
       flex: 1 0 auto;
@@ -97,11 +107,11 @@
           <div class="item">
             <% if(h.link_url){ %>
               <a href="<%= h.link_url %>" class="hero-image-wrapper">
-                <img src="<%= h.image_url %>" alt="<%= h.title || 'Hero Image' %>" decoding="async">
+                <img src="<%= h.image_url %>" alt="<%= h.title || 'Hero Image' %>" decoding="async" fetchpriority="high">
               </a>
             <% } else { %>
               <div class="hero-image-wrapper">
-                <img src="<%= h.image_url %>" alt="<%= h.title || 'Hero Image' %>" decoding="async">
+                <img src="<%= h.image_url %>" alt="<%= h.title || 'Hero Image' %>" decoding="async" fetchpriority="high">
               </div>
             <% } %>
             <% if(h.title){ %>
@@ -216,14 +226,15 @@
   <!-- Floating Cart Trigger (reuse existing scripts) -->
   <%- include('partials/floating-cart') %>
 
-  <script src="/staticfiles/image-loading.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
-  <script src="/staticfiles/owl.carousel2.thumbs.min.js"></script>
-  <script src="/staticfiles/cart-shared.js?v=4"></script>
-  <script src="/staticfiles/front.js?v=2"></script>
-  <script src="https://kit.fontawesome.com/d6db3c2373.js" crossorigin="anonymous"></script>
+  <script src="/staticfiles/image-loading.js" defer></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js" defer></script>
+  <script src="/staticfiles/owl.carousel2.thumbs.min.js" defer></script>
+  <script src="/staticfiles/cart-shared.js?v=4" defer></script>
+  <script src="/staticfiles/front.js?v=2" defer></script>
+  <script src="https://kit.fontawesome.com/d6db3c2373.js" crossorigin="anonymous" defer></script>
   <script>
+    document.addEventListener('DOMContentLoaded', function() {
     // Initialize hero carousel
     $('#hero-carousel').owlCarousel({items:1, loop:true, autoplay:true, autoplayTimeout:4000, dots:true});
     if(typeof addToCart === 'undefined') { console.warn('addToCart not in scope - ensure front.js loaded'); }
@@ -339,6 +350,8 @@
     function getCookie(name){ var cookieValue=null; if(document.cookie && document.cookie!==''){ var cookies=document.cookie.split(';'); for(var i=0;i<cookies.length;i++){ var cookie=cookies[i].trim(); if(cookie.substring(0,name.length+1)===(name+'=')){ cookieValue=decodeURIComponent(cookie.substring(name.length+1)); break; } } } return cookieValue; }
     function uuidv4(){ return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){ var r=Math.random()*16|0,v=c=='x'?r:(r&0x3|0x8); return v.toString(16); }); }
   // cart logic now provided by shared /staticfiles/cart-shared.js
+  
+  });
   
   // Theme customizer live preview support
   window.addEventListener('message', function(e) {

@@ -86,8 +86,9 @@
               <input id="name" class="form-control" placeholder="Name *" required />
             </div>
             <div class="col-md-6 form-group">
-              <label class="sr-only" for="mobile">Mobile Number *</label>
-              <input id="mobile" class="form-control" placeholder="Mobile Number *" type="tel" pattern="[0-9]{10}" maxlength="10" required />
+              <label class="sr-only" for="mobile">WhatsApp Number *</label>
+              <input id="mobile" class="form-control" placeholder="WhatsApp Number *" type="tel" pattern="[0-9]{10}" maxlength="10" required />
+              <small style="color:#666; font-size:11px; display:block; margin-top:4px;">You'll receive an OTP to verify this number</small>
             </div>
             <div class="col-md-6 form-group">
               <label class="sr-only" for="region">Region</label>
@@ -129,16 +130,20 @@
     </form>
   </div>
 
-  <footer class="bg-dark text-white shadow" style="color:#fff;">
+  <footer class="bg-dark text-white shadow" style="color: #fff; margin-top: 40px;">
     <div class="container py-4">
       <div class="row">
         <div class="col-lg-6">
           <p class="small text-gray mb-0">&copy; <%= new Date().getFullYear() %> All rights reserved.</p>
-          <p class="small text-gray mb-0">Crafted by <a class="text-white reset-anchor" target="_blank" href="https://gauravsah.com.np">Gaurav Sah</a></p>
+          <p class="small text-gray mb-0">Crafted by <a class="text-white reset-anchor" href="https://gauravsah.com.np" target="_blank">Gaurav Sah</a></p>
         </div>
         <div class="col-lg-6 text-lg-right">
-          <p class="small mb-0">FIND US &nbsp;<a href="https://facebook.com/allstrawhats/" target="_blank"><i class="fab fa-facebook-square mr-1" style="color:#f5f5f5;"></i></a> <a href="https://instagram.com/allstrawhats/" target="_blank"><i class="fab fa-instagram" style="color:#f5f5f5;"></i></a></p>
-          <p class="text-sm text-gray mb-0"><a class="text-gray reset-anchor" href="mailto:info@allstrawhats.com" target="_blank"><i class="fas fa-envelope"></i> &nbsp;info@allstrawhats.com</a></p>
+          <p class="small mb-0">FIND US &nbsp;
+            <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.facebook_url) ? socialLinks.facebook_url : 'https://facebook.com/allstrawhats/' %>" target="_blank"><i class="fab fa-facebook-square mr-1" style="color: #f5f5f5;"></i></a>
+            <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.instagram_url) ? socialLinks.instagram_url : 'https://instagram.com/allstrawhats/' %>" target="_blank"><i class="fab fa-instagram" style="color: #f5f5f5;"></i></a>
+          </p>
+          <p class="text-sm text-gray mb-0"><a class="text-gray reset-anchor" href="mailto:<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@allstrawhats.com' %>" target="_blank"><i class="fas fa-envelope"></i> &nbsp;<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@allstrawhats.com' %></a></p>
+          <p class="text-sm text-gray mb-0 mt-2"><a class="text-white reset-anchor" href="/track-order"><i class="fas fa-shipping-fast"></i> Track Order</a></p>
         </div>
       </div>
     </div>
