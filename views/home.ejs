@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>" />
   <link rel="stylesheet" href="/staticfiles/floating-button.css" />
   <link rel="stylesheet" href="/staticfiles/product-quickview.css?v=1" />
+  <link rel="stylesheet" href="/staticfiles/image-loading.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <style>
@@ -36,7 +37,7 @@
     .category-item-title{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; padding:.35rem 1rem; font-size:.95rem; font-weight:700; letter-spacing:.05em; border:2px dotted #0a0a0a; text-transform:uppercase;}
     .scroll-menu-wrapper{position:relative; padding:10px 0; height:220px;} .menu{white-space:nowrap; overflow-x:auto; overflow-y:hidden;} .menu::-webkit-scrollbar{width:0;} .scroll-item{display:inline-block; width:200px;}
     @media (max-width:600px){ .scroll-menu-wrapper{height:150px;} .scroll-item{width:120px;} .category-item-title{padding:.2rem .4rem; font-size:.7rem;} }
-    .product{text-align:center; background:#f8f8f8; border:1px solid #f8f8f8; transition:box-shadow .25s, transform .25s;} .product:hover{box-shadow:0 6px 18px -6px rgba(0,0,0,.12); transform:translateY(-3px);} .product img{height:150px; object-fit:contain;}
+    .product{text-align:center; background:#f8f8f8; border:1px solid #f8f8f8; transition:box-shadow .25s, transform .25s;} .product:hover{box-shadow:0 6px 18px -6px rgba(0,0,0,.12); transform:translateY(-3px);} .product img{height:150px; width:100%; object-fit:contain; display:block;}
     
     /* Hero carousel - fixed aspect ratio and better design */
     .hero-wrapper{position:relative; width:100%; padding-top:0; margin-bottom:1.5rem;}
@@ -123,7 +124,10 @@
           <% categories.forEach(c=>{ %>
             <div class="text-center scroll-item">
               <a class="category-item" href="/shop/<%= c.name %>/">
-                <img src="<%= c.image || '/staticfiles/brand.svg' %>" alt="<%- c.name.replace(/"/g,'&quot;') %>">
+                <div class="category-img-container">
+                  <img src="<%= c.image || '/staticfiles/brand.svg' %>" alt="<%- c.name.replace(/"/g,'&quot;') %>" loading="lazy" decoding="async">
+                  <div class="skeleton-loader"></div>
+                </div>
                 <span class="category-item-title"><%= c.name %></span>
               </a>
             </div>
@@ -142,8 +146,13 @@
           <div class="col-xl-3 col-lg-4 col-6 px-1 py-1">
             <div class="product pt-2" style="height:100%;">
               <div class="position-relative mb-1">
-                <div class="<%= p.id %>-added-message show-added-message" style="display:none; position:absolute; left:4px; top:4px; background:#000; color:#fff; font-size:11px; padding:2px 5px; border-radius:3px;">Added</div>
-                <a class="d-block" href="/details/<%= p.id %>/"><img src="<%= p.image %>" class="img-fluid"></a>
+                <div class="<%= p.id %>-added-message show-added-message" style="display:none; position:absolute; left:4px; top:4px; background:#000; color:#fff; font-size:11px; padding:2px 5px; border-radius:3px; z-index:2;">Added</div>
+                <a class="d-block" href="/details/<%= p.id %>/">
+                  <div class="product-img-container">
+                    <img src="<%= p.image %>" alt="<%= p.name %>" loading="lazy" decoding="async">
+                    <div class="skeleton-loader"></div>
+                  </div>
+                </a>
               </div>
               <ul class="mb-2 mt-0 list-inline">
                 <% if(p.has_variants) { %>
@@ -206,6 +215,7 @@
   <!-- Floating Cart Trigger (reuse existing scripts) -->
   <%- include('partials/floating-cart') %>
 
+  <script src="/staticfiles/image-loading.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
   <script src="/staticfiles/owl.carousel2.thumbs.min.js"></script>

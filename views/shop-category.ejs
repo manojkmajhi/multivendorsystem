@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>" />
   <link rel="stylesheet" href="/staticfiles/floating-button.css" />
   <link rel="stylesheet" href="/staticfiles/product-quickview.css?v=1" />
+  <link rel="stylesheet" href="/staticfiles/image-loading.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@300;400;700&display=swap" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Martel+Sans:wght@300;400;800&display=swap" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -53,7 +54,7 @@
     /* Product cards mimic home page */
     .product-grid .product{background:#f8f8f8; border:1px solid #f8f8f8; min-height:100%; transition:box-shadow .25s, transform .25s; border-radius:2px;}
     .product-grid .product:hover{box-shadow:0 6px 18px -6px rgba(0,0,0,.12); transform:translateY(-3px);}    
-    .product-grid .product img{height:150px; object-fit:contain; transition:transform .3s;}
+    .product-grid .product img{height:150px; width:100%; object-fit:contain; transition:transform .3s; display:block;}
     .product-grid .product:hover img{transform:scale(1.04);}    
     .product-grid .product h5{font-size:13px; line-height:16px; font-weight:600; margin-top:0; min-height:32px;}
     .product-grid .product h5 a{color:#000; text-decoration:none;}
@@ -182,8 +183,13 @@
             <div class="col-xl-3 col-lg-4 col-6 px-1 py-1">
               <div class="product text-center pt-2 bg-light" style="border:1px solid #f8f8f8; height:100%!important;">
                 <div class="position-relative mb-1">
-                  <div class="<%= p.id %>-added-message show-added-message"></div>
-                  <a class="d-block" href="/details/<%= p.id %>/"><img class="img-fluid blur-up lazy-image" data-src="<%= p.image %>" src="/staticfiles/placeholder-blur.jpg" alt="<%- p.name.replace(/"/g,'&quot;') %>" loading="lazy" decoding="async"></a>
+                  <div class="<%= p.id %>-added-message show-added-message" style="z-index:2;"></div>
+                  <a class="d-block" href="/details/<%= p.id %>/">
+                    <div class="product-img-container">
+                      <img src="<%= p.image %>" alt="<%- p.name.replace(/"/g,'&quot;') %>" loading="lazy" decoding="async">
+                      <div class="skeleton-loader"></div>
+                    </div>
+                  </a>
                 </div>
                 <ul class="mb-2 mt-0 list-inline">
                   <% if(p.has_variants) { %>
@@ -396,6 +402,7 @@
     </div>
   </footer>
 
+  <script src="/staticfiles/image-loading.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
