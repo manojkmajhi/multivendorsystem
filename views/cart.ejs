@@ -16,33 +16,39 @@
     .page-wrapper{flex:1 0 auto; width:100%; display:flex; flex-direction:column;}
     nav.navbar{box-shadow:0 2px 6px rgba(0,0,0,.05); background:#fff;}
     .nav-spacer{height:90px;}
-    .breadcrumb-inline{font-size:11px; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:12px;}
+    .breadcrumb-inline{font-size:10px; letter-spacing:1.2px; text-transform:uppercase; margin-bottom:8px;}
     .breadcrumb{background:transparent; padding:0; margin:0;}
     .breadcrumb-item+.breadcrumb-item::before{content:'/'; padding:0 6px; color:#999;}
-    /* Table + rows */
-    .cart-table table{border-collapse:separate; border-spacing:0 6px;}
-    .cart-table thead th{font-size:11px; letter-spacing:1.5px; font-weight:700; color:#555; border:none; text-transform:uppercase; background:transparent; padding:0 10px 4px;}
-  .cart-table tbody tr{background:#f8f8f8; transition:box-shadow .25s, transform .25s, opacity .35s ease; border-radius:8px;}
-  .cart-table tbody tr:hover{box-shadow:0 6px 18px -6px rgba(0,0,0,.14); transform:translateY(-2px);}    
-  .cart-table td{border:none; vertical-align:middle; padding:14px 12px;}
-    .cart-table img{width:68px; height:68px; object-fit:contain; background:#fff; border:1px solid #eee; border-radius:4px;}
-    /* Quantity control */
-  .qty-control{display:inline-flex; align-items:center; background:#fff; border:1px solid #d0d0d0; border-radius:5px; overflow:hidden; box-shadow:0 2px 4px -2px rgba(0,0,0,.08);}
-  .qty-control button{background:transparent; border:none; width:34px; height:34px; line-height:34px; font-size:15px; padding:0; color:#111; cursor:pointer; outline:none; font-weight:600;}
-    .qty-control button:hover{background:#111; color:#fff;}
-  .qty-input{width:52px; height:34px; border:0; border-left:1px solid #eee; border-right:1px solid #eee; text-align:center; font-size:14px; background:#fff; padding:0; font-weight:600; letter-spacing:.5px;}
+    /* Ultra-compact card layout */
+    .cart-table{display:flex; flex-direction:column; gap:6px;}
+    .cart-item-card{display:flex; align-items:center; gap:10px; background:#fff; padding:8px 10px; border-radius:6px; border:1px solid #e8e8e8; transition:all .2s ease;}
+    .cart-item-card:hover{border-color:#ccc; box-shadow:0 2px 8px rgba(0,0,0,.06);}
+    .cart-item-img{width:50px; height:50px; object-fit:contain; background:#fafafa; border:1px solid #e8e8e8; border-radius:4px; flex-shrink:0;}
+    .cart-item-info{flex:1; min-width:0;}
+    .cart-item-name{font-size:13px; font-weight:600; margin:0; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .cart-item-price{font-size:12px; color:#888; margin:2px 0 0;}
+    .cart-item-right{display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0;}
+    /* Minimal quantity control */
+  .qty-control{display:inline-flex; align-items:center; background:#f8f8f8; border:1px solid #ddd; border-radius:4px; overflow:hidden;}
+  .qty-control button{background:transparent; border:none; width:24px; height:24px; line-height:24px; font-size:13px; padding:0; color:#333; cursor:pointer; outline:none; font-weight:700; transition:all .15s;}
+    .qty-control button:hover{background:#000; color:#fff;}
+  .qty-input{width:32px; height:24px; border:0; border-left:1px solid #ddd; border-right:1px solid #ddd; text-align:center; font-size:12px; background:#fff; padding:0; font-weight:600;}
     .qty-input:focus{outline:none;}
-  .qty-pulse{animation:qty-pulse .6s ease;} @keyframes qty-pulse{0%{background:#fff2c6;}60%{background:#fff;}100%{background:#fff;}}
-    .line-subtotal{font-weight:600;}
+  .qty-pulse{animation:qty-pulse .5s ease;} @keyframes qty-pulse{0%{background:#fffacd;}50%{background:#fff;}100%{background:#fff;}}
+    .cart-item-subtotal{font-size:13px; font-weight:700; min-width:70px; text-align:right; color:#111;}
     /* Remove */
-    .remove-btn{background:none; border:none; color:#dc3545; font-size:12px; letter-spacing:.5px; text-transform:uppercase; font-weight:600; padding:0;}
-    .remove-btn i{font-size:14px;}
-    .remove-btn:hover{color:#a00; text-decoration:underline;}
-    /* Summary card */
-  .cart-summary-box{background:linear-gradient(145deg,#fafafa,#f1f1f1); padding:20px 22px 22px; border-radius:10px; box-shadow:0 8px 26px -10px rgba(0,0,0,.18); position:sticky; top:100px; border:1px solid #ececec;}
-    .summary-title{font-size:13px; letter-spacing:1.5px; font-weight:700; margin-bottom:16px;}
-    .cart-summary-box p{font-size:14px;}
-    .summary-total{font-size:17px; letter-spacing:.5px;}
+    .remove-btn{background:none; border:none; color:#999; font-size:16px; padding:0; cursor:pointer; width:24px; height:24px; line-height:24px; border-radius:3px; transition:all .15s;}
+    .remove-btn:hover{background:#fee; color:#dc3545;}
+    /* Minimal summary card */
+  .cart-summary-box{background:#fff; padding:14px 16px; border-radius:6px; box-shadow:0 2px 12px rgba(0,0,0,.08); position:sticky; top:100px; border:1px solid #e8e8e8;}
+    .summary-title{font-size:11px; letter-spacing:1.5px; font-weight:700; margin-bottom:8px; color:#666;}
+    .cart-summary-box p{font-size:13px; margin-bottom:4px;}
+    .summary-total{font-size:14px; font-weight:600;}
+    .cart-summary-box hr{margin:8px 0; border-color:#eee;}
+    .cart-summary-box .btn{font-size:13px; padding:8px 12px; border-radius:4px; font-weight:600;}
+    .cart-summary-box .btn-dark{background:#000; border:none;}
+    .cart-summary-box .btn-outline-dark{border:1px solid #ddd; color:#333;}
+    .cart-summary-box .btn-outline-dark:hover{background:#f5f5f5;}
     .btn-dark{background:#000; border-color:#000;}
     .btn-outline-dark{border-color:#000;}
     /* Empty */
@@ -52,20 +58,14 @@
     /* Responsive */
     @media (max-width:991.98px){ .cart-summary-box{margin-top:20px; position:static;} }
     @media (max-width:767.98px){
-      .cart-table table thead{display:none;}
-      .cart-table table tbody tr{display:block; padding:12px 14px 6px; border-radius:10px; margin-bottom:10px;}
-      .cart-table td{display:flex; padding:3px 0; border:none;}
-      .cart-table td:first-child{justify-content:center; margin-bottom:8px;}
-      .cart-table td:nth-child(2){font-size:15px; font-weight:600; margin-bottom:6px;}
-      .cart-table td:nth-child(3), .cart-table td:nth-child(4), .cart-table td:nth-child(5), .cart-table td:nth-child(6){justify-content:space-between;}
-      .cart-table td:nth-child(4), .cart-table td:nth-child(5){font-size:13px;}
-      .remove-btn{font-size:11px;}
-      .mobile-total-bar{display:flex; position:fixed; left:0; right:0; bottom:0; background:#111; color:#fff; padding:10px 14px; align-items:center; justify-content:space-between; z-index:4000; box-shadow:0 -4px 14px -6px rgba(0,0,0,.4);} 
-      .mobile-total-bar strong{font-size:15px; letter-spacing:.5px;} 
-      .mobile-total-bar .mobile-checkout-btn{background:#fff; color:#000; font-weight:600; border:none; padding:8px 16px; border-radius:4px; font-size:13px;} 
-      footer{padding-bottom:70px;}
+      .cart-item-card{flex-wrap:wrap; padding:8px;}
+      .cart-item-img{width:45px; height:45px;}
+      .cart-item-name{font-size:12px;}
+      .cart-item-price{font-size:11px;}
+      .cart-item-card .qty-control{order:3; margin-top:6px;}
+      .cart-item-right{order:4; flex-direction:row; align-items:center; gap:10px; margin-top:6px;}
+      .cart-item-subtotal{min-width:auto; font-size:12px;}
     }
-    .cart-table tbody tr + tr{margin-top:10px;}
     footer{margin-top:30px; flex-shrink:0;}
   </style>
 </head>
@@ -99,7 +99,7 @@
     </nav>
   </div>
 
-  <div class="container pb-4 pb-md-5 flex-grow-1">
+  <div class="container pb-3 pb-md-4 flex-grow-1">
     <% if(!items.length){ %>
       <div class="empty-state">
         <h4>Your cart is empty</h4>
@@ -109,62 +109,41 @@
     <% } else { %>
       <div class="row">
   <div class="col-lg-8 mb-3 mb-lg-0">
-          <div class="table-responsive cart-table">
-            <table class="table table-sm align-middle mb-0">
-              <thead class="text-uppercase small text-muted">
-                <tr>
-                  <th style="width:72px;">Item</th>
-                  <th>Name</th>
-                  <th class="text-center" style="width:150px;">Qty</th>
-                  <th class="text-right" style="width:120px;">Price</th>
-                  <th class="text-right" style="width:120px;">Subtotal</th>
-                  <th style="width:70px;"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <% items.forEach(i=>{ %>
-                  <tr data-id="<%= i.id %>" data-variant-id="<%= i.variantId || '' %>">
-                    <td><img class="border blur-up lazy-image" data-src="<%= i.image %>" src="/staticfiles/placeholder-blur.jpg" alt="<%- i.name.replace(/\"/g,'&quot;') %>" loading="lazy" decoding="async" /></td>
-                    <td style="line-height:18px; font-size:14px; font-weight:600;"> <a href="/details/<%= i.id %>/" class="text-dark"><%= i.name %></a> </td>
-                    <td class="text-center">
-                      <div class="qty-control">
-                        <button class="dec-btn" aria-label="Decrease quantity">&minus;</button>
-                        <input type="text" class="qty-input" value="<%= i.qty %>" />
-                        <button class="inc-btn" aria-label="Increase quantity">+</button>
-                      </div>
-                    </td>
-                    <td class="text-right">Rs. <%= i.price %></td>
-                    <td class="text-right font-weight-bold">Rs. <span class="line-subtotal"><%= i.subtotal %></span></td>
-                    <td class="text-right"><button class="remove-btn" aria-label="Remove item"><i class="fas fa-times"></i> Remove</button></td>
-                  </tr>
-                <% }) %>
-              </tbody>
-            </table>
+          <div class="cart-table">
+            <% items.forEach(i=>{ %>
+              <div class="cart-item-card" data-id="<%= i.id %>" data-variant-id="<%= i.variantId || '' %>">
+                <img class="cart-item-img blur-up lazy-image" data-src="<%= i.image %>" src="/staticfiles/placeholder-blur.jpg" alt="<%- i.name.replace(/\"/g,'&quot;') %>" loading="lazy" decoding="async" />
+                <div class="cart-item-info">
+                  <div class="cart-item-name"><a href="/details/<%= i.id %>/" class="text-dark"><%= i.name %></a></div>
+                  <div class="cart-item-price">Rs. <%= i.price %></div>
+                </div>
+                <div class="qty-control">
+                  <button class="dec-btn" aria-label="Decrease quantity">&minus;</button>
+                  <input type="text" class="qty-input" value="<%= i.qty %>" />
+                  <button class="inc-btn" aria-label="Increase quantity">+</button>
+                </div>
+                <div class="cart-item-right">
+                  <div class="cart-item-subtotal">Rs. <span class="line-subtotal"><%= i.subtotal %></span></div>
+                  <button class="remove-btn" aria-label="Remove item">×</button>
+                </div>
+              </div>
+            <% }) %>
           </div>
         </div>
         <div class="col-lg-4">
           <div class="cart-summary-box">
-            <div class="summary-title">SUMMARY</div>
-            <p class="mb-1 d-flex justify-content-between"><span class="text-muted">Items</span><span><%= itemCount %></span></p>
-            <hr class="my-2"/>
-            <p class="mb-0 d-flex justify-content-between align-items-center"><span class="summary-total">Total</span><strong>Rs. <span id="cart-total"><%= total %></span></strong></p>
-            <p class="mt-1 mb-3 small text-muted">(Inclusive of all items pricing)</p>
-            <a href="/shop/All/" class="btn btn-outline-dark btn-sm mb-2 w-100">Continue Shopping</a>
-            <a href="/checkout/" class="btn btn-dark btn-block" style="font-weight:600; letter-spacing:.5px;">Checkout</a>
+            <div class="summary-title">ORDER SUMMARY</div>
+            <p class="d-flex justify-content-between"><span class="text-muted" style="font-size:12px;">Items (<%= itemCount %>)</span></p>
+            <hr/>
+            <p class="mb-3 d-flex justify-content-between align-items-center"><span class="summary-total">Total</span><strong style="font-size:16px;">Rs. <span id="cart-total"><%= total %></span></strong></p>
+            <a href="/checkout/" class="btn btn-dark btn-block mb-2">Proceed to Checkout</a>
+            <a href="/shop/All/" class="btn btn-outline-dark btn-block">Continue Shopping</a>
           </div>
         </div>
       </div>
     <% } %>
   </div>
-  <% if(items.length){ %>
-  <div class="mobile-total-bar d-md-none" style="display:none;">
-    <div>
-      <div style="font-size:11px; letter-spacing:1px; opacity:.75;">TOTAL</div>
-      <strong>Rs. <span id="mobile-total"><%= total %></span></strong>
-    </div>
-  <a class="mobile-checkout-btn" href="/checkout/">Checkout</a>
-  </div>
-  <% } %>
+
 
   <footer class="bg-dark text-white shadow" style="color: #fff; margin-top: 40px;">
     <div class="container py-4">
@@ -194,12 +173,12 @@
     function getCookie(name){ var cookieValue=null; if(document.cookie && document.cookie!==''){ var cookies=document.cookie.split(';'); for(var i=0;i<cookies.length;i++){ var cookie=cookies[i].trim(); if(cookie.substring(0,name.length+1)===(name+'=')){ cookieValue=decodeURIComponent(cookie.substring(name.length+1)); break; }}} return cookieValue; }
     function uuidv4(){ return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){ var r=Math.random()*16|0,v=c=='x'?r:(r&0x3|0x8); return v.toString(16); }); }
   function animateQty(row){ const input=$(row).find('.qty-input'); input.addClass('qty-pulse'); setTimeout(()=>input.removeClass('qty-pulse'),600); }
-  function setQty(id, qty, variantId){ if(qty<0) qty=0; const params = {productid:id, qty:qty}; if(variantId) params.variantid = variantId; $.get('/set_cart_qty/', params, function(){ if(qty===0){ const selector = variantId ? 'tr[data-id="'+id+'"][data-variant-id="'+variantId+'"]' : 'tr[data-id="'+id+'"]'; const tr=$(selector).addClass('removing'); tr.css('opacity','0'); setTimeout(()=>tr.remove(),350); } else { const selector = variantId ? 'tr[data-id="'+id+'"][data-variant-id="'+variantId+'"]' : 'tr[data-id="'+id+'"]'; const row=$(selector).get(0); const price=parseInt($(row).find('td').eq(3).text().replace(/[^0-9]/g,''),10); $(row).find('.line-subtotal').text(price*qty); $(row).find('.qty-input').val(qty); animateQty(row); } recalcTotals(); if($('.cart-table tbody tr').length===0){ setTimeout(()=>location.reload(),360); } }); }
-    function recalcTotals(){ var total=0, count=0; $('.cart-table tbody tr').each(function(){ var qty=parseInt($(this).find('.qty-input').val(),10); var subtotal=parseInt($(this).find('.line-subtotal').text(),10); total+=subtotal; count+=qty; }); $('#cart-total').text(total); $('#mobile-total').text(total); if(total>0){ $('.mobile-total-bar').show(); } }
-  $(document).on('click','.inc-btn',function(e){ e.preventDefault(); var row=$(this).closest('tr'); var id=row.data('id'); var variantId=row.data('variant-id')||null; var qty=parseInt(row.find('.qty-input').val(),10)+1; setQty(id, qty, variantId); });
-  $(document).on('click','.dec-btn',function(e){ e.preventDefault(); var row=$(this).closest('tr'); var id=row.data('id'); var variantId=row.data('variant-id')||null; var qty=parseInt(row.find('.qty-input').val(),10)-1; setQty(id, qty, variantId); });
-  $(document).on('blur','.qty-input',function(){ var row=$(this).closest('tr'); var id=row.data('id'); var variantId=row.data('variant-id')||null; var val=parseInt($(this).val(),10); if(isNaN(val)||val<0) val=0; setQty(id,val,variantId); });
-    $(document).on('click','.remove-btn',function(e){ e.preventDefault(); var row=$(this).closest('tr'); var id=row.data('id'); var variantId=row.data('variant-id')||null; setQty(id,0,variantId); });
+  function setQty(id, qty, variantId){ if(qty<0) qty=0; const params = {productid:id, qty:qty}; if(variantId) params.variantid = variantId; $.get('/set_cart_qty/', params, function(){ if(qty===0){ const selector = variantId ? '.cart-item-card[data-id="'+id+'"][data-variant-id="'+variantId+'"]' : '.cart-item-card[data-id="'+id+'"]'; const card=$(selector); card.css('opacity','0'); setTimeout(()=>card.remove(),350); } else { const selector = variantId ? '.cart-item-card[data-id="'+id+'"][data-variant-id="'+variantId+'"]' : '.cart-item-card[data-id="'+id+'"]'; const card=$(selector); const price=parseInt(card.find('.cart-item-price').text().replace(/[^0-9]/g,''),10); card.find('.line-subtotal').text(price*qty); card.find('.qty-input').val(qty); animateQty(card); } recalcTotals(); if($('.cart-item-card').length===0){ setTimeout(()=>location.reload(),360); } }); }
+    function recalcTotals(){ var total=0, count=0; $('.cart-item-card').each(function(){ var qty=parseInt($(this).find('.qty-input').val(),10); var subtotal=parseInt($(this).find('.line-subtotal').text(),10); total+=subtotal; count+=qty; }); $('#cart-total').text(total); $('.summary-title').next('p').html('<span class="text-muted" style="font-size:12px;">Items ('+count+')</span>'); }
+  $(document).on('click','.inc-btn',function(e){ e.preventDefault(); var card=$(this).closest('.cart-item-card'); var id=card.data('id'); var variantId=card.data('variant-id')||null; var qty=parseInt(card.find('.qty-input').val(),10)+1; setQty(id, qty, variantId); });
+  $(document).on('click','.dec-btn',function(e){ e.preventDefault(); var card=$(this).closest('.cart-item-card'); var id=card.data('id'); var variantId=card.data('variant-id')||null; var qty=parseInt(card.find('.qty-input').val(),10)-1; setQty(id, qty, variantId); });
+  $(document).on('blur','.qty-input',function(){ var card=$(this).closest('.cart-item-card'); var id=card.data('id'); var variantId=card.data('variant-id')||null; var val=parseInt($(this).val(),10); if(isNaN(val)||val<0) val=0; setQty(id,val,variantId); });
+    $(document).on('click','.remove-btn',function(e){ e.preventDefault(); var card=$(this).closest('.cart-item-card'); var id=card.data('id'); var variantId=card.data('variant-id')||null; setQty(id,0,variantId); });
     $('#search-form-in-navbar').submit(function(e){ e.preventDefault(); var search_term=$('#search').val(); if(search_term){ window.location=window.location.origin+'/search/all/?q='+search_term; }});
     recalcTotals();
   </script>
