@@ -8,7 +8,9 @@
   <link rel="stylesheet" href="/staticfiles/style.blue.css" />
   <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@300;400;700&display=swap" />
+
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
   <style>
   html{height:100%;}
   body{font-family:'Libre Franklin',Arial,sans-serif; background:#fafbfc; display:flex; flex-direction:column; min-height:100vh; padding-top:70px; overflow-x:hidden;}
@@ -46,6 +48,33 @@
   #celebrate .btn{border-radius:8px; padding:11px 24px; font-weight:600; letter-spacing:.5px; font-size:13px; box-shadow:0 2px 8px rgba(0,0,0,.15);}
   #confettiCanvas{position:absolute; inset:0; width:100%; height:100%; pointer-events:none;}
   .form-section{background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.04); border:1px solid #e8eaed;}
+  .location-picker-wrapper{position:relative;}
+  .location-btn{position:absolute; right:10px; top:50%; transform:translateY(-50%); background:#fff; border:1px solid #e1e4e8; border-radius:6px; padding:8px 12px; cursor:pointer; transition:all .25s ease; box-shadow:0 1px 3px rgba(0,0,0,.08); z-index:2;}
+  .location-btn:hover{background:#000; color:#fff; border-color:#000; box-shadow:0 2px 6px rgba(0,0,0,.15);}
+  .location-btn i{font-size:14px;}
+  #locationModal{display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:9998; align-items:center; justify-content:center; backdrop-filter:blur(4px);}
+  #locationModal.active{display:flex;}
+  .location-modal-content{background:#fff; border-radius:16px; width:90%; max-width:600px; max-height:85vh; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.3);}
+  .location-modal-header{padding:18px 22px; border-bottom:1px solid #e8eaed; display:flex; justify-content:space-between; align-items:center;}
+  .location-modal-header h3{margin:0; font-size:16px; font-weight:700; color:#1a1a1a;}
+  .location-close-btn{background:transparent; border:none; font-size:24px; color:#666; cursor:pointer; padding:0; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:6px;}
+  .location-close-btn:hover{background:#f0f0f0; color:#000;}
+  .location-search-box{padding:16px; border-bottom:1px solid #e8eaed; position:relative;}
+  .location-search-input{width:100%; padding:10px 14px; border:1px solid #e1e4e8; border-radius:8px; font-size:13px;}
+  .location-search-input:focus{outline:none; border-color:#333;}
+
+  #locationMap{height:400px; width:100%;}
+  .location-modal-footer{padding:16px 22px; border-top:1px solid #e8eaed; display:flex; gap:10px; justify-content:flex-end;}
+  .location-btn-primary{background:#000; color:#fff; padding:10px 20px; border-radius:8px; font-size:13px; font-weight:600; border:none; cursor:pointer;}
+  .location-btn-secondary{background:#fff; color:#333; border:1px solid #e1e4e8; padding:10px 20px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;}
+  @keyframes fadeIn{from{opacity:0;} to{opacity:1;}}
+  @keyframes slideUp{from{transform:translateY(30px); opacity:0;} to{transform:translateY(0); opacity:1;}}
+  @media (max-width:767.98px){
+    .location-btn{padding:6px 10px; right:8px;}
+    .location-btn i{font-size:12px;}
+    .location-modal-content{width:95%; max-height:90vh;}
+    #locationMap{height:300px;}
+  }
   
   /* Mobile optimizations */
   @media (max-width:991.98px){ 
@@ -130,7 +159,14 @@
             </div>
             <div class="col-md-6 form-group">
               <label class="sr-only" for="address">Detailed Address *</label>
-              <input id="address" class="form-control" placeholder="Detailed Address *" required />
+              <div class="location-picker-wrapper">
+                <input id="address" class="form-control" placeholder="Detailed Address *" required style="padding-right:50px;" />
+                <button type="button" class="location-btn" onclick="openLocationPicker()" title="Pick location on map">
+                  <i class="fas fa-map-marker-alt"></i>
+                </button>
+              </div>
+              <input type="hidden" id="latitude" />
+              <input type="hidden" id="longitude" />
             </div>
             <div class="col-12 form-group">
               <label class="sr-only" for="notes">Order Notes (Optional)</label>
@@ -178,9 +214,44 @@
 
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
   <script src="https://kit.fontawesome.com/d6db3c2373.js" crossorigin="anonymous"></script>
+
+
   
   <%- include('partials/user-auth-popup') %>
   
+  <!-- Location Picker Modal -->
+  <div id="locationModal">
+    <div class="location-modal-content">
+      <div class="location-modal-header">
+        <h3>📍 Select Delivery Location</h3>
+        <button class="location-close-btn" onclick="closeLocationPicker()">&times;</button>
+      </div>
+      <div style="padding:20px;">
+        <div style="margin-bottom:15px;">
+          <label style="display:block; margin-bottom:5px; font-weight:600;">Search Location:</label>
+          <input id="locationSearch" class="location-search-input" placeholder="Type landmark, area, or address..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;" />
+          <div id="searchResults" style="margin-top:10px; max-height:200px; overflow-y:auto;"></div>
+        </div>
+        <div style="margin-bottom:15px;">
+          <label style="display:block; margin-bottom:5px; font-weight:600;">Or enter coordinates:</label>
+          <div style="display:flex; gap:10px;">
+            <input id="manualLat" placeholder="Latitude" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:4px;" />
+            <input id="manualLng" placeholder="Longitude" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:4px;" />
+          </div>
+        </div>
+        <button onclick="getCurrentLocation()" style="width:100%; padding:10px; background:#f8f9fa; border:1px solid #ddd; border-radius:6px; margin-bottom:15px; cursor:pointer;">
+          📍 Use My Current Location
+        </button>
+      </div>
+      <div class="location-modal-footer">
+        <button class="location-btn-secondary" onclick="closeLocationPicker()">Cancel</button>
+        <button class="location-btn-primary" onclick="confirmLocation()">Confirm Location</button>
+      </div>
+    </div>
+  </div>
+  
+
+
   <div id="celebrate">
     <canvas id="confettiCanvas"></canvas>
     <div class="celebrate-box">
@@ -307,8 +378,128 @@
     }
     
     document.getElementById('celebrate-home').addEventListener('click',()=>{window.location='/';});
+    
+    // Close modal on outside click
+    document.getElementById('locationModal').addEventListener('click', (e) => {
+      if (e.target.id === 'locationModal') closeLocationPicker();
+    });
+    
+
     // Auto redirect after celebration
     celebrateEl.addEventListener('transitionend',()=>{ if(celebrateEl.classList.contains('active')) setTimeout(()=>{window.location='/'},6000);});
+    
+    // Simple location picker
+    let selectedLat, selectedLng, selectedAddress;
+    
+    function openLocationPicker() {
+      document.getElementById('locationModal').classList.add('active');
+      setupLocationSearch();
+    }
+    
+    function closeLocationPicker() {
+      document.getElementById('locationModal').classList.remove('active');
+    }
+    
+    function setupLocationSearch() {
+      const searchInput = document.getElementById('locationSearch');
+      const resultsDiv = document.getElementById('searchResults');
+      let searchTimeout;
+      
+      searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        
+        if (query.length < 2) {
+          resultsDiv.innerHTML = '';
+          return;
+        }
+        
+        searchTimeout = setTimeout(() => {
+          // Simple Nepal locations database
+          const locations = [
+            {name: 'Thamel, Kathmandu', lat: 27.7172, lng: 85.3240},
+            {name: 'Durbar Square, Kathmandu', lat: 27.7045, lng: 85.3077},
+            {name: 'New Road, Kathmandu', lat: 27.7006, lng: 85.3140},
+            {name: 'Patan Durbar Square', lat: 27.6734, lng: 85.3260},
+            {name: 'Bhaktapur Durbar Square', lat: 27.6710, lng: 85.4298},
+            {name: 'Pashupatinath Temple', lat: 27.7106, lng: 85.3482},
+            {name: 'Boudhanath Stupa', lat: 27.7215, lng: 85.3624},
+            {name: 'Swayambhunath Temple', lat: 27.7149, lng: 85.2906},
+            {name: 'Tribhuvan Airport', lat: 27.6966, lng: 85.3591},
+            {name: 'Ratna Park, Kathmandu', lat: 27.7056, lng: 85.3158},
+            {name: 'Baneshwor, Kathmandu', lat: 27.6934, lng: 85.3378},
+            {name: 'Maharajgunj, Kathmandu', lat: 27.7394, lng: 85.3347},
+            {name: 'Lazimpat, Kathmandu', lat: 27.7253, lng: 85.3242},
+            {name: 'Durbarmarg, Kathmandu', lat: 27.7089, lng: 85.3206}
+          ];
+          
+          const matches = locations.filter(loc => 
+            loc.name.toLowerCase().includes(query.toLowerCase())
+          ).slice(0, 5);
+          
+          resultsDiv.innerHTML = matches.map(loc => 
+            `<div onclick="selectLocation('${loc.name}', ${loc.lat}, ${loc.lng})" style="padding:8px; cursor:pointer; border-bottom:1px solid #eee; font-size:13px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='white'">${loc.name}</div>`
+          ).join('');
+        }, 300);
+      });
+    }
+    
+    function selectLocation(name, lat, lng) {
+      selectedAddress = name;
+      selectedLat = lat;
+      selectedLng = lng;
+      document.getElementById('locationSearch').value = name;
+      document.getElementById('searchResults').innerHTML = '';
+      document.getElementById('manualLat').value = lat.toFixed(6);
+      document.getElementById('manualLng').value = lng.toFixed(6);
+    }
+    
+    function getCurrentLocation() {
+      if (navigator.geolocation) {
+        const btn = event.target;
+        btn.innerHTML = '🔄 Getting location...';
+        
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            selectedLat = lat;
+            selectedLng = lng;
+            selectedAddress = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            document.getElementById('manualLat').value = lat.toFixed(6);
+            document.getElementById('manualLng').value = lng.toFixed(6);
+            document.getElementById('locationSearch').value = selectedAddress;
+            btn.innerHTML = '📍 Use My Current Location';
+          },
+          () => {
+            alert('Unable to get location. Please enter manually.');
+            btn.innerHTML = '📍 Use My Current Location';
+          }
+        );
+      } else {
+        alert('Geolocation not supported.');
+      }
+    }
+    
+    function confirmLocation() {
+      const manualLat = document.getElementById('manualLat').value;
+      const manualLng = document.getElementById('manualLng').value;
+      
+      if (manualLat && manualLng) {
+        selectedLat = parseFloat(manualLat);
+        selectedLng = parseFloat(manualLng);
+      }
+      
+      if (selectedLat && selectedLng) {
+        const address = selectedAddress || document.getElementById('locationSearch').value || `${selectedLat.toFixed(6)}, ${selectedLng.toFixed(6)}`;
+        document.getElementById('address').value = address;
+        document.getElementById('latitude').value = selectedLat;
+        document.getElementById('longitude').value = selectedLng;
+        closeLocationPicker();
+      } else {
+        alert('Please select a location or enter coordinates.');
+      }
+    }
   </script>
 </body>
 </html>

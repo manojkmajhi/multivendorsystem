@@ -1837,7 +1837,7 @@ app.get('/checkout/', async (req, res) => {
     
     const total = items.reduce((s,i)=>s+i.subtotal,0);
     if(!items.length) return res.redirect('/cart/');
-    res.render('checkout', { items, total, siteSetting: res.locals.siteSetting });
+    res.render('checkout', { items, total, siteSetting: res.locals.siteSetting, googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || '' });
   } catch(e){
     console.error('CHECKOUT_PAGE_ERROR', e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load checkout.' });
