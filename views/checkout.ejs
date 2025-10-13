@@ -211,6 +211,10 @@
               <label class="sr-only" for="area">Area</label>
               <select id="area" class="custom-select"><option value="">Select Area</option></select>
             </div>
+            <div class="col-md-6 form-group" id="otherCityWrapper" style="display:none;">
+              <label class="sr-only" for="otherCity">Enter City</label>
+              <input id="otherCity" class="form-control" placeholder="Enter City *" />
+            </div>
             <div class="col-md-6 form-group">
               <label class="sr-only" for="email">Email (Optional)</label>
               <input id="email" type="email" class="form-control" placeholder="Email (Optional)" />
@@ -328,9 +332,10 @@
 
   <script>
     // Simple region -> area mapping (placeholder)
-    const areas = { 'Inside Valley':['Select Area','Kathmandu','Bhaktapur','Lalitpur'], 'Outside Valley':['Select Area','Pokhara','Butwal','Itahari','Chitwan'] };
-    function updateAreas(){ const r=document.getElementById('region').value; const sel=document.getElementById('area'); sel.innerHTML=''; areas[r].forEach(a=>{ const o=document.createElement('option'); o.textContent=a; sel.appendChild(o); }); recalc(); }
+    const areas = { 'Inside Valley':['Select Area','Kathmandu','Bhaktapur','Lalitpur'], 'Outside Valley':['Select Area','Pokhara','Butwal','Itahari','Chitwan','Other'] };
+    function updateAreas(){ const r=document.getElementById('region').value; const sel=document.getElementById('area'); sel.innerHTML=''; areas[r].forEach(a=>{ const o=document.createElement('option'); o.textContent=a; sel.appendChild(o); }); document.getElementById('otherCityWrapper').style.display='none'; document.getElementById('otherCity').value=''; recalc(); }
     document.getElementById('region').addEventListener('change', updateAreas);
+    document.getElementById('area').addEventListener('change', function(){ const wrapper=document.getElementById('otherCityWrapper'); if(this.value==='Other'){ wrapper.style.display='block'; document.getElementById('otherCity').required=true; }else{ wrapper.style.display='none'; document.getElementById('otherCity').required=false; document.getElementById('otherCity').value=''; } recalc(); });
     updateAreas();
 
     function recalc(){ 
@@ -387,12 +392,15 @@
     });
     
     async function submitOrder() {
+      const areaValue = document.getElementById('area')?.value || '';
+      const finalArea = areaValue === 'Other' ? document.getElementById('otherCity')?.value || '' : areaValue;
+      
       const formData = {
         name: document.getElementById('name')?.value || '',
         mobile: document.getElementById('mobile')?.value || '',
         email: document.getElementById('email')?.value || '',
         region: document.getElementById('region')?.value || 'Inside Valley',
-        area: document.getElementById('area')?.value || '',
+        area: finalArea,
         address: document.getElementById('address')?.value || '',
         notes: document.getElementById('notes')?.value || '',
         subtotal: parseInt(document.getElementById('subtotal')?.textContent || '0'),
@@ -401,7 +409,7 @@
       };
       
       // Validate
-      if(!formData.name || !formData.mobile || !formData.address || formData.area === 'Select Area') {
+      if(!formData.name || !formData.mobile || !formData.address || formData.area === 'Select Area' || !formData.area) {
         alert('Please fill in all required fields');
         return;
       }
