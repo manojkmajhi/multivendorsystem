@@ -8,8 +8,10 @@
   <link rel="stylesheet" href="/staticfiles/style.blue.css" />
   <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@300;400;700&display=swap" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
   html{height:100%;}
@@ -52,28 +54,82 @@
   .location-btn{position:absolute; right:10px; top:50%; transform:translateY(-50%); background:#fff; border:1px solid #e1e4e8; border-radius:6px; padding:8px 12px; cursor:pointer; transition:all .25s ease; box-shadow:0 1px 3px rgba(0,0,0,.08); z-index:2;}
   .location-btn:hover{background:#000; color:#fff; border-color:#000; box-shadow:0 2px 6px rgba(0,0,0,.15);}
   .location-btn i{font-size:14px;}
-  #locationModal{display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:9998; align-items:center; justify-content:center; backdrop-filter:blur(4px);}
+  #locationModal{display:none; position:fixed; inset:0; background:rgba(0,0,0,.8); z-index:9998; align-items:center; justify-content:center; backdrop-filter:blur(6px); padding:20px; animation:fadeIn .3s ease; overflow:auto;}
   #locationModal.active{display:flex;}
-  .location-modal-content{background:#fff; border-radius:16px; width:90%; max-width:600px; max-height:85vh; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.3);}
-  .location-modal-header{padding:18px 22px; border-bottom:1px solid #e8eaed; display:flex; justify-content:space-between; align-items:center;}
-  .location-modal-header h3{margin:0; font-size:16px; font-weight:700; color:#1a1a1a;}
-  .location-close-btn{background:transparent; border:none; font-size:24px; color:#666; cursor:pointer; padding:0; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:6px;}
-  .location-close-btn:hover{background:#f0f0f0; color:#000;}
-  .location-search-box{padding:16px; border-bottom:1px solid #e8eaed; position:relative;}
-  .location-search-input{width:100%; padding:10px 14px; border:1px solid #e1e4e8; border-radius:8px; font-size:13px;}
-  .location-search-input:focus{outline:none; border-color:#333;}
+  .location-modal-content{background:#fff; border-radius:16px; width:100%; max-width:600px; height:auto; max-height:calc(100vh - 40px); overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.4); display:flex; flex-direction:column; animation:slideUp .3s ease;}
+  @keyframes fadeIn{from{opacity:0;} to{opacity:1;}}
+  @keyframes slideUp{from{transform:translateY(20px); opacity:0;} to{transform:translateY(0); opacity:1;}}
+  .location-modal-header{padding:14px 18px; border-bottom:1px solid #e0e0e0; display:flex; justify-content:space-between; align-items:center; background:#fff; flex-shrink:0;}
+  .location-modal-header h3{margin:0; font-size:16px; font-weight:700; color:#1a1a1a; display:flex; align-items:center; gap:8px;}
+  .location-close-btn{background:#f5f5f5; border:none; font-size:18px; color:#666; cursor:pointer; padding:0; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:50%; transition:all .2s;}
+  .location-close-btn:hover{background:#e0e0e0; color:#000; transform:rotate(90deg);}
+  .location-search-input{width:100%; padding:12px 16px; border:2px solid #e0e0e0; border-radius:10px; font-size:14px; transition:all .2s; background:#fafafa; font-weight:400;}
+  .location-search-input:focus{outline:none; border-color:#000; box-shadow:0 2px 8px rgba(0,0,0,.08); background:#fff;}
+  .location-search-input::placeholder{color:#aaa; font-weight:400;}
+  .search-status{position:absolute; right:16px; top:50%; transform:translateY(-50%); font-size:10px; color:#999; pointer-events:none; font-weight:500;}
+  @keyframes pulse{0%, 100%{opacity:1;} 50%{opacity:.5;}}
 
-  #locationMap{height:400px; width:100%;}
-  .location-modal-footer{padding:16px 22px; border-top:1px solid #e8eaed; display:flex; gap:10px; justify-content:flex-end;}
-  .location-btn-primary{background:#000; color:#fff; padding:10px 20px; border-radius:8px; font-size:13px; font-weight:600; border:none; cursor:pointer;}
-  .location-btn-secondary{background:#fff; color:#333; border:1px solid #e1e4e8; padding:10px 20px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;}
+  .location-modal-body{flex:1; display:flex; flex-direction:column; overflow:auto; position:relative; min-height:0;}
+  .location-search-wrapper{padding:12px 16px; background:#fff; position:relative; z-index:10; flex-shrink:0;}
+  #locationMap{width:100%; height:280px; z-index:1; flex-shrink:0; background:#f5f5f5;}
+  .leaflet-container{font-family:'Libre Franklin',Arial,sans-serif; font-size:13px;}
+  .map-overlay-controls{position:absolute; top:12px; right:12px; z-index:1000; display:flex; flex-direction:column; gap:8px;}
+  .current-location-btn{background:#fff; color:#1a1a1a; border:none; padding:10px 16px; border-radius:50px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.15); font-size:12px; font-weight:600; transition:all .2s; display:flex; align-items:center; gap:6px;}
+  .current-location-btn:hover{background:#1a1a1a; color:#fff; transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,.25);}
+  .current-location-btn:active{transform:translateY(0);}
+  .leaflet-control-attribution{font-size:9px !important; background:rgba(255,255,255,.9) !important;}
+  .location-info{padding:12px 16px; background:#fff; border-top:1px solid #e0e0e0; flex-shrink:0;}
+  .location-info-card{background:#f8f9fa; padding:12px; border-radius:10px; border:1px solid #e8eaed;}
+  .location-info-label{font-weight:600; color:#666; margin-bottom:6px; font-size:10px; text-transform:uppercase; letter-spacing:.6px; display:flex; align-items:center; gap:4px;}
+  .location-info-text{color:#1a1a1a; font-size:13px; margin-bottom:4px; font-weight:600; line-height:1.3;}
+  .location-info-coords{color:#888; font-size:11px; font-family:monospace; background:#fff; padding:4px 8px; border-radius:4px; display:inline-block; margin-top:2px;}
+  .location-modal-footer{padding:12px 16px; border-top:1px solid #e0e0e0; display:flex; gap:10px; justify-content:space-between; background:#fff; flex-shrink:0;}
+  .location-btn-primary{background:#000; color:#fff; padding:12px 28px; border-radius:50px; font-size:13px; font-weight:600; border:none; cursor:pointer; transition:all .2s; flex:1; box-shadow:0 2px 8px rgba(0,0,0,.2);}
+  .location-btn-primary:hover{background:#1a1a1a; transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,.3);}
+  .location-btn-primary:active{transform:translateY(0);}
+  .location-btn-secondary{background:#f5f5f5; color:#1a1a1a; border:none; padding:12px 20px; border-radius:50px; font-size:13px; font-weight:600; cursor:pointer; transition:all .2s;}
+  .location-btn-secondary:hover{background:#e0e0e0;}
+  .search-result-item{padding:10px 12px; cursor:pointer; border-bottom:1px solid #f0f0f0; font-size:12px; transition:all .2s; display:flex; align-items:start; gap:10px; background:#fff;}
+  .search-result-item:hover{background:#f8f9fa; padding-left:16px; border-left:3px solid #000;}
+  .search-result-item:active{background:#f0f0f0;}
+  .search-result-item:last-child{border-bottom:none;}
+  .search-result-icon{font-size:18px; margin-top:1px; opacity:.8;}
+  .search-result-content{flex:1; min-width:0;}
+  .search-result-title{font-weight:600; color:#1a1a1a; margin-bottom:3px; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .search-result-subtitle{font-size:11px; color:#888; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .search-results-container{max-height:200px; overflow-y:auto; border-radius:10px; background:#fff; box-shadow:0 2px 12px rgba(0,0,0,.12); margin-top:10px; border:1px solid #e0e0e0;}
+  .search-results-container::-webkit-scrollbar{width:5px;}
+  .search-results-container::-webkit-scrollbar-track{background:#f5f5f5;}
+  .search-results-container::-webkit-scrollbar-thumb{background:#ccc; border-radius:3px;}
+  .search-results-container::-webkit-scrollbar-thumb:hover{background:#999;}
   @keyframes fadeIn{from{opacity:0;} to{opacity:1;}}
   @keyframes slideUp{from{transform:translateY(30px); opacity:0;} to{transform:translateY(0); opacity:1;}}
+  @media (min-width:768px){
+    .location-modal-content{max-width:580px;}
+    #locationMap{height:320px;}
+  }
+  @media (min-width:1024px){
+    .location-modal-content{max-width:620px;}
+    #locationMap{height:340px;}
+  }
   @media (max-width:767.98px){
-    .location-btn{padding:6px 10px; right:8px;}
-    .location-btn i{font-size:12px;}
-    .location-modal-content{width:95%; max-height:90vh;}
-    #locationMap{height:300px;}
+    #locationModal{padding:0;}
+    .location-modal-content{border-radius:0; max-width:100%; max-height:100%; height:100%;}
+    .location-modal-header{padding:12px 16px;}
+    .location-modal-header h3{font-size:15px;}
+    .location-search-wrapper{padding:10px 16px;}
+    .location-search-input{padding:10px 14px; font-size:13px;}
+    .search-status{right:14px; font-size:9px;}
+    #locationMap{height:calc(100vh - 320px); min-height:250px;}
+    .location-info{padding:10px 16px;}
+    .location-info-card{padding:10px;}
+    .location-info-text{font-size:12px;}
+    .location-info-coords{font-size:10px;}
+    .location-modal-footer{padding:10px 16px; flex-direction:column-reverse;}
+    .location-btn-primary, .location-btn-secondary{width:100%; padding:11px;}
+    .map-overlay-controls{top:10px; right:10px;}
+    .current-location-btn{padding:8px 12px; font-size:11px;}
+    .search-results-container{max-height:150px;}
   }
   
   /* Mobile optimizations */
@@ -223,25 +279,30 @@
   <div id="locationModal">
     <div class="location-modal-content">
       <div class="location-modal-header">
-        <h3>📍 Select Delivery Location</h3>
+        <h3><span style="font-size:22px;">📍</span> Select Delivery Location</h3>
         <button class="location-close-btn" onclick="closeLocationPicker()">&times;</button>
       </div>
-      <div style="padding:20px;">
-        <div style="margin-bottom:15px;">
-          <label style="display:block; margin-bottom:5px; font-weight:600;">Search Location:</label>
-          <input id="locationSearch" class="location-search-input" placeholder="Type landmark, area, or address..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;" />
-          <div id="searchResults" style="margin-top:10px; max-height:200px; overflow-y:auto;"></div>
+      <div class="location-modal-body">
+        <div class="location-search-wrapper">
+          <div style="position:relative;">
+            <input id="locationSearch" class="location-search-input" placeholder="Search area, landmark, school, hospital..." autocomplete="off" />
+            <span id="searchStatus" class="search-status"></span>
+          </div>
+          <div id="searchResults" class="search-results-container" style="display:none;"></div>
         </div>
-        <div style="margin-bottom:15px;">
-          <label style="display:block; margin-bottom:5px; font-weight:600;">Or enter coordinates:</label>
-          <div style="display:flex; gap:10px;">
-            <input id="manualLat" placeholder="Latitude" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:4px;" />
-            <input id="manualLng" placeholder="Longitude" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:4px;" />
+        <div style="position:relative; flex:1;">
+          <div id="locationMap"></div>
+          <div class="map-overlay-controls">
+            <button class="current-location-btn" onclick="getCurrentLocation()"><span>📍</span> My Location</button>
           </div>
         </div>
-        <button onclick="getCurrentLocation()" style="width:100%; padding:10px; background:#f8f9fa; border:1px solid #ddd; border-radius:6px; margin-bottom:15px; cursor:pointer;">
-          📍 Use My Current Location
-        </button>
+        <div class="location-info">
+          <div class="location-info-card">
+            <div class="location-info-label"><span>📍</span> Selected Location</div>
+            <div id="selectedLocationText" class="location-info-text">Drag marker or click map to select location</div>
+            <div id="selectedCoords" class="location-info-coords"></div>
+          </div>
+        </div>
       </div>
       <div class="location-modal-footer">
         <button class="location-btn-secondary" onclick="closeLocationPicker()">Cancel</button>
@@ -388,12 +449,21 @@
     // Auto redirect after celebration
     celebrateEl.addEventListener('transitionend',()=>{ if(celebrateEl.classList.contains('active')) setTimeout(()=>{window.location='/'},6000);});
     
-    // Simple location picker
-    let selectedLat, selectedLng, selectedAddress;
+    // Leaflet with Nominatim
+    let map, marker;
+    let selectedLat = 27.7172, selectedLng = 85.3240, selectedAddress = '';
+    let searchSetupDone = false;
+    let searchTimeout;
     
     function openLocationPicker() {
       document.getElementById('locationModal').classList.add('active');
-      setupLocationSearch();
+      if (!searchSetupDone) {
+        setupLocationSearch();
+        searchSetupDone = true;
+      }
+      if (!map) {
+        setTimeout(initMap, 100);
+      }
     }
     
     function closeLocationPicker() {
@@ -403,101 +473,202 @@
     function setupLocationSearch() {
       const searchInput = document.getElementById('locationSearch');
       const resultsDiv = document.getElementById('searchResults');
-      let searchTimeout;
+      const searchStatus = document.getElementById('searchStatus');
+      let currentRequest = null;
       
       searchInput.addEventListener('input', function() {
         clearTimeout(searchTimeout);
         const query = this.value.trim();
         
         if (query.length < 2) {
-          resultsDiv.innerHTML = '';
+          resultsDiv.style.display = 'none';
+          searchStatus.textContent = '';
+          if (currentRequest) currentRequest.abort();
           return;
         }
         
-        searchTimeout = setTimeout(() => {
-          // Simple Nepal locations database
-          const locations = [
-            {name: 'Thamel, Kathmandu', lat: 27.7172, lng: 85.3240},
-            {name: 'Durbar Square, Kathmandu', lat: 27.7045, lng: 85.3077},
-            {name: 'New Road, Kathmandu', lat: 27.7006, lng: 85.3140},
-            {name: 'Patan Durbar Square', lat: 27.6734, lng: 85.3260},
-            {name: 'Bhaktapur Durbar Square', lat: 27.6710, lng: 85.4298},
-            {name: 'Pashupatinath Temple', lat: 27.7106, lng: 85.3482},
-            {name: 'Boudhanath Stupa', lat: 27.7215, lng: 85.3624},
-            {name: 'Swayambhunath Temple', lat: 27.7149, lng: 85.2906},
-            {name: 'Tribhuvan Airport', lat: 27.6966, lng: 85.3591},
-            {name: 'Ratna Park, Kathmandu', lat: 27.7056, lng: 85.3158},
-            {name: 'Baneshwor, Kathmandu', lat: 27.6934, lng: 85.3378},
-            {name: 'Maharajgunj, Kathmandu', lat: 27.7394, lng: 85.3347},
-            {name: 'Lazimpat, Kathmandu', lat: 27.7253, lng: 85.3242},
-            {name: 'Durbarmarg, Kathmandu', lat: 27.7089, lng: 85.3206}
-          ];
-          
-          const matches = locations.filter(loc => 
-            loc.name.toLowerCase().includes(query.toLowerCase())
-          ).slice(0, 5);
-          
-          resultsDiv.innerHTML = matches.map(loc => 
-            `<div onclick="selectLocation('${loc.name}', ${loc.lat}, ${loc.lng})" style="padding:8px; cursor:pointer; border-bottom:1px solid #eee; font-size:13px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='white'">${loc.name}</div>`
-          ).join('');
-        }, 300);
+        searchStatus.textContent = 'Searching...';
+        searchStatus.style.animation = 'pulse 1s infinite';
+        
+        searchTimeout = setTimeout(async () => {
+          try {
+            if (currentRequest) currentRequest.abort();
+            currentRequest = new AbortController();
+            
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)},Nepal&countrycodes=np&limit=8&addressdetails=1`, {
+              headers: {'Accept-Language': 'en'},
+              signal: currentRequest.signal
+            });
+            const results = await res.json();
+            
+            searchStatus.textContent = '';
+            searchStatus.style.animation = '';
+            
+            if (results.length > 0) {
+              resultsDiv.style.display = 'block';
+              resultsDiv.innerHTML = results.map(loc => {
+                const icon = getLocationIcon(loc.type);
+                const name = loc.display_name.split(',')[0];
+                const addr = loc.display_name.split(',').slice(1, 3).join(',');
+                return `<div class="search-result-item" onclick='selectPlace(${JSON.stringify(loc.display_name)}, ${loc.lat}, ${loc.lon})'><div class="search-result-icon">${icon}</div><div class="search-result-content"><div class="search-result-title">${name}</div><div class="search-result-subtitle">${addr}</div></div></div>`;
+              }).join('');
+            } else {
+              resultsDiv.style.display = 'block';
+              resultsDiv.innerHTML = `<div style="padding:16px; text-align:center; color:#999; font-size:12px;">
+                <div style="margin-bottom:8px;">No results for "${query}"</div>
+                <div style="font-size:11px; color:#aaa;">Try different keywords</div>
+              </div>`;
+            }
+          } catch (e) {
+            if (e.name !== 'AbortError') {
+              searchStatus.textContent = '';
+              searchStatus.style.animation = '';
+              resultsDiv.style.display = 'block';
+              resultsDiv.innerHTML = '<div style="padding:16px; text-align:center; color:#e74c3c; font-size:12px;">Search failed</div>';
+            }
+          }
+        }, 150);
       });
     }
     
-    function selectLocation(name, lat, lng) {
+    function getLocationIcon(type) {
+      const icons = {school: '🏫', university: '🎓', college: '🎓', hospital: '🏥', clinic: '🏥', doctor: '🏥', restaurant: '🍽️', cafe: '☕', food: '🍔', hotel: '🏨', lodging: '🏨', mall: '🏬', shop: '🏪', store: '🏪', park: '🌳', garden: '🌿', temple: '🛕', church: '⛪', mosque: '🕌', airport: '✈️', bus_station: '🚌', train_station: '🚆', bank: '🏦', atm: '🏧', police: '👮', fire_station: '🚒', post_office: '🏤', library: '📚', stadium: '🏟️', gym: '🏋️'};
+      return icons[type] || '📍';
+    }
+    
+    function selectPlace(name, lat, lng) {
       selectedAddress = name;
-      selectedLat = lat;
-      selectedLng = lng;
-      document.getElementById('locationSearch').value = name;
-      document.getElementById('searchResults').innerHTML = '';
-      document.getElementById('manualLat').value = lat.toFixed(6);
-      document.getElementById('manualLng').value = lng.toFixed(6);
+      selectedLat = parseFloat(lat);
+      selectedLng = parseFloat(lng);
+      document.getElementById('locationSearch').value = name.split(',')[0];
+      document.getElementById('searchResults').style.display = 'none';
+      if (!map) initMap();
+      if (map && marker) {
+        map.setView([selectedLat, selectedLng], 16, {animate: false});
+        marker.setLatLng([selectedLat, selectedLng]);
+      }
+      updateLocationDisplay();
+    }
+    
+    function initMap() {
+      if (map) return;
+      
+      map = L.map('locationMap', {
+        center: [selectedLat, selectedLng],
+        zoom: 14,
+        zoomControl: true,
+        attributionControl: true,
+        preferCanvas: true
+      });
+      
+      L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: '© Google',
+        updateWhenIdle: true,
+        updateWhenZooming: false,
+        keepBuffer: 2
+      }).addTo(map);
+      
+      marker = L.marker([selectedLat, selectedLng], {draggable: true}).addTo(map);
+      
+      marker.on('dragend', function() {
+        const pos = marker.getLatLng();
+        selectedLat = pos.lat;
+        selectedLng = pos.lng;
+        selectedAddress = '';
+        updateLocationDisplay();
+      });
+      
+      map.on('click', function(e) {
+        selectedLat = e.latlng.lat;
+        selectedLng = e.latlng.lng;
+        marker.setLatLng([selectedLat, selectedLng]);
+        selectedAddress = '';
+        updateLocationDisplay();
+      });
+      
+      setTimeout(() => map.invalidateSize(), 100);
+    }
+    
+    async function updateLocationDisplay() {
+      let displayText = selectedAddress || `${selectedLat.toFixed(6)}, ${selectedLng.toFixed(6)}`;
+      
+      if (!selectedAddress) {
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${selectedLat}&lon=${selectedLng}&zoom=18&addressdetails=1`);
+          const data = await res.json();
+          if (data.address) {
+            const addr = data.address;
+            const parts = [];
+            
+            // Priority: specific locations first
+            if (addr.road) parts.push(addr.road);
+            else if (addr.neighbourhood) parts.push(addr.neighbourhood);
+            else if (addr.suburb) parts.push(addr.suburb);
+            
+            if (addr.amenity) parts.unshift(addr.amenity);
+            if (addr.building) parts.unshift(addr.building);
+            if (addr.shop) parts.unshift(addr.shop);
+            if (addr.tourism) parts.unshift(addr.tourism);
+            
+            if (addr.city || addr.town || addr.village) {
+              parts.push(addr.city || addr.town || addr.village);
+            }
+            
+            displayText = parts.length > 0 ? parts.join(', ') : data.display_name.split(',').slice(0, 3).join(',');
+            selectedAddress = displayText;
+          } else if (data.display_name) {
+            displayText = data.display_name.split(',').slice(0, 3).join(',');
+            selectedAddress = displayText;
+          }
+        } catch (e) {}
+      }
+      
+      document.getElementById('selectedLocationText').textContent = displayText;
+      document.getElementById('selectedCoords').textContent = `${selectedLat.toFixed(6)}, ${selectedLng.toFixed(6)}`;
     }
     
     function getCurrentLocation() {
       if (navigator.geolocation) {
         const btn = event.target;
-        btn.innerHTML = '🔄 Getting location...';
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span>⏳</span> Getting...';
+        btn.disabled = true;
         
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            selectedLat = lat;
-            selectedLng = lng;
-            selectedAddress = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-            document.getElementById('manualLat').value = lat.toFixed(6);
-            document.getElementById('manualLng').value = lng.toFixed(6);
-            document.getElementById('locationSearch').value = selectedAddress;
-            btn.innerHTML = '📍 Use My Current Location';
+            selectedLat = position.coords.latitude;
+            selectedLng = position.coords.longitude;
+            selectedAddress = '';
+            if (!map) initMap();
+            if (map && marker) {
+              map.setView([selectedLat, selectedLng], 16, {animate: false});
+              marker.setLatLng([selectedLat, selectedLng]);
+            }
+            updateLocationDisplay();
+            btn.innerHTML = originalText;
+            btn.disabled = false;
           },
           () => {
-            alert('Unable to get location. Please enter manually.');
-            btn.innerHTML = '📍 Use My Current Location';
+            alert('Enable location access in your browser.');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
           }
         );
-      } else {
-        alert('Geolocation not supported.');
       }
     }
     
     function confirmLocation() {
-      const manualLat = document.getElementById('manualLat').value;
-      const manualLng = document.getElementById('manualLng').value;
-      
-      if (manualLat && manualLng) {
-        selectedLat = parseFloat(manualLat);
-        selectedLng = parseFloat(manualLng);
-      }
-      
       if (selectedLat && selectedLng) {
-        const address = selectedAddress || document.getElementById('locationSearch').value || `${selectedLat.toFixed(6)}, ${selectedLng.toFixed(6)}`;
-        document.getElementById('address').value = address;
-        document.getElementById('latitude').value = selectedLat;
-        document.getElementById('longitude').value = selectedLng;
+        const address = selectedAddress || document.getElementById('selectedLocationText').textContent;
+        const fullAddress = `${address} (${selectedLat.toFixed(6)}, ${selectedLng.toFixed(6)})`;
+        document.getElementById('address').value = fullAddress;
+        document.getElementById('latitude').value = selectedLat.toFixed(6);
+        document.getElementById('longitude').value = selectedLng.toFixed(6);
         closeLocationPicker();
       } else {
-        alert('Please select a location or enter coordinates.');
+        alert('Please select a location on the map.');
       }
     }
   </script>
