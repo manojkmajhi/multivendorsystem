@@ -241,29 +241,29 @@
               <a href="/cart/" class="back-cart-btn"><span style="font-size:14px; line-height:0;" class="mr-1">&larr;</span> Change Cart</a>
             </div>
             <div class="col-12 form-group">
-              <div class="form-section" style="background:#e8f5e9; border:1px solid #c8e6c9; padding:8px; margin-top:8px;">
-                <div class="section-heading" style="margin-bottom:6px; font-size:11px;">PAYMENT</div>
-                <div style="display:flex; gap:6px; margin-bottom:6px;">
-                  <label style="flex:1; cursor:pointer; border:2px solid #ddd; border-radius:6px; padding:10px 12px; display:flex; align-items:center; justify-content:center; gap:6px; transition:all .2s; background:#fff;" id="esewaLabel">
-                    <input type="radio" name="payment" value="esewa" id="paymentEsewa" style="width:16px; height:16px;" checked />
-                    <img src="https://i.postimg.cc/c42fF8HH/esewa.png" alt="eSewa" style="height:26px; object-fit:contain;" />
-                  </label>
-                  <label style="flex:1; cursor:pointer; border:2px solid #ddd; border-radius:6px; padding:10px 12px; display:flex; align-items:center; justify-content:center; gap:6px; transition:all .2s; background:#fff;" id="codLabel">
-                    <input type="radio" name="payment" value="cod" id="paymentCod" style="width:16px; height:16px;" />
-                    <img src="https://i.postimg.cc/GhVvXs2r/Cod.png" alt="Cash on Delivery" style="height:26px; object-fit:contain;" />
-                  </label>
-                </div>
-                <div id="esewaQrSection" style="padding:6px; background:#fff; border-radius:5px; border:1px solid #c8e6c9;">
-                  <div style="display:flex; gap:6px; align-items:center;">
-                    <img id="esewaQrImage" src="" alt="QR" style="width:65px; height:65px; border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,.1); object-fit:contain; flex-shrink:0;" />
-                    <div style="flex:1; min-width:0;">
-                      <div style="font-size:9px; color:#666; margin-bottom:4px;">Scan & upload proof</div>
-                      <label for="paymentScreenshot" style="display:block; cursor:pointer; background:#4caf50; color:#fff; padding:5px 8px; border-radius:3px; text-align:center; font-weight:600; font-size:10px; transition:all .2s;" onmouseover="this.style.background='#45a049'" onmouseout="this.style.background='#4caf50'">
-                        <i class="fas fa-upload"></i> Upload *
+              <div class="form-section" style="background:#e8f5e9; border:1px solid #c8e6c9; padding:12px; margin-top:8px;">
+                <div class="section-heading" style="margin-bottom:10px; font-size:11px;">PAYMENT</div>
+                <div style="display:grid; grid-template-columns:auto 1fr; gap:12px; align-items:center;">
+                  <div style="display:flex; flex-direction:column; gap:8px;">
+                    <label style="cursor:pointer; border:2px solid #ddd; border-radius:8px; padding:12px 16px; display:flex; align-items:center; gap:8px; transition:all .2s; background:#fff; min-width:160px;" id="esewaLabel">
+                      <input type="radio" name="payment" value="esewa" id="paymentEsewa" style="width:18px; height:18px; margin:0;" checked />
+                      <img src="https://i.postimg.cc/c42fF8HH/esewa.png" alt="eSewa" style="height:28px; object-fit:contain;" />
+                    </label>
+                    <label style="cursor:pointer; border:2px solid #ddd; border-radius:8px; padding:12px 16px; display:flex; align-items:center; gap:8px; transition:all .2s; background:#fff; min-width:160px;" id="codLabel">
+                      <input type="radio" name="payment" value="cod" id="paymentCod" style="width:18px; height:18px; margin:0;" />
+                      <img src="https://i.postimg.cc/GhVvXs2r/Cod.png" alt="Cash on Delivery" style="height:28px; object-fit:contain;" />
+                    </label>
+                  </div>
+                  <div id="esewaQrSection" style="padding:12px; background:#fff; border-radius:8px; border:1px solid #c8e6c9; display:flex; gap:12px; align-items:center;">
+                    <img id="esewaQrImage" src="" alt="QR" style="width:90px; height:90px; border-radius:6px; box-shadow:0 2px 4px rgba(0,0,0,.1); object-fit:contain; flex-shrink:0;" />
+                    <div style="flex:1;">
+                      <div style="font-size:11px; color:#555; margin-bottom:8px; font-weight:600;">Scan & upload proof</div>
+                      <label for="paymentScreenshot" style="display:inline-block; cursor:pointer; background:#4caf50; color:#fff; padding:9px 20px; border-radius:6px; text-align:center; font-weight:600; font-size:12px; transition:all .2s;" onmouseover="this.style.background='#45a049'" onmouseout="this.style.background='#4caf50'">
+                        <i class="fas fa-upload"></i> Upload SS *
                       </label>
                       <input type="file" id="paymentScreenshot" accept="image/*" style="display:none;" />
-                      <div id="screenshotPreview" style="margin-top:4px; display:none;">
-                        <div style="font-size:9px; color:#4caf50; font-weight:600;"><i class="fas fa-check-circle"></i> ✓</div>
+                      <div id="screenshotPreview" style="margin-top:8px; display:none;">
+                        <div style="font-size:11px; color:#4caf50; font-weight:600;"><i class="fas fa-check-circle"></i> Uploaded ✓</div>
                       </div>
                     </div>
                   </div>
