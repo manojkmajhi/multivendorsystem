@@ -208,12 +208,15 @@
               <select id="region" class="custom-select"><option>Inside Valley</option><option>Outside Valley</option></select>
             </div>
             <div class="col-md-6 form-group">
-              <label class="sr-only" for="area">Area</label>
-              <select id="area" class="custom-select"><option value="">Select Area</option></select>
-            </div>
-            <div class="col-md-6 form-group" id="otherCityWrapper" style="display:none;">
-              <label class="sr-only" for="otherCity">Enter City</label>
-              <input id="otherCity" class="form-control" placeholder="Enter City *" />
+              <label class="sr-only" for="area">Area / District</label>
+              <div style="position:relative;">
+                <input type="text" id="areaDisplay" class="form-control" placeholder="Click to search area / district..." autocomplete="off" readonly style="cursor:pointer; background:#fff;" />
+                <input type="hidden" id="areaValue" />
+                <div id="areaDropdown" style="display:none; position:absolute; top:100%; left:0; right:0; background:#fff; border:1px solid #e1e4e8; border-radius:8px; max-height:250px; overflow-y:auto; z-index:1000; box-shadow:0 4px 12px rgba(0,0,0,.15); margin-top:4px;">
+                  <input type="text" id="areaSearch" class="form-control" placeholder="Type to search..." autocomplete="off" style="border:none; border-bottom:2px solid #e1e4e8; border-radius:8px 8px 0 0; margin:0; box-shadow:none;" />
+                  <div id="areaList" style="max-height:200px; overflow-y:auto;"></div>
+                </div>
+              </div>
             </div>
             <div class="col-md-6 form-group">
               <label class="sr-only" for="email">Email (Optional)</label>
@@ -236,6 +239,36 @@
             </div>
             <div class="col-12 form-group mb-0">
               <a href="/cart/" class="back-cart-btn"><span style="font-size:14px; line-height:0;" class="mr-1">&larr;</span> Change Cart</a>
+            </div>
+            <div class="col-12 form-group">
+              <div class="form-section" style="background:#e8f5e9; border:1px solid #c8e6c9; padding:8px; margin-top:8px;">
+                <div class="section-heading" style="margin-bottom:6px; font-size:11px;">PAYMENT</div>
+                <div style="display:flex; gap:6px; margin-bottom:6px;">
+                  <label style="flex:1; cursor:pointer; border:2px solid #ddd; border-radius:6px; padding:10px 12px; display:flex; align-items:center; justify-content:center; gap:6px; transition:all .2s; background:#fff;" id="esewaLabel">
+                    <input type="radio" name="payment" value="esewa" id="paymentEsewa" style="width:16px; height:16px;" checked />
+                    <img src="https://i.postimg.cc/c42fF8HH/esewa.png" alt="eSewa" style="height:26px; object-fit:contain;" />
+                  </label>
+                  <label style="flex:1; cursor:pointer; border:2px solid #ddd; border-radius:6px; padding:10px 12px; display:flex; align-items:center; justify-content:center; gap:6px; transition:all .2s; background:#fff;" id="codLabel">
+                    <input type="radio" name="payment" value="cod" id="paymentCod" style="width:16px; height:16px;" />
+                    <img src="https://i.postimg.cc/GhVvXs2r/Cod.png" alt="Cash on Delivery" style="height:26px; object-fit:contain;" />
+                  </label>
+                </div>
+                <div id="esewaQrSection" style="padding:6px; background:#fff; border-radius:5px; border:1px solid #c8e6c9;">
+                  <div style="display:flex; gap:6px; align-items:center;">
+                    <img id="esewaQrImage" src="" alt="QR" style="width:65px; height:65px; border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,.1); object-fit:contain; flex-shrink:0;" />
+                    <div style="flex:1; min-width:0;">
+                      <div style="font-size:9px; color:#666; margin-bottom:4px;">Scan & upload proof</div>
+                      <label for="paymentScreenshot" style="display:block; cursor:pointer; background:#4caf50; color:#fff; padding:5px 8px; border-radius:3px; text-align:center; font-weight:600; font-size:10px; transition:all .2s;" onmouseover="this.style.background='#45a049'" onmouseout="this.style.background='#4caf50'">
+                        <i class="fas fa-upload"></i> Upload *
+                      </label>
+                      <input type="file" id="paymentScreenshot" accept="image/*" style="display:none;" />
+                      <div id="screenshotPreview" style="margin-top:4px; display:none;">
+                        <div style="font-size:9px; color:#4caf50; font-weight:600;"><i class="fas fa-check-circle"></i> ✓</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           </div>
@@ -331,22 +364,213 @@
   </div>
 
   <script>
-    // Simple region -> area mapping (placeholder)
-    const areas = { 'Inside Valley':['Select Area','Kathmandu','Bhaktapur','Lalitpur'], 'Outside Valley':['Select Area','Pokhara','Butwal','Itahari','Chitwan','Other'] };
-    function updateAreas(){ const r=document.getElementById('region').value; const sel=document.getElementById('area'); sel.innerHTML=''; areas[r].forEach(a=>{ const o=document.createElement('option'); o.textContent=a; sel.appendChild(o); }); document.getElementById('otherCityWrapper').style.display='none'; document.getElementById('otherCity').value=''; recalc(); }
+    // Load eSewa QR code from settings
+    fetch('/api/payment-settings')
+      .then(r => r.json())
+      .then(data => {
+        if(data.esewa_qr) {
+          document.getElementById('esewaQrImage').src = data.esewa_qr;
+        } else {
+          document.getElementById('esewaQrImage').src = 'https://i.postimg.cc/mDPmcWp9/Whats-App-Image-2025-10-14-at-16-17-59-1cdf0cb6.jpg';
+        }
+      })
+      .catch(() => {
+        document.getElementById('esewaQrImage').src = 'https://i.postimg.cc/mDPmcWp9/Whats-App-Image-2025-10-14-at-16-17-59-1cdf0cb6.jpg';
+      });
+    
+    // Region -> area mapping with Kathmandu Valley locations and Nepal districts
+    const areas = { 
+      'Inside Valley': ['Select Area', 'Anamnagar', 'Ason', 'Babarmahal', 'Bagbazaar', 'Baghdol', 'Balaju', 'Balambu', 'Balkhu', 'Balkot', 'Balkumari', 'Baluwakhani', 'Baluwatar', 'Baneshwor', 'Bansbari', 'Basbari', 'Basantapur', 'Basundhara', 'Bafal', 'Bhangal', 'Bhaisepati', 'Bhotahity', 'Bijeshwori', 'Bode', 'Boudha', 'Budhanilkantha', 'Budol', 'Bungamati', 'Chabahil', 'Chandol', 'Chandragiri', 'Changunarayan', 'Chapagaun', 'Chapali', 'Chhauni', 'Chhetrapati', 'Chobhar', 'Chunikhel', 'Dakshinkali', 'Dallu', 'Dhapakhel', 'Dhapasi', 'Dhobighat', 'Dholahiti', 'Dhumbarahi', 'Dhulikhel', 'Dilli Bazaar', 'Durbar Marg', 'Duwakot', 'Gairidhara', 'Gaushala', 'Godawari', 'Gongabu', 'Gothatar', 'Gwarko', 'Gyaneshwor', 'Hadigaun', 'Harisiddhi', 'Hattisar', 'Imadol', 'Itumbahal', 'Jamal', 'Jawalakhel', 'Jhamsikhel', 'Jorpati', 'Kabhre', 'Kalimati', 'Kamaladi', 'Kapan', 'Khokana', 'Kirtipur', 'Koteshwor', 'Kuleshwor', 'Kupondole', 'Kusunti', 'Lainchaur', 'Lazimpat', 'Lubhu', 'Machhegaun', 'Mahalaxmi', 'Maharajgunj', 'Maitidevi', 'Maitighar', 'Manamaiju', 'Manohara', 'Mangal Bazar', 'Matatirtha', 'Nagarkot', 'Naikap', 'Nakhipot', 'Nakhkhu', 'Naxal', 'Nayabazar', 'New Baneshwor', 'New Road', 'Old Baneshwor', 'Panga', 'Patan', 'Patan Durbar Square', 'Pepsicola', 'Pharping', 'Pulchowk', 'Samakhushi', 'Sanepa', 'Sanga', 'Sankhamul', 'Sankhu', 'Satdobato', 'Sinamangal', 'Sitapaila', 'Sunakothi', 'Sundarighat', 'Sundarijal', 'Suryabinayak', 'Swayambhu', 'Tangal', 'Taukhel', 'Teku', 'Thaiba', 'Thamel', 'Thankot', 'Thapathali', 'Tinkune', 'Tokha', 'Tokha Municipality', 'Tripureshwor', 'Tusal', 'Tushal'],
+      'Outside Valley': ['Select District', 'Achham', 'Arghakhanchi', 'Baglung', 'Baitadi', 'Bajhang', 'Bajura', 'Banke', 'Bara', 'Bardiya', 'Bhojpur', 'Chitwan', 'Dadeldhura', 'Dailekh', 'Dang', 'Darchula', 'Dhading', 'Dhankuta', 'Dhanusa', 'Dolakha', 'Dolpa', 'Doti', 'Gorkha', 'Gulmi', 'Humla', 'Ilam', 'Jajarkot', 'Jhapa', 'Jumla', 'Kailali', 'Kalikot', 'Kanchanpur', 'Kapilvastu', 'Kaski', 'Kavrepalanchok', 'Khotang', 'Lamjung', 'Mahottari', 'Makwanpur', 'Manang', 'Morang', 'Mugu', 'Mustang', 'Myagdi', 'Nawalparasi', 'Nuwakot', 'Okhaldhunga', 'Palpa', 'Panchthar', 'Parbat', 'Parsa', 'Pyuthan', 'Ramechhap', 'Rasuwa', 'Rautahat', 'Rolpa', 'Rukum', 'Rupandehi', 'Salyan', 'Sankhuwasabha', 'Saptari', 'Sarlahi', 'Sindhuli', 'Sindhupalchok', 'Siraha', 'Solukhumbu', 'Sunsari', 'Surkhet', 'Syangja', 'Tanahu', 'Taplejung', 'Terhathum', 'Udayapur']
+    };
+    let allAreas = [];
+    let selectedArea = '';
+    
+    function updateAreas(){ 
+      const r=document.getElementById('region').value; 
+      allAreas = areas[r];
+      selectedArea = '';
+      document.getElementById('areaDisplay').value = '';
+      document.getElementById('areaValue').value = '';
+      document.getElementById('areaSearch').value = '';
+      document.getElementById('areaDropdown').style.display = 'none';
+      const placeholder = r === 'Inside Valley' ? 'Click to search area...' : 'Click to search district...';
+      document.getElementById('areaDisplay').placeholder = placeholder;
+      updatePaymentOptions();
+      recalc(); 
+    }
+    
     document.getElementById('region').addEventListener('change', updateAreas);
-    document.getElementById('area').addEventListener('change', function(){ const wrapper=document.getElementById('otherCityWrapper'); if(this.value==='Other'){ wrapper.style.display='block'; document.getElementById('otherCity').required=true; }else{ wrapper.style.display='none'; document.getElementById('otherCity').required=false; document.getElementById('otherCity').value=''; } recalc(); });
+    
+    // Searchable dropdown for area
+    const areaDisplay = document.getElementById('areaDisplay');
+    const areaSearch = document.getElementById('areaSearch');
+    const areaDropdown = document.getElementById('areaDropdown');
+    const areaList = document.getElementById('areaList');
+    
+    areaDisplay.addEventListener('click', function(){
+      areaDropdown.style.display = 'block';
+      areaSearch.focus();
+      showAreaDropdown('');
+    });
+    
+    areaSearch.addEventListener('input', function(){
+      showAreaDropdown(this.value);
+    });
+    
+    document.addEventListener('click', function(e){
+      if(!areaDisplay.contains(e.target) && !areaDropdown.contains(e.target)){
+        areaDropdown.style.display = 'none';
+      }
+    });
+    
+    let nominatimTimeout;
+    async function showAreaDropdown(query){
+      const filtered = allAreas.filter(a => 
+        a.toLowerCase().includes(query.toLowerCase()) && a !== 'Select Area' && a !== 'Select District'
+      ).slice(0, 5);
+      
+      let html = '';
+      
+      if(filtered.length > 0){
+        html += '<div style="padding:6px 10px; font-size:10px; color:#999; font-weight:600; text-transform:uppercase; background:#f8f9fa;">📍 Predefined Areas</div>';
+        html += filtered.map(a => 
+          `<div class="area-option" style="padding:10px 14px; cursor:pointer; font-size:13px; border-bottom:1px solid #f0f0f0; transition:all .2s;" 
+                onmouseover="this.style.background='#f8f9fa'" 
+                onmouseout="this.style.background='#fff'" 
+                onclick="selectArea('${a.replace(/'/g, "\\'")}')"
+          >${a}</div>`
+        ).join('');
+      }
+      
+      if(query.length >= 3){
+        clearTimeout(nominatimTimeout);
+        nominatimTimeout = setTimeout(async () => {
+          try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ', Kathmandu, Nepal')}&format=json&limit=3`);
+            const data = await response.json();
+            
+            let finalHtml = html;
+            
+            if(data.length > 0){
+              const mapHtml = '<div style="padding:6px 10px; font-size:10px; color:#999; font-weight:600; text-transform:uppercase; background:#f8f9fa; border-top:2px solid #e0e0e0;">🗺️ Map Suggestions</div>' +
+                data.map(place => {
+                  const name = place.display_name.split(',')[0];
+                  return `<div class="area-option" style="padding:10px 14px; cursor:pointer; font-size:13px; border-bottom:1px solid #f0f0f0; transition:all .2s;" 
+                        onmouseover="this.style.background='#f8f9fa'" 
+                        onmouseout="this.style.background='#fff'" 
+                        onclick="selectArea('${name.replace(/'/g, "\\'")}')"
+                    ><div style="font-weight:600;">${name}</div><div style="font-size:11px; color:#666;">${place.display_name.split(',').slice(1, 3).join(',')}</div></div>`;
+                }).join('');
+              finalHtml += mapHtml;
+            }
+            
+            if(query.length >= 2){
+              finalHtml += `<div style="padding:6px 10px; font-size:10px; color:#999; font-weight:600; text-transform:uppercase; background:#f8f9fa; border-top:2px solid #e0e0e0;">➕ Custom</div><div class="area-option" style="padding:10px 14px; cursor:pointer; font-size:13px; background:#fff3cd; transition:all .2s;" onmouseover="this.style.background='#fff9e6'" onmouseout="this.style.background='#fff3cd'" onclick="selectArea('${query.replace(/'/g, "\\'")}')"><div style="font-weight:600; color:#856404;"><i class="fas fa-plus-circle"></i> Add "${query}"</div><div style="font-size:11px; color:#856404;">Use this custom area</div></div>`;
+            }
+            
+            areaList.innerHTML = finalHtml;
+          } catch(e) {
+            let finalHtml = html;
+            if(query.length >= 2){
+              finalHtml += `<div style="padding:6px 10px; font-size:10px; color:#999; font-weight:600; text-transform:uppercase; background:#f8f9fa; border-top:2px solid #e0e0e0;">➕ Custom</div><div class="area-option" style="padding:10px 14px; cursor:pointer; font-size:13px; background:#fff3cd; transition:all .2s;" onmouseover="this.style.background='#fff9e6'" onmouseout="this.style.background='#fff3cd'" onclick="selectArea('${query.replace(/'/g, "\\'")}')"><div style="font-weight:600; color:#856404;"><i class="fas fa-plus-circle"></i> Add "${query}"</div><div style="font-size:11px; color:#856404;">Use this custom area</div></div>`;
+            }
+            areaList.innerHTML = finalHtml;
+          }
+        }, 500);
+      } else if(query.length >= 2){
+        html += `<div style="padding:6px 10px; font-size:10px; color:#999; font-weight:600; text-transform:uppercase; background:#f8f9fa; border-top:2px solid #e0e0e0;">➕ Custom</div><div class="area-option" style="padding:10px 14px; cursor:pointer; font-size:13px; background:#fff3cd; transition:all .2s;" onmouseover="this.style.background='#fff9e6'" onmouseout="this.style.background='#fff3cd'" onclick="selectArea('${query.replace(/'/g, "\\'")}')"><div style="font-weight:600; color:#856404;"><i class="fas fa-plus-circle"></i> Add "${query}"</div><div style="font-size:11px; color:#856404;">Use this custom area</div></div>`;
+        areaList.innerHTML = html;
+      } else if(filtered.length === 0){
+        html = '<div style="padding:12px; color:#999; font-size:13px; text-align:center;">Type to search areas</div>';
+        areaList.innerHTML = html;
+      } else {
+        areaList.innerHTML = html;
+      }
+    }
+    
+    window.selectArea = function(area){
+      selectedArea = area;
+      document.getElementById('areaDisplay').value = area;
+      document.getElementById('areaValue').value = area;
+      document.getElementById('areaSearch').value = '';
+      areaDropdown.style.display = 'none';
+      recalc();
+    };
+    
     updateAreas();
+    
+    // Payment method handling
+    function updatePaymentOptions(){
+      const region = document.getElementById('region').value;
+      const codLabel = document.getElementById('codLabel');
+      const codRadio = document.getElementById('paymentCod');
+      const esewaRadio = document.getElementById('paymentEsewa');
+      
+      if(region === 'Outside Valley'){
+        codLabel.style.opacity = '0.5';
+        codLabel.style.pointerEvents = 'none';
+        codRadio.disabled = true;
+        esewaRadio.checked = true;
+        updatePaymentUI();
+      } else {
+        codLabel.style.opacity = '1';
+        codLabel.style.pointerEvents = 'auto';
+        codRadio.disabled = false;
+      }
+    }
+    
+    function updatePaymentUI(){
+      const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+      const qrSection = document.getElementById('esewaQrSection');
+      const esewaLabel = document.getElementById('esewaLabel');
+      const codLabel = document.getElementById('codLabel');
+      
+      if(paymentMethod === 'esewa'){
+        qrSection.style.display = 'block';
+        esewaLabel.style.borderColor = '#4caf50';
+        esewaLabel.style.background = '#f1f8f4';
+        codLabel.style.borderColor = '#ddd';
+        codLabel.style.background = 'transparent';
+      } else {
+        qrSection.style.display = 'none';
+        codLabel.style.borderColor = '#4caf50';
+        codLabel.style.background = '#f1f8f4';
+        esewaLabel.style.borderColor = '#ddd';
+        esewaLabel.style.background = 'transparent';
+      }
+    }
+    
+    document.querySelectorAll('input[name="payment"]').forEach(radio => {
+      radio.addEventListener('change', updatePaymentUI);
+    });
+    
+    // Screenshot upload handling
+    let uploadedScreenshot = null;
+    document.getElementById('paymentScreenshot').addEventListener('change', function(e){
+      const file = e.target.files[0];
+      if(file){
+        const reader = new FileReader();
+        reader.onload = function(event){
+          uploadedScreenshot = event.target.result;
+          document.getElementById('screenshotPreview').style.display = 'block';
+          console.log('Screenshot uploaded, size:', uploadedScreenshot.length);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    
+    updatePaymentOptions();
+    updatePaymentUI();
 
     function recalc(){ 
       const subtotal=parseInt(document.getElementById('subtotal').textContent,10); 
       const region=document.getElementById('region').value; 
       let fee=0; 
-      if(region==='Outside Valley'){ fee=70; } 
+      if(region==='Outside Valley'){ fee=100; } 
       document.getElementById('delivery-fee').textContent=fee; 
       document.getElementById('grand-total').textContent=subtotal+fee; 
     }
-    document.getElementById('area').addEventListener('change', recalc);
 
     // Pre-fill from logged in user
     if (window.currentUser) {
@@ -393,24 +617,39 @@
     
     async function submitOrder() {
       const areaValue = document.getElementById('area')?.value || '';
-      const finalArea = areaValue === 'Other' ? document.getElementById('otherCity')?.value || '' : areaValue;
+      const paymentMethod = document.querySelector('input[name="payment"]:checked')?.value || 'esewa';
       
       const formData = {
         name: document.getElementById('name')?.value || '',
         mobile: document.getElementById('mobile')?.value || '',
         email: document.getElementById('email')?.value || '',
         region: document.getElementById('region')?.value || 'Inside Valley',
-        area: finalArea,
+        area: areaValue,
         address: document.getElementById('address')?.value || '',
         notes: document.getElementById('notes')?.value || '',
         subtotal: parseInt(document.getElementById('subtotal')?.textContent || '0'),
         deliveryFee: parseInt(document.getElementById('delivery-fee')?.textContent || '0'),
-        total: parseInt(document.getElementById('grand-total')?.textContent || '0')
+        total: parseInt(document.getElementById('grand-total')?.textContent || '0'),
+        paymentMethod: paymentMethod,
+        paymentScreenshot: uploadedScreenshot
       };
       
+      console.log('Submitting order with screenshot:', !!formData.paymentScreenshot);
+      
+      // Get selected area
+      const areaVal = document.getElementById('areaValue').value;
+      formData.area = areaVal;
+      
       // Validate
-      if(!formData.name || !formData.mobile || !formData.address || formData.area === 'Select Area' || !formData.area) {
+      if(!formData.name || !formData.mobile || !formData.address || !areaVal) {
         alert('Please fill in all required fields');
+        return;
+      }
+      
+      // Validate payment screenshot for eSewa
+      console.log('Payment validation:', { paymentMethod, hasScreenshot: !!uploadedScreenshot });
+      if(paymentMethod === 'esewa' && !uploadedScreenshot){
+        alert('Please upload payment screenshot for eSewa payment');
         return;
       }
       
