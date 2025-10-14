@@ -66,27 +66,35 @@
     .pagination .page-link{color:#000; font-size:12px; border:none; background:transparent;}
     .pagination .page-item.active .page-link{background:#000; border-radius:2px; color:#fff;}
     .pagination .page-item:not(.active) .page-link:hover{background:#000; color:#fff; border-radius:2px;}
-  /* Mobile integrated category dropdown panel */
-  .category-heading-btn{outline:none;}
-  .category-heading-btn:focus{box-shadow:none;}
-  .category-heading-btn .caret-icon{display:inline-block; transition:transform .3s cubic-bezier(.55,.06,.34,1.37); font-size:.8em; position:relative; top:-1px;}
+  /* Mobile categories dropdown - Clean UX Design */
+  .category-heading-btn{outline:none; background:#fff; border:2px solid #e0e0e0; border-radius:8px; padding:11px 16px; font-size:13px; font-weight:700; color:#000; display:flex; align-items:center; justify-content:space-between; width:100%; transition:all .2s ease; letter-spacing:.5px; text-transform:uppercase;}
+  .category-heading-btn:hover{background:#f8f9fa; border-color:#ccc;}
+  .category-heading-btn:focus{box-shadow:0 0 0 3px rgba(0,0,0,.05); border-color:#000;}
+  .category-heading-btn .current-cat{flex:1; text-align:left;}
+  .category-heading-btn .caret-icon{font-size:10px; margin-left:8px; transition:transform .3s ease;}
+  .category-heading-btn.active{background:#fff; border-color:#000;}
   .category-heading-btn.active .caret-icon{transform:rotate(180deg);}
   .product-header-row{position:relative;}
-  #mobileCatPanel{position:absolute; top:100%; left:0; right:0; background:#fff; border:1px solid #e5e5e5; border-radius:12px; box-shadow:0 22px 40px -12px rgba(0,0,0,.35); padding:12px 14px 16px; transform:translateY(8px) scale(.96); transform-origin:top center; opacity:0; pointer-events:none; transition:opacity .28s ease, transform .32s cubic-bezier(.22,1.15,.53,1); z-index:1200;}
+  #mobileCatPanel{position:absolute; top:calc(100% + 10px); left:0; right:0; background:#fff; border:none; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,.15); padding:20px 18px; transform:translateY(-10px) scale(.95); transform-origin:top center; opacity:0; pointer-events:none; transition:all .3s cubic-bezier(.34,1.56,.64,1); z-index:1200; max-height:65vh; overflow-y:auto;}
   #mobileCatPanel.open{opacity:1; transform:translateY(0) scale(1); pointer-events:auto;}
-  #mobileCatPanel .panel-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;}
-  #mobileCatPanel .panel-header span{font-size:11px; letter-spacing:1px; font-weight:600; color:#555;}
-  #mobileCatPanel .close-panel{background:#000; color:#fff; border:none; width:28px; height:28px; border-radius:50%; line-height:28px; text-align:center; font-size:16px; font-weight:400; padding:0; cursor:pointer; transition:transform .25s, background .25s;}
-  #mobileCatPanel .close-panel:hover{background:#111;}
-  #mobileCatPanel .close-panel:active{transform:scale(.85);}
-  #mobileCatPanel ul{list-style:none; margin:2px 0 0; padding:0; display:flex; flex-wrap:wrap;}
-  #mobileCatPanel ul li{margin:6px 6px 0 0;}
-  #mobileCatPanel a.cat-chip{display:inline-block; background:#f3f3f3; padding:7px 14px 6px; border-radius:28px; font-size:12px; letter-spacing:.5px; text-decoration:none; color:#333; font-weight:500; line-height:1; position:relative; overflow:hidden; transition:background .25s, color .25s, box-shadow .25s;}
-  #mobileCatPanel a.cat-chip:hover{background:#111; color:#fff;}
-  #mobileCatPanel a.cat-chip.active{background:#000; color:#fff; box-shadow:0 6px 18px -6px rgba(0,0,0,.5);}
-  #mobileCatOverlay{position:fixed; inset:0; background:rgba(0,0,0,.33); backdrop-filter:saturate(160%) blur(2px); opacity:0; pointer-events:none; transition:opacity .25s ease; z-index:1100;}
+  #mobileCatPanel .panel-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;}
+  #mobileCatPanel .panel-header span{font-size:11px; letter-spacing:1.5px; font-weight:700; color:#999; text-transform:uppercase;}
+  #mobileCatPanel .close-panel{background:transparent; color:#999; border:none; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:300; cursor:pointer; transition:all .2s ease;}
+  #mobileCatPanel .close-panel:hover{color:#000; transform:scale(1.1);}
+  #mobileCatPanel .close-panel:active{transform:scale(.9);}
+  #mobileCatPanel ul{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;}
+  #mobileCatPanel ul li{margin:0;}
+  #mobileCatPanel a.cat-chip{display:flex; align-items:center; justify-content:center; background:#fff; padding:14px 12px; border-radius:10px; font-size:13px; letter-spacing:.3px; text-decoration:none; color:#666; font-weight:600; text-align:center; border:2px solid #e0e0e0; transition:all .2s ease; min-height:52px;}
+  #mobileCatPanel a.cat-chip:hover{background:#f8f9fa; color:#000; border-color:#ccc;}
+  #mobileCatPanel a.cat-chip.active{background:#000; color:#fff; border-color:#000; box-shadow:0 4px 12px rgba(0,0,0,.2);}
+  #mobileCatPanel a.cat-chip.active:hover{background:#111; border-color:#111;}
+  #mobileCatOverlay{position:fixed; inset:0; background:rgba(0,0,0,.5); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:all .3s ease; z-index:1100;}
   #mobileCatOverlay.show{opacity:1; pointer-events:auto;}
-  @supports not (backdrop-filter: blur(2px)){ #mobileCatOverlay{background:rgba(0,0,0,.45);} }
+  @supports not (backdrop-filter: blur(3px)){ #mobileCatOverlay{background:rgba(0,0,0,.6);} }
+  @media (max-width:576px){
+    #mobileCatPanel{padding:18px 16px; border-radius:14px;}
+    #mobileCatPanel a.cat-chip{padding:12px 10px; font-size:12px; min-height:48px;}
+  }
     .one{background:#fff; border:1px solid #e5e5e5; border-radius:6px; box-shadow:0 12px 30px -8px rgba(0,0,0,.25);} 
     @media (max-width: 991.98px){ .desktop-sidebar{display:none;} }
   </style>
@@ -154,9 +162,10 @@
             <% } %>
           </h4>
           <!-- Mobile button triggers modal category picker -->
-          <div class="d-lg-none mb-0">
-            <button id="mobileCatToggle" class="category-heading-btn btn btn-link p-0 text-uppercase" type="button" style="font-weight:400; letter-spacing:1px; font-size:1.25rem; text-decoration:none; color:#000;">
-              | <span class="current-cat"><%= activeCategory %></span> <span class="caret-icon">&#9662;</span> |
+          <div class="d-lg-none mb-0" style="width:100%;">
+            <button id="mobileCatToggle" class="category-heading-btn" type="button">
+              <span class="current-cat"><%= activeCategory %></span>
+              <span class="caret-icon">▼</span>
             </button>
             <!-- Hidden panel -->
             <div id="mobileCatPanel" aria-hidden="true">
