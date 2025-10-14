@@ -1,7 +1,8 @@
 const fs = require('fs');
 const path = require('path');
+const archiver = require('archiver');
 
-console.log('🚀 Building production package...\n');
+console.log('🚀 Building optimized production package...\n');
 
 const OUTPUT_DIR = path.join(__dirname, 'dist');
 
@@ -93,13 +94,97 @@ const uploadsDir = path.join(OUTPUT_DIR, 'strawhats', 'media', 'uploads');
 fs.mkdirSync(uploadsDir, { recursive: true });
 fs.writeFileSync(path.join(uploadsDir, '.gitkeep'), '');
 
+// Create production .env template
+const envTemplate = `# Production Environment Variables
+NODE_ENV=production
+PORT=3000
+
+# Supabase Configuration
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+SUPABASE_ANON_KEY=your_anon_key
+
+# Admin Authentication
+ADMIN_TOKEN=change_this_secure_token
+
+# Optional: Google Maps API
+GOOGLE_MAPS_API_KEY=your_google_maps_key
+
+# Optional: OTPless Authentication
+OTPLESS_APP_ID=your_otpless_app_id
+OTPLESS_CLIENT_ID=your_otpless_client_id
+OTPLESS_CLIENT_SECRET=your_otpless_client_secret
+`;
+fs.writeFileSync(path.join(OUTPUT_DIR, '.env.production'), envTemplate);
+
+// Create deployment README
+const deployReadme = `# All Strawhats - Production Deployment
+
+## Quick Deploy
+
+1. **Install dependencies:**
+   \`\`\`bash
+   npm install --production
+   \`\`\`
+
+2. **Configure environment:**
+   - Copy \`.env.production\` to \`.env\`
+   - Update with your actual credentials
+
+3. **Start server:**
+   \`\`\`bash
+   npm start
+   \`\`\`
+
+## Performance Features
+
+✅ Gzip compression enabled
+✅ Static asset caching (365 days)
+✅ Security headers configured
+✅ Production optimizations active
+✅ Image lazy loading
+✅ Minified responses
+
+## Server Requirements
+
+- Node.js >= 16.0.0
+- npm >= 8.0.0
+- 512MB RAM minimum
+- 1GB disk space
+
+## Environment Variables
+
+See \`.env.production\` for all configuration options.
+
+## Support
+
+For issues, check server logs and ensure all environment variables are set correctly.
+`;
+fs.writeFileSync(path.join(OUTPUT_DIR, 'DEPLOY.md'), deployReadme);
+
 console.log(`\n✅ Production build complete!`);
 console.log(`📁 Location: dist/`);
 console.log(`📁 Files: ${fileCount}`);
-console.log(`\n🚀 Ready for deployment!`);
-console.log(`\nNext steps:`);
-console.log(`1. Zip the dist/ folder`);
-console.log(`2. Upload to server and extract`);
-console.log(`3. Run: npm install --production`);
-console.log(`4. Create .env file`);
-console.log(`5. Run: npm start`);
+
+// Create zip archive
+console.log(`\n📦 Creating deployment archive...`);
+const output = fs.createWriteStream(path.join(__dirname, 'dist-production.zip'));
+const archive = archiver('zip', { zlib: { level: 9 } });
+
+output.on('close', () => {
+  const sizeMB = (archive.pointer() / 1024 / 1024).toFixed(2);
+  console.log(`✅ Archive created: dist-production.zip (${sizeMB} MB)`);
+  console.log(`\n🚀 Ready for deployment!`);
+  console.log(`\nDeploy steps:`);
+  console.log(`1. Upload dist-production.zip to server`);
+  console.log(`2. Extract: unzip dist-production.zip`);
+  console.log(`3. Install: npm install --production`);
+  console.log(`4. Configure: cp .env.production .env (and edit)`);
+  console.log(`5. Start: npm start`);
+  console.log(`\n💡 For PM2: pm2 start server.js --name allstrawhats`);
+});
+
+archive.on('error', (err) => { throw err; });
+archive.pipe(output);
+archive.directory(OUTPUT_DIR, false);
+archive.finalize();

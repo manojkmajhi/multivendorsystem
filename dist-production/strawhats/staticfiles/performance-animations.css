@@ -1,0 +1,328 @@
+/* Performance-optimized animations and transitions */
+
+/* GPU acceleration for animated elements */
+.product,
+.floating-cart-notification,
+.search-suggestions,
+.modal,
+.carousel-item,
+.lazy-image {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Optimized product hover effects */
+.product {
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              box-shadow 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.product:hover {
+  transform: translateY(-3px) translateZ(0);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.product img {
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.product:hover img {
+  transform: scale(1.05) translateZ(0);
+}
+
+/* Fast fade animations */
+@keyframes fadeInFast {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) translateZ(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) translateZ(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px) translateZ(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateZ(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) translateZ(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05) translateZ(0);
+  }
+  70% {
+    transform: scale(0.9) translateZ(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateZ(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1) translateZ(0);
+  }
+  50% {
+    transform: scale(1.1) translateZ(0);
+  }
+  100% {
+    transform: scale(1) translateZ(0);
+  }
+}
+
+/* Cart animations */
+.cart-item-enter {
+  animation: slideInRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.cart-item-exit {
+  animation: fadeOut 0.2s ease-in forwards;
+}
+
+.cart-count-update {
+  animation: pulse 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.added-to-cart {
+  animation: bounceIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1) translateZ(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.8) translateZ(0);
+  }
+}
+
+/* Image loading animations */
+.lazy-image {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.lazy-image.loaded {
+  opacity: 1;
+  background: none;
+  animation: none;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Search suggestions animations */
+.search-suggestions {
+  opacity: 0;
+  transform: translateY(-10px) translateZ(0);
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.search-suggestions.show {
+  opacity: 1;
+  transform: translateY(0) translateZ(0);
+}
+
+.suggestion-item {
+  opacity: 0;
+  transform: translateX(-20px) translateZ(0);
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+.suggestion-item:nth-child(1) { animation-delay: 0.05s; }
+.suggestion-item:nth-child(2) { animation-delay: 0.1s; }
+.suggestion-item:nth-child(3) { animation-delay: 0.15s; }
+.suggestion-item:nth-child(4) { animation-delay: 0.2s; }
+.suggestion-item:nth-child(5) { animation-delay: 0.25s; }
+
+/* Modal animations */
+.modal.fade .modal-dialog {
+  transform: scale(0.8) translateZ(0);
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.modal.show .modal-dialog {
+  transform: scale(1) translateZ(0);
+}
+
+/* Button press animations */
+.btn {
+  transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+}
+
+.btn:active {
+  transform: scale(0.98) translateZ(0);
+}
+
+.btn:focus {
+  box-shadow: 0 0 0 3px rgba(43, 144, 217, 0.25);
+}
+
+/* Floating cart animations */
+.floating-cart-notification {
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              opacity 0.3s ease-out;
+}
+
+.floating-cart-notification.show {
+  transform: translateX(0) translateZ(0);
+  opacity: 1;
+}
+
+.floating-cart-notification.hide {
+  transform: translateX(100%) translateZ(0);
+  opacity: 0;
+}
+
+/* Hero carousel optimizations */
+.owl-carousel .owl-item {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+.owl-carousel .owl-stage {
+  transform: translateZ(0);
+}
+
+/* Category hover effects */
+.category-item {
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow: hidden;
+}
+
+.category-item:hover {
+  transform: translateY(-2px) translateZ(0);
+}
+
+/* Blur-up crossfade effect for placeholders -> real images */
+.image-ratio { overflow: hidden; position: relative; }
+.image-ratio img { position: absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; }
+.blur-up { filter: blur(16px); transform: translateZ(0); opacity: 0.85; transition: filter 450ms cubic-bezier(.4,0,.2,1), opacity 450ms cubic-bezier(.4,0,.2,1); }
+.blur-up.loaded { filter: blur(0); opacity: 1; }
+
+/* Make sure lazy-loaded images don't cause layout shift when width/height attrs present */
+img[width][height] { max-width: 100%; height: auto; }
+
+.category-item img {
+  transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.category-item:hover img {
+  transform: scale(1.1) translateZ(0);
+}
+
+/* Loading states */
+.loading {
+  position: relative;
+  pointer-events: none;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #333;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .lazy-image {
+    animation: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .product:hover {
+    box-shadow: 0 0 0 2px currentColor;
+  }
+  
+  .btn:focus {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+}
+
+/* Performance optimizations for mobile */
+@media (max-width: 768px) {
+  .product img {
+    transition-duration: 0.2s;
+  }
+  
+  .category-item img {
+    transition-duration: 0.3s;
+  }
+  
+  /* Reduce animation complexity on mobile */
+  .suggestion-item {
+    animation: fadeInFast 0.2s ease-out forwards;
+  }
+}
+
+/* Optimize for touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .product:hover,
+  .category-item:hover {
+    transform: none;
+  }
+  
+  .product:active {
+    transform: scale(0.98) translateZ(0);
+  }
+}
+
+/* Print styles */
+@media print {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

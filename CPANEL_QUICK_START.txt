@@ -1,0 +1,97 @@
+═══════════════════════════════════════════════════════════════
+  ALL STRAWHATS - cPANEL DEPLOYMENT QUICK START
+═══════════════════════════════════════════════════════════════
+
+⏱️  TOTAL TIME: 15 MINUTES
+
+───────────────────────────────────────────────────────────────
+STEP 1: UPLOAD (5 min)
+───────────────────────────────────────────────────────────────
+1. cPanel → File Manager
+2. Navigate to: public_html (or yourdomain.com)
+3. Upload: dist-production.zip
+4. Right-click → Extract
+5. Move all files from dist/ to root
+6. Delete dist/ folder and .zip file
+
+───────────────────────────────────────────────────────────────
+STEP 2: NODE.JS APP (5 min)
+───────────────────────────────────────────────────────────────
+1. cPanel → Setup Node.js App
+2. Click "Create Application"
+3. Configure:
+   - Node.js version: 18.x
+   - Application mode: Production
+   - Application root: yourdomain.com
+   - Application URL: yourdomain.com
+   - Startup file: server.js
+4. Click "Create"
+
+───────────────────────────────────────────────────────────────
+STEP 3: ENVIRONMENT (3 min)
+───────────────────────────────────────────────────────────────
+1. Click "Edit" on your app
+2. Add Environment Variables:
+
+   NODE_ENV = production
+   PORT = 3000
+   SUPABASE_URL = https://xxx.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY = eyJxxx...
+   ADMIN_TOKEN = your_secure_password
+
+3. Click "Save"
+
+───────────────────────────────────────────────────────────────
+STEP 4: INSTALL (2 min)
+───────────────────────────────────────────────────────────────
+1. Click "Run NPM Install"
+2. Wait for green checkmark
+
+───────────────────────────────────────────────────────────────
+STEP 5: START
+───────────────────────────────────────────────────────────────
+1. Click "Restart"
+2. Wait 10-20 seconds
+3. Visit: https://yourdomain.com
+
+✅ DONE!
+
+───────────────────────────────────────────────────────────────
+VERIFY
+───────────────────────────────────────────────────────────────
+✓ Homepage loads
+✓ Admin panel: https://yourdomain.com/admin/
+✓ Images display
+✓ Cart works
+
+───────────────────────────────────────────────────────────────
+TROUBLESHOOTING
+───────────────────────────────────────────────────────────────
+App Stopped?
+→ Check Passenger log
+→ Click "Restart" again
+
+Module Error?
+→ Click "Run NPM Install"
+→ Restart app
+
+Database Error?
+→ Verify SUPABASE_URL
+→ Check SUPABASE_SERVICE_ROLE_KEY
+
+───────────────────────────────────────────────────────────────
+ADMIN ACCESS
+───────────────────────────────────────────────────────────────
+URL: https://yourdomain.com/admin/
+Password: Your ADMIN_TOKEN value
+
+───────────────────────────────────────────────────────────────
+SUPPORT FILES
+───────────────────────────────────────────────────────────────
+📄 CPANEL_DEPLOYMENT.md - Full guide
+📄 CPANEL_VISUAL_GUIDE.md - Step-by-step with screenshots
+📄 DEPLOYMENT_SUMMARY.md - All deployment options
+
+═══════════════════════════════════════════════════════════════
+  READY TO SELL! 🚀
+═══════════════════════════════════════════════════════════════

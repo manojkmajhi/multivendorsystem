@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Cart | All Strawhats</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/staticfiles/style.blue.css" />
+  <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>" />
+  <link rel="stylesheet" href="/staticfiles/floating-button.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@300;400;700&display=swap" />
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <style>
+    html,body{height:100%;}
+    body{font-family:'Libre Franklin',Arial,sans-serif; background:#fff; display:flex; flex-direction:column;}
+    .page-wrapper{flex:1 0 auto; width:100%; display:flex; flex-direction:column;}
+    nav.navbar{box-shadow:0 2px 6px rgba(0,0,0,.05); background:#fff;}
+    .nav-spacer{height:90px;}
+    .breadcrumb-inline{font-size:10px; letter-spacing:1.2px; text-transform:uppercase; margin-bottom:8px;}
+    .breadcrumb{background:transparent; padding:0; margin:0;}
+    .breadcrumb-item+.breadcrumb-item::before{content:'/'; padding:0 6px; color:#999;}
+    /* Ultra-compact card layout */
+    .cart-table{display:flex; flex-direction:column; gap:6px;}
+    .cart-item-card{display:flex; align-items:center; gap:10px; background:#fff; padding:8px 10px; border-radius:6px; border:1px solid #e8e8e8; transition:all .2s ease;}
+    .cart-item-card:hover{border-color:#ccc; box-shadow:0 2px 8px rgba(0,0,0,.06);}
+    .cart-item-img{width:50px; height:50px; object-fit:contain; background:#fafafa; border:1px solid #e8e8e8; border-radius:4px; flex-shrink:0;}
+    .cart-item-info{flex:1; min-width:0;}
+    .cart-item-name{font-size:13px; font-weight:600; margin:0; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .cart-item-price{font-size:12px; color:#888; margin:2px 0 0;}
+    .cart-item-right{display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0;}
+    /* Minimal quantity control */
+  .qty-control{display:inline-flex; align-items:center; background:#f8f8f8; border:1px solid #ddd; border-radius:4px; overflow:hidden;}
+  .qty-control button{background:transparent; border:none; width:24px; height:24px; line-height:24px; font-size:13px; padding:0; color:#333; cursor:pointer; outline:none; font-weight:700; transition:all .15s;}
+    .qty-control button:hover{background:#000; color:#fff;}
+  .qty-input{width:32px; height:24px; border:0; border-left:1px solid #ddd; border-right:1px solid #ddd; text-align:center; font-size:12px; background:#fff; padding:0; font-weight:600;}
+    .qty-input:focus{outline:none;}
+  .qty-pulse{animation:qty-pulse .5s ease;} @keyframes qty-pulse{0%{background:#fffacd;}50%{background:#fff;}100%{background:#fff;}}
+    .cart-item-subtotal{font-size:13px; font-weight:700; min-width:70px; text-align:right; color:#111;}
+    /* Remove */
+    .remove-btn{background:none; border:none; color:#999; font-size:16px; padding:0; cursor:pointer; width:24px; height:24px; line-height:24px; border-radius:3px; transition:all .15s;}
+    .remove-btn:hover{background:#fee; color:#dc3545;}
+    /* Minimal summary card */
+  .cart-summary-box{background:#fff; padding:14px 16px; border-radius:6px; box-shadow:0 2px 12px rgba(0,0,0,.08); position:sticky; top:100px; border:1px solid #e8e8e8;}
+    .summary-title{font-size:11px; letter-spacing:1.5px; font-weight:700; margin-bottom:8px; color:#666;}
+    .cart-summary-box p{font-size:13px; margin-bottom:4px;}
+    .summary-total{font-size:14px; font-weight:600;}
+    .cart-summary-box hr{margin:8px 0; border-color:#eee;}
+    .cart-summary-box .btn{font-size:13px; padding:8px 12px; border-radius:4px; font-weight:600;}
+    .cart-summary-box .btn-dark{background:#000; border:none;}
+    .cart-summary-box .btn-outline-dark{border:1px solid #ddd; color:#333;}
+    .cart-summary-box .btn-outline-dark:hover{background:#f5f5f5;}
+    .btn-dark{background:#000; border-color:#000;}
+    .btn-outline-dark{border-color:#000;}
+    /* Empty */
+    .empty-state{padding:70px 0 90px; text-align:center;}
+    .empty-state h4{font-weight:600; letter-spacing:1px; font-size:22px;}
+    .empty-state p{color:#666;}
+    /* Responsive */
+    @media (max-width:991.98px){ .cart-summary-box{margin-top:20px; position:static;} }
+    @media (max-width:767.98px){
+      .cart-item-card{flex-wrap:wrap; padding:8px;}
+      .cart-item-img{width:45px; height:45px;}
+      .cart-item-name{font-size:12px;}
+      .cart-item-price{font-size:11px;}
+      .cart-item-card .qty-control{order:3; margin-top:6px;}
+      .cart-item-right{order:4; flex-direction:row; align-items:center; gap:10px; margin-top:6px;}
+      .cart-item-subtotal{min-width:auto; font-size:12px;}
+    }
+    footer{margin-top:30px; flex-shrink:0;}
+  </style>
+</head>
+<body>
+<div class="page-wrapper">
+  <nav class="navbar navbar-light fixed-top py-0 px-2">
+    <div class="container px-0 px-lg-3">
+  <a class="navbar-brand" href="/"><img src="<%= (siteSetting && siteSetting.logo_url) || '/staticfiles/brand.svg' %>" height="60" /></a>
+      <form method="POST" id="search-form-in-navbar">
+        <div class="input-group search-input-group">
+          <input class="form-control form-control-lg search" id="search" name="search" type="text" placeholder="Search Anime Products" />
+          <div class="input-group-append">
+            <button class="input-group-text search-icon" id="search-icon-id"><i class="fas fa-search"></i></button>
+          </div>
+        </div>
+      </form>
+      <ul class="navbar-nav ml-auto phone-in-navbar" style="display:none;">
+        <li class="nav-item"><a class="nav-link" href="tel:9814789009"> <i class="fas fa-phone-alt"></i> 9814789009<sup><small> NP</small></sup></a></li>
+      </ul>
+    </div>
+  </nav>
+  <div class="nav-spacer"></div>
+
+  <div class="container breadcrumb-inline">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb px-0">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li class="breadcrumb-item"><a href="/shop/All/">Shop</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Cart</li>
+      </ol>
+    </nav>
+  </div>
+
+  <div class="container pb-3 pb-md-4 flex-grow-1">
+    <% if(!items.length){ %>
+      <div class="empty-state">
+        <h4>Your cart is empty</h4>
+        <p class="text-muted mb-4">Browse categories and add some items.</p>
+        <a href="/shop/All/" class="btn btn-dark">Go to Shop</a>
+      </div>
+    <% } else { %>
+      <div class="row">
+  <div class="col-lg-8 mb-3 mb-lg-0">
+          <div class="cart-table">
+            <% items.forEach(i=>{ %>
+              <div class="cart-item-card" data-id="<%= i.id %>" data-variant-id="<%= i.variantId || '' %>">
+                <img class="cart-item-img blur-up lazy-image" data-src="<%= i.image %>" src="/staticfiles/placeholder-blur.jpg" alt="<%- i.name.replace(/\"/g,'&quot;') %>" loading="lazy" decoding="async" />
+                <div class="cart-item-info">
+                  <div class="cart-item-name"><a href="/details/<%= i.id %>/" class="text-dark"><%= i.name %></a></div>
+                  <div class="cart-item-price">Rs. <%= i.price %></div>
+                </div>
+                <div class="qty-control">
+                  <button class="dec-btn" aria-label="Decrease quantity">&minus;</button>
+                  <input type="text" class="qty-input" value="<%= i.qty %>" />
+                  <button class="inc-btn" aria-label="Increase quantity">+</button>
+                </div>
+                <div class="cart-item-right">
+                  <div class="cart-item-subtotal">Rs. <span class="line-subtotal"><%= i.subtotal %></span></div>
+                  <button class="remove-btn" aria-label="Remove item">×</button>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="cart-summary-box">
+            <div class="summary-title">ORDER SUMMARY</div>
+            <p class="d-flex justify-content-between"><span class="text-muted" style="font-size:12px;">Items (<%= itemCount %>)</span></p>
+            <hr/>
+            <p class="mb-3 d-flex justify-content-between align-items-center"><span class="summary-total">Total</span><strong style="font-size:16px;">Rs. <span id="cart-total"><%= total %></span></strong></p>
+            <a href="/checkout/" class="btn btn-dark btn-block mb-2">Proceed to Checkout</a>
+            <a href="/shop/All/" class="btn btn-outline-dark btn-block">Continue Shopping</a>
+          </div>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+
+  <footer class="bg-dark text-white shadow" style="color: #fff; margin-top: 40px;">
+    <div class="container py-4">
+      <div class="row">
+        <div class="col-lg-6">
+          <p class="small text-gray mb-0">&copy; <%= new Date().getFullYear() %> All rights reserved.</p>
+          <p class="small text-gray mb-0">Crafted by <a class="text-white reset-anchor" href="https://gauravsah.com.np" target="_blank">Gaurav Sah</a></p>
+        </div>
+        <div class="col-lg-6 text-lg-right">
+          <p class="small mb-0">FIND US &nbsp;
+            <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.facebook_url) ? socialLinks.facebook_url : 'https://facebook.com/allstrawhats/' %>" target="_blank"><i class="fab fa-facebook-square mr-1" style="color: #f5f5f5;"></i></a>
+            <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.instagram_url) ? socialLinks.instagram_url : 'https://instagram.com/allstrawhats/' %>" target="_blank"><i class="fab fa-instagram" style="color: #f5f5f5;"></i></a>
+          </p>
+          <p class="text-sm text-gray mb-0"><a class="text-gray reset-anchor" href="mailto:<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@allstrawhats.com' %>" target="_blank"><i class="fas fa-envelope"></i> &nbsp;<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@allstrawhats.com' %></a></p>
+          <p class="text-sm text-gray mb-0 mt-2"><a class="text-white reset-anchor" href="/track-order"><i class="fas fa-shipping-fast"></i> Track Order</a></p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- /.page-wrapper -->
+
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+  <script src="https://kit.fontawesome.com/d6db3c2373.js" crossorigin="anonymous"></script>
+  <script src="/staticfiles/cart-optimized.js?v=3" defer></script>
+  <script>
+    function getCookie(name){ var cookieValue=null; if(document.cookie && document.cookie!==''){ var cookies=document.cookie.split(';'); for(var i=0;i<cookies.length;i++){ var cookie=cookies[i].trim(); if(cookie.substring(0,name.length+1)===(name+'=')){ cookieValue=decodeURIComponent(cookie.substring(name.length+1)); break; }}} return cookieValue; }
+    function uuidv4(){ return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){ var r=Math.random()*16|0,v=c=='x'?r:(r&0x3|0x8); return v.toString(16); }); }
+  function animateQty(row){ const input=$(row).find('.qty-input'); input.addClass('qty-pulse'); setTimeout(()=>input.removeClass('qty-pulse'),600); }
+  function setQty(id, qty, variantId){ if(qty<0) qty=0; const params = {productid:id, qty:qty}; if(variantId) params.variantid = variantId; $.get('/set_cart_qty/', params, function(){ if(qty===0){ const selector = variantId ? '.cart-item-card[data-id="'+id+'"][data-variant-id="'+variantId+'"]' : '.cart-item-card[data-id="'+id+'"]'; const card=$(selector); card.css('opacity','0'); setTimeout(()=>card.remove(),350); } else { const selector = variantId ? '.cart-item-card[data-id="'+id+'"][data-variant-id="'+variantId+'"]' : '.cart-item-card[data-id="'+id+'"]'; const card=$(selector); const price=parseInt(card.find('.cart-item-price').text().replace(/[^0-9]/g,''),10); card.find('.line-subtotal').text(price*qty); card.find('.qty-input').val(qty); animateQty(card); } recalcTotals(); if($('.cart-item-card').length===0){ setTimeout(()=>location.reload(),360); } }); }
+    function recalcTotals(){ var total=0, count=0; $('.cart-item-card').each(function(){ var qty=parseInt($(this).find('.qty-input').val(),10); var subtotal=parseInt($(this).find('.line-subtotal').text(),10); total+=subtotal; count+=qty; }); $('#cart-total').text(total); $('.summary-title').next('p').html('<span class="text-muted" style="font-size:12px;">Items ('+count+')</span>'); }
+  $(document).on('click','.inc-btn',function(e){ e.preventDefault(); var card=$(this).closest('.cart-item-card'); var id=card.data('id'); var variantId=card.data('variant-id')||null; var qty=parseInt(card.find('.qty-input').val(),10)+1; setQty(id, qty, variantId); });
+  $(document).on('click','.dec-btn',function(e){ e.preventDefault(); var card=$(this).closest('.cart-item-card'); var id=card.data('id'); var variantId=card.data('variant-id')||null; var qty=parseInt(card.find('.qty-input').val(),10)-1; setQty(id, qty, variantId); });
+  $(document).on('blur','.qty-input',function(){ var card=$(this).closest('.cart-item-card'); var id=card.data('id'); var variantId=card.data('variant-id')||null; var val=parseInt($(this).val(),10); if(isNaN(val)||val<0) val=0; setQty(id,val,variantId); });
+    $(document).on('click','.remove-btn',function(e){ e.preventDefault(); var card=$(this).closest('.cart-item-card'); var id=card.data('id'); var variantId=card.data('variant-id')||null; setQty(id,0,variantId); });
+    $('#search-form-in-navbar').submit(function(e){ e.preventDefault(); var search_term=$('#search').val(); if(search_term){ window.location=window.location.origin+'/search/all/?q='+search_term; }});
+    recalcTotals();
+  </script>
+  <script>
+    (function(){
+      function minimalInit(){
+        var imgs = document.querySelectorAll('img.lazy-image');
+        imgs.forEach(function(img){ img.classList.add('blur-up');
+          if ('loading' in HTMLImageElement.prototype) {
+            img.addEventListener('load', function(){ img.classList.add('loaded'); });
+            var ds = img.getAttribute('data-src'); if (ds && (!img.src || img.src.indexOf('placeholder-blur') !== -1)) img.src = ds;
+          } else {
+            var onScroll = function(){ if (img.getBoundingClientRect().top < window.innerHeight + 200 && !img.classList.contains('loaded')){ var s=img.getAttribute('data-src'); if(s){ var t=new Image(); t.onload=function(){ img.src=s; img.classList.add('loaded'); }; t.src=s; } window.removeEventListener('scroll', onScroll);} };
+            window.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+          }
+        });
+      }
+      if (window.ImageOptimizer && typeof window.ImageOptimizer.init === 'function') {
+        try{ window.ImageOptimizer.addOptimizationCSS(); }catch(e){}
+        try{ window.ImageOptimizer.init(); }catch(e){}
+      } else {
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', minimalInit);
+        else minimalInit();
+      }
+    })();
+  </script>
+</body>
+</html>

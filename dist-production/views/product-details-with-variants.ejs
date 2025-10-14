@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title><%= product.name %> | All Strawhats</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/staticfiles/style.blue.css">
+  <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>">
+  <link rel="stylesheet" href="/staticfiles/floating-button.css" />
+  <link rel="stylesheet" href="/staticfiles/product-quickview.css?v=1" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script type="application/json" id="product-data"><%- JSON.stringify(product) %></script>
+  <script>
+    const productData = JSON.parse(document.getElementById('product-data').textContent);
+    $(document).ready(function(){
+      initVariantSelector(productData);
+      $('#product-add-to-cart').click(function(){
+        addToCart($('#product-add-to-cart').val(), $('#product_qty').val(), true);
+      });
+      $("#search-form-in-navbar").submit(function(e){
+        e.preventDefault();
+        var search_term = $("#search").val();
+        if(search_term){
+          window.location = window.location.origin+"/search/all/?q="+search_term;
+        }
+      });
+    });
+  </script>
+      <form method="POST" id="search-form-in-navbar">
+        <div class="input-group search-input-group">
+          <input class="form-control form-control-lg search" id="search" name="search" type="text" placeholder="Search Products">
+          <div class="input-group-append">
+            <button class="input-group-text search-icon" id="search-icon-id"><i class="fas fa-search"></i></button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </nav>
+
+  <%- include('partials/floating-cart') %>
+
+  <div class="container-fluid" style="margin-top: 80px;">
+  <section class="py-2 py-md-5">
+    <div class="container px-0 px-sm-2 px-md-3">
+      <div class="row mb-5">
+        <div class="col-lg-6">
+          <div class="row m-sm-0">
+            <div class="col-sm-12">
+              <!-- Aspect-ratio wrapper prevents layout shift while image loads -->
+              <div class="image-ratio" style="position:relative;width:100%;padding-bottom:66.66%;overflow:hidden;background:#fafafa;border:1px solid #f0f0f0;">
+                <img class="img-fluid product-main-image blur-up lazy-image" data-src="<%= product.image %>" src="/staticfiles/placeholder-blur.jpg" alt="<%= product.name %>" style="object-fit:contain;width:100%;height:100%;position:absolute;top:0;left:0;" loading="lazy" decoding="async" width="600" height="400">
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-lg-6 details-texts">
+          <h1 class="mt-3 mb-1 mb-md-2"><%= product.name %></h1>
+          
+          <% if(!product.has_variants) { %>
+            <p class="lead mb-2">Rs. <%= product.price %></p>
+          <% } %>
+          
+          <% if(product.short_description){ %>
+            <p class="text-muted" style="font-size:14px; line-height:1.45;">
+              <%= product.short_description %>
+            </p>
+          <% } %>
+
+          <!-- Variant Selector Container -->
+          <div id="variantSelector"></div>
+
+          <% if(!product.has_variants) { %>
+            <div class="row align-items-stretch mb-4">
+              <div class="col-sm-5 pr-sm-0">
+                <div class="border d-flex align-items-center justify-content-between py-1 px-3 bg-white border-white">
+                  <span class="small text-uppercase text-gray mr-4 no-select">Quantity</span>
+                  <div class="quantity">
+                    <button class="dec-btn p-0"><i class="fas fa-caret-left"></i></button>
+                    <input class="form-control border-0 shadow-0 p-0" type="text" id="product_qty" value="1">
+                    <button class="inc-btn p-0"><i class="fas fa-caret-right"></i></button>
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-3 pl-sm-0">
+                <button class="btn btn-dark btn-sm btn-block h-100" id="product-add-to-cart" value="<%= product.id %>">Add to cart</button>
+              </div>
+            </div>
+          <% } %>
+
+          <ul class="list-unstyled small d-inline-block">
+            <li class="px-3 py-2 mb-1 bg-white text-muted">
+              <strong class="text-uppercase text-dark">Category:</strong>
+              <a class="reset-anchor ml-2" href="/shop/<%= product.category %>/"><%= product.category %></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+  </div>
+  </div>
+
+  <footer class="bg-dark text-white shadow">
+    <div class="container py-4">
+      <div class="row">
+        <div class="col-lg-6">
+          <p class="small text-gray mb-0">© <%= new Date().getFullYear() %> All rights reserved.</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+  <script src="/staticfiles/variant-selector.js"></script>
+  <script src="/staticfiles/cart-optimized.js?v=3" defer></script>
+  <script>
+    // Embed productData safely for JS
+  // productData is now loaded from the JSON script tag below
+    $(document).ready(function(){
+      initVariantSelector(productData);
+      $('#product-add-to-cart').click(function(){
+        addToCart($('#product-add-to-cart').val(), $('#product_qty').val(), true);
+      });
+      $("#search-form-in-navbar").submit(function(e){
+        e.preventDefault();
+        var search_term = $("#search").val();
+        if(search_term){
+          window.location = window.location.origin+"/search/all/?q="+search_term;
+        }
+      });
+    });
+  </script>
+  <script>
+    // Use global ImageOptimizer if present, otherwise minimal fallback.
+    (function(){
+      function minimalInit() {
+        var imgs = document.querySelectorAll('img.lazy-image');
+        imgs.forEach(function(img){
+          img.classList.add('blur-up');
+          // Ensure placeholder stays until real image loads
+          if (!img.src || img.src.indexOf('data:') === 0) {
+            // keep placeholder
+          }
+          var loadSrc = function(){
+            var s = img.getAttribute('data-src');
+            if (!s) return;
+            var tmp = new Image();
+            tmp.onload = function(){ img.src = s; img.classList.add('loaded'); };
+            tmp.onerror = function(){ img.classList.add('loaded'); };
+            tmp.src = s;
+          };
+
+          if ('loading' in HTMLImageElement.prototype) {
+            // let browser lazy-load; still ensure we swap src when needed
+            img.addEventListener('load', function(){ img.classList.add('loaded'); });
+            // If data-src exists but browser didn't set src, set it now
+            if (!img.src || img.src.indexOf('placeholder-blur') !== -1) {
+              var ds = img.getAttribute('data-src'); if (ds) img.src = ds;
+            }
+          } else {
+            // simple viewport check
+            var onScroll = function(){
+              if (img.getBoundingClientRect().top < window.innerHeight + 200 && !img.classList.contains('loaded')) {
+                loadSrc();
+                window.removeEventListener('scroll', onScroll);
+              }
+            };
+            window.addEventListener('scroll', onScroll, {passive:true});
+            // try one time
+            onScroll();
+          }
+        });
+      }
+
+      if (window.ImageOptimizer && typeof window.ImageOptimizer.init === 'function') {
+        // ensure ImageOptimizer styles and init run
+        try{ window.ImageOptimizer.addOptimizationCSS(); }catch(e){}
+        try{ window.ImageOptimizer.init(); }catch(e){}
+      } else {
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', minimalInit);
+        else minimalInit();
+      }
+    })();
+  </script>
+</body>
+</html>
