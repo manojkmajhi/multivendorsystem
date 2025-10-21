@@ -644,6 +644,25 @@
             <div style="font-size: 18px; margin-top: 10px;"><strong>Total:</strong> Rs ${order.total.toFixed(2)}</div>
           </div>
 
+          ${order.payment_method || order.payment_screenshot ? `
+            <hr>
+            <div style="margin-top: 20px;">
+              <h6 style="margin-bottom: 15px;">💳 Payment Information</h6>
+              <div style="background: #f8f9fa; padding: 15px; border-radius: 4px;">
+                <div style="margin-bottom: 10px;"><strong>Method:</strong> ${order.payment_method === 'esewa' ? 'eSewa' : 'Cash on Delivery'}</div>
+                ${order.payment_screenshot ? `
+                  <div>
+                    <strong>Payment Screenshot:</strong>
+                    <div style="margin-top: 10px;">
+                      <img src="${order.payment_screenshot}" alt="Payment Screenshot" style="max-width: 100%; max-height: 300px; border-radius: 6px; border: 2px solid #4caf50; cursor: pointer; display: block;" onclick="window.open('${order.payment_screenshot}', '_blank')" />
+                      <p style="font-size: 11px; color: #666; margin-top: 8px; text-align: center;">Click image to view full size</p>
+                    </div>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          ` : ''}
+
           <hr>
           <div style="margin-top: 20px;">
             <h6 style="margin-bottom: 15px;">📦 Order Status & Tracking</h6>

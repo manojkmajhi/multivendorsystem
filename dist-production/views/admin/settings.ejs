@@ -59,7 +59,7 @@
       <div class="card">
         <div class="card-header"><h2 class="card-title">Site Configuration</h2></div>
         <div class="card-body">
-          <form method="POST">
+          <form method="POST" enctype="multipart/form-data">
             <div class="form-group">
               <label class="form-label">Site Name *</label>
               <input name="name" class="form-control" value="<%= site.name %>" required placeholder="e.g., All Strawhats" />
@@ -302,6 +302,30 @@
               <input name="phone_number" class="form-control" value="<%= typeof social !== 'undefined' && social.phone_number ? social.phone_number : '' %>" placeholder="9814789009" />
               <small class="form-text">Contact phone number</small>
             </div>
+
+            <hr style="margin: 2rem 0; border: none; border-top: 1px solid #dee2e6;">
+            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 1rem;">💳 Payment Settings</h3>
+            
+            <div class="form-group">
+              <label class="form-label">eSewa QR Code URL</label>
+              <input name="esewa_qr" class="form-control" value="<%= typeof payment !== 'undefined' && payment.esewa_qr ? payment.esewa_qr : '' %>" placeholder="https://i.postimg.cc/..." />
+              <small class="form-text">URL to your eSewa QR code image</small>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Or Upload QR Code Image</label>
+              <input type="file" name="qr_file" accept="image/*" class="form-control" style="padding: 0.5rem;" />
+              <small class="form-text">Upload a new QR code image (will override URL above)</small>
+            </div>
+            
+            <% if(typeof payment !== 'undefined' && payment.esewa_qr) { %>
+              <div class="form-group">
+                <label class="form-label">Current QR Code Preview</label>
+                <div style="padding: 1rem; background: #f8f9fa; border-radius: 4px; display: inline-block;">
+                  <img src="<%= payment.esewa_qr %>" style="width: 150px; height: 150px; object-fit: contain; border: 2px solid #4caf50; border-radius: 8px;" alt="eSewa QR">
+                </div>
+              </div>
+            <% } %>
 
             <hr style="margin: 2rem 0; border: none; border-top: 1px solid #dee2e6;">
             <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 1rem;">Security</h3>

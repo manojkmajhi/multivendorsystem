@@ -11,17 +11,22 @@ const { productCache, categoryCache, settingsCache, heroCache, cacheMiddleware, 
 
 const app = express();
 
-// Enable aggressive gzip compression
-app.use(compression({ level: 6, threshold: 1024 }));
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
+
+// Optimize Express settings
+app.set('x-powered-by', false);
+app.set('etag', 'strong');
+if (NODE_ENV === 'production') {
+  app.set('view cache', true);
+}
+
+// Enable aggressive gzip compression
+app.use(compression({ level: 6, threshold: 1024 }));
 
 // Production optimizations
 if (NODE_ENV === 'production') {
   app.set('trust proxy', 1);
-  app.disable('x-powered-by');
-  app.set('view cache', true);
-  app.set('etag', 'strong');
 }
 
 // Supabase client with connection pooling
@@ -64,8 +69,8 @@ async function setSetting(key, value){
 }
 
 app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Performance and security headers
 app.use((req,res,next)=>{
@@ -249,7 +254,7 @@ function normalizeType(t){
 async function getAnyProductById(id){
   if(!id) return null;
   id = String(id).trim();
-  console.log('→ getAnyProductById called', { id, hasSupabase: !!supabase });
+  if(NODE_ENV !== 'production') console.log('→ getAnyProductById called', { id, hasSupabase: !!supabase });
   
   if(supabase){
     try {
@@ -257,27 +262,22 @@ async function getAnyProductById(id){
       const { data, error } = await supabase.from('products').select('*').eq('id', id).maybeSingle();
       
       if(error){
-        console.error('❌ SUPABASE_PRODUCT_LOOKUP_ERROR', { id, error: error.message, code: error.code, details: error.details, hint: error.hint });
+        if(NODE_ENV !== 'production') console.error('❌ SUPABASE_PRODUCT_LOOKUP_ERROR', { id, error: error.message });
       } else if(data) {
-        console.log('✓ SUPABASE_PRODUCT_LOOKUP_SUCCESS', { id, name: data.name, active: data.active });
+        if(NODE_ENV !== 'production') console.log('✓ SUPABASE_PRODUCT_LOOKUP_SUCCESS', { id, name: data.name });
         return data;
-      } else {
-        console.warn('⚠ SUPABASE_PRODUCT_LOOKUP_EMPTY', { id, message: 'Query succeeded but returned no data (likely RLS block or product does not exist)' });
       }
 
     } catch(e){ 
-      console.error('💥 SUPABASE_PRODUCT_LOOKUP_EXCEPTION', { id, error: e.message, stack: e.stack }); 
+      if(NODE_ENV !== 'production') console.error('💥 SUPABASE_PRODUCT_LOOKUP_EXCEPTION', { id, error: e.message }); 
     }
   }
   
   // Fallback to in-memory products
   const memMatch = products.find(p=>p.id === id);
-  if(memMatch) {
-    console.log('✓ Found in memory fallback', { id });
-    return memMatch;
-  }
+  if(memMatch) return memMatch;
   
-  console.warn('❌ Product not found anywhere', { id });
+  if(NODE_ENV !== 'production') console.warn('❌ Product not found', { id });
   return null;
 }
 
@@ -925,18 +925,19 @@ app.get('/admin/settings', adminGuard, async (req,res)=>{
     const customColors = await getSetting('custom_colors', { primary: '#2b90d9', secondary: '#6c757d', success: '#28a745', danger: '#dc3545' });
     const seo = await getSetting('seo', {});
     const social = await getSetting('social', {});
-  res.render('admin/settings', { site, customColors, seo, social, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
+    const payment = await getSetting('payment', { esewa_qr: 'https://i.postimg.cc/mDPmcWp9/Whats-App-Image-2025-10-14-at-16-17-59-1cdf0cb6.jpg' });
+  res.render('admin/settings', { site, customColors, seo, social, payment, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
   } catch(e){
     console.error(e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load settings.' });
   }
 });
 
-app.post('/admin/settings', adminGuard, async (req,res)=>{
+app.post('/admin/settings', adminGuard, upload.single('qr_file'), async (req,res)=>{
   const { name, logo_url, new_password, primary_color, secondary_color, success_color, danger_color,
     meta_description, meta_keywords, site_tagline, og_title, og_description, og_image,
     twitter_card, twitter_handle, google_analytics, google_verification, facebook_pixel,
-    facebook_url, instagram_url, twitter_url, youtube_url, tiktok_url, contact_email, phone_number } = req.body;
+    facebook_url, instagram_url, twitter_url, youtube_url, tiktok_url, contact_email, phone_number, esewa_qr } = req.body;
   try {
     let siteOk = true;
     const siteResult = await setSetting('site', { name, logo_url });
@@ -961,6 +962,12 @@ app.post('/admin/settings', adminGuard, async (req,res)=>{
     // Save social media links
     const socialData = { facebook_url, instagram_url, twitter_url, youtube_url, tiktok_url, contact_email, phone_number };
     await setSetting('social', socialData);
+    
+    // Save payment settings (eSewa QR)
+    let finalQr = esewa_qr;
+    if(req.file) finalQr = '/media/uploads/' + req.file.filename;
+    const paymentData = { esewa_qr: finalQr };
+    await setSetting('payment', paymentData);
     
     let pwChanged = false;
     if(new_password && new_password.trim().length){
@@ -1576,27 +1583,28 @@ app.get('/api/otpless-config', (req, res) => {
   res.json({ appId: process.env.OTPLESS_APP_ID });
 });
 
+app.get('/api/payment-settings', async (req, res) => {
+  try {
+    const payment = await getSetting('payment', { esewa_qr: 'https://i.postimg.cc/mDPmcWp9/Whats-App-Image-2025-10-14-at-16-17-59-1cdf0cb6.jpg' });
+    res.json(payment);
+  } catch(e) {
+    res.json({ esewa_qr: 'https://i.postimg.cc/mDPmcWp9/Whats-App-Image-2025-10-14-at-16-17-59-1cdf0cb6.jpg' });
+  }
+});
+
 // Add to cart endpoint (front-end calls /add_to_cart/?productid=..&qty=..&variantid=..)
 app.get('/add_to_cart/', async (req, res) => {
   try {
     const { productid, qty, variantid } = req.query;
-    console.log('🛒 ADD_TO_CART request', { productid, qty, variantid, cookies: req.cookies });
     
-    if (!productid || !qty) {
-      console.warn('❌ Missing params');
-      return res.status(400).json({ error: 'productid and qty required' });
-    }
+    if (!productid || !qty) return res.status(400).json({ error: 'productid and qty required' });
     
     const trimmed = String(productid).trim();
     const product = await getCachedProduct(trimmed);
     
-    if (!product) {
-      console.error('❌ ADD_TO_CART_PRODUCT_NOT_FOUND', { productid: trimmed });
-      return res.status(404).json({ error: 'Product not found' });
-    }
+    if (!product) return res.status(404).json({ error: 'Product not found' });
     
     const device = req.cookies.device || 'anonymous';
-    console.log('✓ Product found, adding to cart', { productid: trimmed, device, productName: product.name, variantid });
     
     const cart = getCart(device);
     const cartKey = variantid ? `${trimmed}_${variantid}` : trimmed;
@@ -1608,11 +1616,9 @@ app.get('/add_to_cart/', async (req, res) => {
     }
     
     const totalCount = cart.reduce((a,c)=>a+c.qty,0);
-    console.log('✓ Cart updated', { device, itemCount: cart.length, totalQty: totalCount });
-    
     return res.json({ ok: true, count: totalCount });
   } catch(e){
-    console.error('💥 ADD_TO_CART_ERROR', e);
+    if(NODE_ENV !== 'production') console.error('ADD_TO_CART_ERROR', e);
     return res.status(500).json({ error: 'Failed to add to cart' });
   }
 });
@@ -1622,7 +1628,6 @@ app.get('/get_cart/', async (req,res)=>{
   try {
     const device = req.cookies.device || 'anonymous';
     const cart = getCart(device);
-    console.log('📋 GET_CART request', { device, itemCount: cart.length });
     
     // Batch load all products and variants
     const productIds = [...new Set(cart.map(it => it.productId))];
@@ -1663,7 +1668,6 @@ app.get('/get_cart/', async (req,res)=>{
       return [p.id, finalName, it.qty, finalPrice, finalImage, normalizeType(p.type), it.qty, it.variantId || null];
     });
     
-    console.log('✓ GET_CART response', { mappedCount: mapped.length });
     res.json({ cart: mapped });
   } catch(e){
     console.error('GET_CART_ERROR', e);
@@ -1806,7 +1810,6 @@ app.get('/cart/', async (req,res)=>{
   try {
     const device = req.cookies.device || 'anonymous';
     const cart = getCart(device);
-    console.log('🛒 CART_PAGE request', { device, itemCount: cart.length });
     
     // Batch load products and variants
     const productIds = [...new Set(cart.map(it => it.productId))];
@@ -1854,8 +1857,6 @@ app.get('/cart/', async (req,res)=>{
     
     const total = items.reduce((s,i)=>s+i.subtotal,0);
     const itemCount = items.reduce((s,i)=>s+i.qty,0);
-    console.log('✓ Cart page render', { itemCount, total });
-    
     res.render('cart', { items, total, itemCount, siteSetting: res.locals.siteSetting });
   } catch(e){
     console.error('CART_PAGE_ERROR', e);
@@ -1925,7 +1926,7 @@ app.get('/checkout/', async (req, res) => {
 // Submit order from checkout
 app.post('/checkout/', async (req, res) => {
   try {
-    const { name, mobile, email, region, area, address, notes, subtotal, deliveryFee, total } = req.body;
+    const { name, mobile, email, region, area, address, notes, subtotal, deliveryFee, total, paymentMethod, paymentScreenshot } = req.body;
     
     // Validate required fields
     if(!name || !mobile || !region || !area || !address) {
@@ -1978,6 +1979,11 @@ app.post('/checkout/', async (req, res) => {
       return res.status(400).json({ error: 'No valid items in cart' });
     }
     
+    // Validate payment method
+    if(paymentMethod === 'esewa' && !paymentScreenshot){
+      return res.status(400).json({ error: 'Payment screenshot required for eSewa payment' });
+    }
+    
     // Create order in database
     if(supabase){
       const orderData = {
@@ -1992,9 +1998,17 @@ app.post('/checkout/', async (req, res) => {
         delivery_fee: parseFloat(deliveryFee),
         total: parseFloat(total),
         status: 'pending',
+        payment_method: paymentMethod || 'cod',
+        payment_screenshot: paymentScreenshot || null,
         items: orderItems
         // order_number will be auto-generated by database trigger
       };
+      
+      console.log('Creating order with payment info:', { 
+        paymentMethod, 
+        hasScreenshot: !!paymentScreenshot,
+        screenshotLength: paymentScreenshot ? paymentScreenshot.length : 0
+      });
       
       const { data, error } = await supabase.from('orders').insert(orderData).select().single();
       
@@ -2068,6 +2082,9 @@ app.use(function(req, res){
 
 function start(port, attempt=0){
   const srv = app.listen(port, () => {
+    // Enable HTTP keep-alive
+    srv.keepAliveTimeout = 65000;
+    srv.headersTimeout = 66000;
     console.log('='.repeat(60));
     console.log(`✓ All Strawhats Server [${NODE_ENV.toUpperCase()}]`);
     console.log(`✓ Running on http://localhost:${port}`);

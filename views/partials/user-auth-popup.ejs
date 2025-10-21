@@ -5,7 +5,7 @@
     <div style="padding: 32px 28px;">
       <h3>Verify Mobile Number</h3>
       <p class="text-muted small">Enter OTP sent to <strong id="verifyPhone"></strong> via WhatsApp</p>
-      <input type="text" id="otpInput" class="form-control" placeholder="Enter 6-digit OTP" maxlength="6" style="font-size: 24px; text-align: center; letter-spacing: 8px; margin: 20px 0;" onkeypress="if(event.key==='Enter')verifyOTP()" oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value.length===6){verifyOTP();}" autocomplete="off">
+      <input type="text" id="otpInput" class="form-control" placeholder="Enter 6-digit OTP" maxlength="6" style="font-size: 24px; text-align: center; letter-spacing: 8px; margin: 20px 0;" onkeypress="if(event.key==='Enter')verifyOTP()" oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value.length===6){setTimeout(verifyOTP, 300);}" autocomplete="one-time-code">
       <button id="verifyOTPBtn" onclick="verifyOTP()" class="btn btn-dark btn-block" style="height: 48px; font-weight: 600;">Verify OTP</button>
       <p class="text-center text-muted small mt-3">Didn't receive? <a href="#" onclick="resendOTP(); return false;">Resend OTP</a></p>
     </div>
@@ -218,6 +218,28 @@ async function verifyMobileWithOTP(phone, name, callback) {
   document.getElementById('otpInput').value = '';
   document.getElementById('otpVerifyModal').classList.add('active');
   document.body.style.overflow = 'hidden';
+  
+  // Try WebOTP API for auto-read
+  if ('OTPCredential' in window) {
+    try {
+      const ac = new AbortController();
+      setTimeout(() => ac.abort(), 60000); // 1 min timeout
+      
+      navigator.credentials.get({
+        otp: { transport: ['sms'] },
+        signal: ac.signal
+      }).then(otp => {
+        if (otp && otp.code) {
+          document.getElementById('otpInput').value = otp.code;
+          setTimeout(verifyOTP, 300);
+        }
+      }).catch(err => {
+        console.log('WebOTP not available:', err);
+      });
+    } catch(e) {
+      console.log('WebOTP API not supported');
+    }
+  }
   
   // Send OTP via server
   try {

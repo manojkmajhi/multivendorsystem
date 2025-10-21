@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@300;400;700&display=swap" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="preload" as="image" href="https://i.postimg.cc/c42fF8HH/esewa.png" />
+  <link rel="preload" as="image" href="https://i.postimg.cc/GhVvXs2r/Cod.png" />
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -41,6 +43,28 @@
   .place-order-btn:active{transform:translateY(0); box-shadow:0 2px 6px rgba(0,0,0,.15);}    
   footer{margin-top:0; flex-shrink:0;}
   .helper-text{color:#6c757d; font-size:10px; display:block; margin-top:3px; line-height:1.3;}
+  .payment-container{display:flex; gap:8px; flex-wrap:wrap;}
+  .payment-method-label{cursor:pointer; border:2px solid #ddd; border-radius:8px; padding:12px 16px; display:flex; align-items:center; justify-content:center; gap:8px; transition:all .25s ease; background:#fff; flex:1; min-width:140px;}
+  .payment-method-label:hover{border-color:#4caf50; transform:translateY(-2px); box-shadow:0 4px 10px rgba(0,0,0,.1);}
+  .payment-method-label.active{border-color:#4caf50; background:#f1f8f4; box-shadow:0 2px 8px rgba(76,175,80,.2);}
+  #esewaModal{display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px); padding:20px; animation:fadeIn .3s ease;}
+  #esewaModal.active{display:flex;}
+  .esewa-modal-content{background:#fff; border-radius:16px; max-width:480px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.3); animation:slideUp .3s ease; overflow:hidden;}
+  .esewa-modal-header{padding:16px 20px; background:linear-gradient(135deg, #4caf50 0%, #45a049 100%); color:#fff; display:flex; justify-content:space-between; align-items:center;}
+  .esewa-modal-header h3{margin:0; font-size:18px; font-weight:700; display:flex; align-items:center; gap:8px;}
+  .esewa-close-btn{background:rgba(255,255,255,.2); border:none; color:#fff; font-size:24px; cursor:pointer; padding:0; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:50%; transition:all .2s;}
+  .esewa-close-btn:hover{background:rgba(255,255,255,.3); transform:rotate(90deg);}
+  .esewa-modal-body{padding:24px; text-align:center;}
+  .esewa-qr-container{background:#f8f9fa; padding:16px; border-radius:12px; margin-bottom:16px; display:inline-block;}
+  .esewa-actions{display:flex; gap:10px; margin-top:20px;}
+  .esewa-btn{flex:1; padding:12px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:all .2s; border:none; box-shadow:0 2px 6px rgba(0,0,0,.1);}
+  .esewa-btn-primary{background:#4caf50; color:#fff;}
+  .esewa-btn-primary:hover{background:#45a049; transform:translateY(-1px); box-shadow:0 4px 10px rgba(0,0,0,.15);}
+  .esewa-btn-secondary{background:#f5f5f5; color:#333;}
+  .esewa-btn-secondary:hover{background:#e0e0e0;}
+  .screenshot-preview{margin-top:12px; padding:12px; background:#f8f9fa; border-radius:8px; display:none;}
+  .screenshot-preview.show{display:block;}
+  .screenshot-preview img{width:100px; height:100px; border-radius:8px; object-fit:cover; box-shadow:0 2px 6px rgba(0,0,0,.1);}
   #celebrate{position:fixed; inset:0; background:rgba(0,0,0,.75); display:flex; align-items:center; justify-content:center; z-index:9999; opacity:0; pointer-events:none; transition:opacity .4s ease; backdrop-filter:blur(4px);}
   #celebrate.active{opacity:1; pointer-events:auto;}
   #celebrate .celebrate-box{background:#fff; padding:40px 32px 36px; border-radius:16px; max-width:380px; width:90%; text-align:center; position:relative; box-shadow:0 20px 60px rgba(0,0,0,.3), 0 8px 20px rgba(0,0,0,.15);}    
@@ -51,11 +75,12 @@
   #confettiCanvas{position:absolute; inset:0; width:100%; height:100%; pointer-events:none;}
   .form-section{background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.04); border:1px solid #e8eaed;}
   .location-picker-wrapper{position:relative;}
-  .location-btn{position:absolute; right:6px; top:50%; transform:translateY(-50%); background:#333; color:#fff; border:none; border-radius:5px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:0 1px 3px rgba(0,0,0,.1); z-index:2;}
-  .location-btn:hover{background:#444; box-shadow:0 2px 8px rgba(0,0,0,.15); transform:translateY(-50%) translateX(-2px);}
-  .location-btn:active{transform:translateY(-50%) scale(0.95); box-shadow:0 1px 2px rgba(0,0,0,.1);}
-  .location-btn i{font-size:15px; transition:transform .3s cubic-bezier(0.4, 0, 0.2, 1);}
-  .location-btn:hover i{transform:scale(1.1);}
+  .location-picker-wrapper .form-control{padding-right:45px !important;}
+  .location-btn{position:absolute; right:8px; top:50%; transform:translateY(-50%); background:#333; color:#fff; border:none; border-radius:6px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:none; z-index:5; padding:0;}
+  .location-btn:hover{background:#444; transform:translateY(-50%) scale(1.05);}
+  .location-btn:active{transform:translateY(-50%) scale(0.95);}
+  .location-btn i{font-size:14px; transition:transform .3s cubic-bezier(0.4, 0, 0.2, 1);}
+  .location-btn:hover i{transform:scale(1.05);}
   #locationModal{display:none; position:fixed; inset:0; background:rgba(0,0,0,.8); z-index:9998; align-items:center; justify-content:center; backdrop-filter:blur(6px); padding:20px; animation:fadeIn .3s ease; overflow:auto;}
   #locationModal.active{display:flex;}
   .location-modal-content{background:#fff; border-radius:16px; width:100%; max-width:600px; height:auto; max-height:calc(100vh - 40px); overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.4); display:flex; flex-direction:column; animation:slideUp .3s ease;}
@@ -141,6 +166,12 @@
   }
   @media (max-width:767.98px){ 
     body{padding-top:60px; background:#fff;}
+    .payment-container{gap:6px;}
+    .payment-method-label{padding:10px 14px; min-width:120px;}
+    #esewaModal{padding:0;}
+    .esewa-modal-content{border-radius:0; max-width:100%; height:100%;}
+    .esewa-modal-body{padding:20px;}
+    .esewa-actions{flex-direction:column-reverse;}
     .main-content{padding-bottom:15px;}
     .breadcrumb-inline{margin:6px 0 10px;}
     .section-heading{font-size:12px; margin-bottom:10px;}
@@ -225,7 +256,7 @@
             <div class="col-md-6 form-group">
               <label class="sr-only" for="address">Detailed Address *</label>
               <div class="location-picker-wrapper">
-                <input id="address" class="form-control" placeholder="Detailed Address *" required style="padding-right:50px;" />
+                <input id="address" class="form-control" placeholder="Detailed Address *" required />
                 <button type="button" class="location-btn" onclick="openLocationPicker()" title="Pick location on map">
                   <i class="fas fa-map-marker-alt"></i>
                 </button>
@@ -241,32 +272,18 @@
               <a href="/cart/" class="back-cart-btn"><span style="font-size:14px; line-height:0;" class="mr-1">&larr;</span> Change Cart</a>
             </div>
             <div class="col-12 form-group">
-              <div class="form-section" style="background:#e8f5e9; border:1px solid #c8e6c9; padding:12px; margin-top:8px;">
-                <div class="section-heading" style="margin-bottom:10px; font-size:11px;">PAYMENT</div>
-                <div style="display:grid; grid-template-columns:auto 1fr; gap:12px; align-items:center;">
-                  <div style="display:flex; flex-direction:column; gap:8px;">
-                    <label style="cursor:pointer; border:2px solid #ddd; border-radius:8px; padding:12px 16px; display:flex; align-items:center; gap:8px; transition:all .2s; background:#fff; min-width:160px;" id="esewaLabel">
-                      <input type="radio" name="payment" value="esewa" id="paymentEsewa" style="width:18px; height:18px; margin:0;" checked />
-                      <img src="https://i.postimg.cc/c42fF8HH/esewa.png" alt="eSewa" style="height:28px; object-fit:contain;" />
-                    </label>
-                    <label style="cursor:pointer; border:2px solid #ddd; border-radius:8px; padding:12px 16px; display:flex; align-items:center; gap:8px; transition:all .2s; background:#fff; min-width:160px;" id="codLabel">
-                      <input type="radio" name="payment" value="cod" id="paymentCod" style="width:18px; height:18px; margin:0;" />
-                      <img src="https://i.postimg.cc/GhVvXs2r/Cod.png" alt="Cash on Delivery" style="height:28px; object-fit:contain;" />
-                    </label>
-                  </div>
-                  <div id="esewaQrSection" style="padding:12px; background:#fff; border-radius:8px; border:1px solid #c8e6c9; display:flex; gap:12px; align-items:center;">
-                    <img id="esewaQrImage" src="" alt="QR" style="width:90px; height:90px; border-radius:6px; box-shadow:0 2px 4px rgba(0,0,0,.1); object-fit:contain; flex-shrink:0;" />
-                    <div style="flex:1;">
-                      <div style="font-size:11px; color:#555; margin-bottom:8px; font-weight:600;">Scan & upload proof</div>
-                      <label for="paymentScreenshot" style="display:inline-block; cursor:pointer; background:#4caf50; color:#fff; padding:9px 20px; border-radius:6px; text-align:center; font-weight:600; font-size:12px; transition:all .2s;" onmouseover="this.style.background='#45a049'" onmouseout="this.style.background='#4caf50'">
-                        <i class="fas fa-upload"></i> Upload SS *
-                      </label>
-                      <input type="file" id="paymentScreenshot" accept="image/*" style="display:none;" />
-                      <div id="screenshotPreview" style="margin-top:8px; display:none;">
-                        <div style="font-size:11px; color:#4caf50; font-weight:600;"><i class="fas fa-check-circle"></i> Uploaded ✓</div>
-                      </div>
-                    </div>
-                  </div>
+              <div class="form-section" style="background:#e8f5e9; border:1px solid #c8e6c9; padding:14px; margin-top:8px;">
+                <div class="section-heading" style="margin-bottom:10px; font-size:11px;">PAYMENT METHOD</div>
+                <div class="payment-container">
+                  <label class="payment-method-label active" id="codLabel">
+                    <input type="radio" name="payment" value="cod" id="paymentCod" style="width:18px; height:18px; margin:0;" checked />
+                    <img src="https://i.postimg.cc/GhVvXs2r/Cod.png" alt="Cash on Delivery" loading="eager" decoding="async" style="height:28px; object-fit:contain;" />
+                  </label>
+                  <label class="payment-method-label" id="esewaLabel">
+                    <input type="radio" name="payment" value="esewa" id="paymentEsewa" style="width:18px; height:18px; margin:0;" />
+                    <img src="https://i.postimg.cc/c42fF8HH/esewa.png" alt="eSewa" loading="eager" decoding="async" style="height:28px; object-fit:contain;" />
+                    <span id="esewaCheckmark" style="display:none; color:#4caf50; font-size:18px; margin-left:4px;"><i class="fas fa-check-circle"></i></span>
+                  </label>
                 </div>
               </div>
             </div>
@@ -352,6 +369,39 @@
   
 
 
+  <!-- eSewa Payment Modal -->
+  <div id="esewaModal">
+    <div class="esewa-modal-content">
+      <div class="esewa-modal-header">
+        <h3><img src="https://i.postimg.cc/c42fF8HH/esewa.png" alt="eSewa" style="height:24px; filter:brightness(0) invert(1);"/> eSewa Payment</h3>
+        <button class="esewa-close-btn" onclick="closeEsewaModal()">&times;</button>
+      </div>
+      <div class="esewa-modal-body">
+        <p style="color:#666; font-size:13px; margin-bottom:16px;">Scan QR code with your eSewa app to complete payment</p>
+        <div class="esewa-qr-container">
+          <img id="esewaQrImageModal" src="" alt="QR" loading="eager" decoding="async" style="width:200px; height:200px; border-radius:8px; object-fit:contain;" />
+        </div>
+        <div class="screenshot-preview" id="screenshotPreview">
+          <p style="font-size:12px; color:#4caf50; font-weight:600; margin-bottom:8px;"><i class="fas fa-check-circle"></i> Screenshot Uploaded</p>
+          <img id="screenshotImage" src="" alt="Screenshot" />
+        </div>
+        <div class="esewa-actions">
+          <button type="button" class="esewa-btn esewa-btn-secondary" id="downloadQrModal">
+            <i class="fas fa-download"></i> Download QR
+          </button>
+          <label for="paymentScreenshot" class="esewa-btn esewa-btn-primary" id="uploadLabel" style="margin:0; display:flex; align-items:center; justify-content:center; gap:6px;">
+            <i class="fas fa-upload"></i> Upload Screenshot *
+          </label>
+          <input type="file" id="paymentScreenshot" accept="image/*" style="display:none;" />
+        </div>
+        <button type="button" class="esewa-btn esewa-btn-secondary" id="closeModalBtn" style="display:none; margin-top:12px; width:100%;" onclick="closeEsewaModal()">
+          <i class="fas fa-times"></i> Close
+        </button>
+        <p style="font-size:11px; color:#999; margin-top:16px;" id="uploadHint">Upload payment screenshot to confirm your order</p>
+      </div>
+    </div>
+  </div>
+
   <div id="celebrate">
     <canvas id="confettiCanvas"></canvas>
     <div class="celebrate-box">
@@ -364,23 +414,58 @@
   </div>
 
   <script>
-    // Load eSewa QR code from settings
+    // Load eSewa QR code
+    let qrImageUrl = '';
+    const preloadQr = new Image();
+    preloadQr.src = 'https://i.postimg.cc/mDPmcWp9/Whats-App-Image-2025-10-14-at-16-17-59-1cdf0cb6.jpg';
+    
     fetch('/api/payment-settings')
       .then(r => r.json())
       .then(data => {
-        if(data.esewa_qr) {
-          document.getElementById('esewaQrImage').src = data.esewa_qr;
-        } else {
-          document.getElementById('esewaQrImage').src = 'https://i.postimg.cc/mDPmcWp9/Whats-App-Image-2025-10-14-at-16-17-59-1cdf0cb6.jpg';
-        }
+        qrImageUrl = data.esewa_qr || 'https://i.postimg.cc/mDPmcWp9/Whats-App-Image-2025-10-14-at-16-17-59-1cdf0cb6.jpg';
+        document.getElementById('esewaQrImageModal').src = qrImageUrl;
       })
       .catch(() => {
-        document.getElementById('esewaQrImage').src = 'https://i.postimg.cc/mDPmcWp9/Whats-App-Image-2025-10-14-at-16-17-59-1cdf0cb6.jpg';
+        qrImageUrl = 'https://i.postimg.cc/mDPmcWp9/Whats-App-Image-2025-10-14-at-16-17-59-1cdf0cb6.jpg';
+        document.getElementById('esewaQrImageModal').src = qrImageUrl;
       });
+    
+    // eSewa modal functions
+    function openEsewaModal() {
+      document.getElementById('esewaModal').classList.add('active');
+    }
+    
+    window.closeEsewaModal = function() {
+      document.getElementById('esewaModal').classList.remove('active');
+    };
+    
+    // Close modal on outside click
+    document.getElementById('esewaModal').addEventListener('click', function(e) {
+      if(e.target.id === 'esewaModal') closeEsewaModal();
+    });
+    
+    // Download QR from modal
+    document.getElementById('downloadQrModal').addEventListener('click', async function(e){
+      e.preventDefault();
+      try {
+        const response = await fetch(qrImageUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'esewa-qr.jpg';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } catch(err) {
+        window.open(qrImageUrl, '_blank');
+      }
+    });
     
     // Region -> area mapping with Kathmandu Valley locations and Nepal districts
     const areas = { 
-      'Inside Valley': ['Select Area', 'Anamnagar', 'Ason', 'Babarmahal', 'Bagbazaar', 'Baghdol', 'Balaju', 'Balambu', 'Balkhu', 'Balkot', 'Balkumari', 'Baluwakhani', 'Baluwatar', 'Baneshwor', 'Bansbari', 'Basbari', 'Basantapur', 'Basundhara', 'Bafal', 'Bhangal', 'Bhaisepati', 'Bhotahity', 'Bijeshwori', 'Bode', 'Boudha', 'Budhanilkantha', 'Budol', 'Bungamati', 'Chabahil', 'Chandol', 'Chandragiri', 'Changunarayan', 'Chapagaun', 'Chapali', 'Chhauni', 'Chhetrapati', 'Chobhar', 'Chunikhel', 'Dakshinkali', 'Dallu', 'Dhapakhel', 'Dhapasi', 'Dhobighat', 'Dholahiti', 'Dhumbarahi', 'Dhulikhel', 'Dilli Bazaar', 'Durbar Marg', 'Duwakot', 'Gairidhara', 'Gaushala', 'Godawari', 'Gongabu', 'Gothatar', 'Gwarko', 'Gyaneshwor', 'Hadigaun', 'Harisiddhi', 'Hattisar', 'Imadol', 'Itumbahal', 'Jamal', 'Jawalakhel', 'Jhamsikhel', 'Jorpati', 'Kabhre', 'Kalimati', 'Kamaladi', 'Kapan', 'Khokana', 'Kirtipur', 'Koteshwor', 'Kuleshwor', 'Kupondole', 'Kusunti', 'Lainchaur', 'Lazimpat', 'Lubhu', 'Machhegaun', 'Mahalaxmi', 'Maharajgunj', 'Maitidevi', 'Maitighar', 'Manamaiju', 'Manohara', 'Mangal Bazar', 'Matatirtha', 'Nagarkot', 'Naikap', 'Nakhipot', 'Nakhkhu', 'Naxal', 'Nayabazar', 'New Baneshwor', 'New Road', 'Old Baneshwor', 'Panga', 'Patan', 'Patan Durbar Square', 'Pepsicola', 'Pharping', 'Pulchowk', 'Samakhushi', 'Sanepa', 'Sanga', 'Sankhamul', 'Sankhu', 'Satdobato', 'Sinamangal', 'Sitapaila', 'Sunakothi', 'Sundarighat', 'Sundarijal', 'Suryabinayak', 'Swayambhu', 'Tangal', 'Taukhel', 'Teku', 'Thaiba', 'Thamel', 'Thankot', 'Thapathali', 'Tinkune', 'Tokha', 'Tokha Municipality', 'Tripureshwor', 'Tusal', 'Tushal'],
+      'Inside Valley': ['Select Area', 'Aalapot', 'Airport', 'Aloknagar', 'Anamnagar', 'Anand Nagar', 'Ason', 'Babarmahal', 'Badikhel', 'Bafal', 'Bagbazar', 'Baghdol', 'Balaju', 'Balambu', 'Balkhu', 'Balkot', 'Balkumari', 'Baluwa', 'Baluwatar', 'Banasthali', 'Baniyatar', 'Bansbari', 'Basanta Nagar', 'Basantapur', 'Basuki Nagar', 'Basundhara', 'Battisputali', 'Bauddha', 'Bhadrabas', 'Bhadrakali', 'Bhaisepati', 'Bhandarkhal', 'Bhatkeko Pul', 'Bhatkepati', 'Bhimdhunga', 'Bhimsen Sthan', 'Bhimsengola', 'Bhotahiti', 'Bhote Bahal', 'Bhrikuti Tole', 'Bhrikutimandap', 'Bhuikhel', 'Bhurungkhel', 'Bijeshwori', 'Bijuli Bazar', 'Binayak Tole', 'Bir Hospital', 'Biruwa', 'Bisankhunarayan', 'Bishalnagar', 'Bode', 'Boharatar', 'Bramha Tol', 'Budhanilakantha', 'Buddhanagar', 'Bungamati', 'Byasi', 'Central Jail', 'Chabahil', 'Chagal', 'Chaksibari', 'Chakupat', 'Chalnakhel', 'Chamati', 'Chandol', 'Chandragiri', 'Changunarayan', 'Chapagaon', 'Chapali Bhadrakali', 'Chardobato', 'Chhauni', 'Chhetrapati', 'Chhitijnagar', 'Chikanmugal', 'Chobhar', 'Chouketar Dahachowk', 'Chuchepati', 'Chuinkhel', 'Chundevi', 'Dadhikot', 'Dakshinkali', 'Dallu', 'Danchhi', 'Dasharath Stadium', 'Dhalko', 'Dhapakhel', 'Dhapasi', 'Dharmapath', 'Dharampur', 'Dharmasthali', 'Dhobichaur', 'Dhobidhara', 'Dhumbarahi', 'Dillibazar', 'Dudhpati', 'Durbarmarg', 'Duwakot', 'Ekantakuna', 'Fulbari', 'Gairidhara', 'Gairigaon', 'Galkopakha', 'Gamcha', 'Ganabahal', 'Ganesh Chowk', 'Ganga Hiti', 'Gaththaghar', 'Gaurighat', 'Gaushala', 'Gelalgaun', 'Ghalate', 'Ghattekulo', 'Godamchaur', 'Godawari', 'Gokarneshwor', 'Goldhunga', 'Golfutar', 'Gongabu', 'Gopi Krishna', 'Gothatar', 'Guhyeshwari', 'Gundu', 'Gundugaun', 'Gwarko', 'Gyaneshwor', 'Halchowk', 'Handigaun', 'Hanuman Dhoka', 'Harisiddhi', 'Hattiban', 'Hattigauda', 'Hattisar', 'Ichangu Narayan', 'Imadol', 'Indrachowk', 'Indrayani', 'Itachhen', 'Itapukhu', 'Jadibuti', 'Jagati', 'Jaisidewal', 'Jamal', 'Jawalakhel', 'Jaya Bageshwori', 'Jhamsikhel', 'Jhaukhel', 'Jhochhen', 'Jitpurphedi', 'Jorpati', 'Jyatha', 'Kalanki', 'Kaldhara', 'Kalikasthan', 'Kalimati', 'Kalopul', 'Kalmochan Ghat', 'Kamal Pokhari', 'Kamalachhi', 'Kamaladi', 'Kamalbinayak', 'Kandaghari', 'Kanibahal', 'Kantipath', 'Kapan', 'Kapurdhara', 'Katunje', 'Kaushaltar', 'Khadka Bhadrakali', 'Kharibot', 'Khichhapokhari', 'Khokana', 'Khumaltar', 'Khusibu', 'Kilagal', 'Kimdol', 'Kirtipur', 'Kotdevi', 'Koteshwor', 'Kuleshwor', 'Kumarigal', 'Kumaripati', 'Kumaristhan', 'Kupandol', 'Kusunti', 'Lagankhel', 'Lagantole', 'Lainchaur', 'Lamatar', 'Lazimpat', 'Libali', 'Lokanthali', 'Lubhu', 'Machhegaun', 'Machhindrabahal', 'Mahaboudha', 'Mahadevsthan', 'Maharajgunj', 'Mahankal', 'Maiju Bahal', 'Maitidevi', 'Maitighar', 'Maligaun', 'Manamaiju', 'Mandikhatar', 'Mangalbazar', 'Marutole', 'Matatirtha', 'Mhepi', 'Mid Baneshwor', 'Minbhawan', 'Mitrapark', 'Mulpani', 'Nagarjun', 'Nagdhunga', 'Nagpokhari', 'Nakhipot', 'Nakhudol', 'Nakkhu', 'Nalinchowk', 'Naradevi', 'Narayan Chaur', 'Narayan Gopal Chowk', 'Narephat', 'Naxal', 'Naya Basti', 'Naya Naikap', 'Nayabazar', 'Nayapati', 'Nepaltar', 'New Baneshwor', 'New Colony', 'Newroad', 'Old Baneshwor', 'Paknajol', 'Panipokhari', 'Pashupatinath', 'Patan', 'Patan Hospital', 'Patandhoka', 'Pepsicola', 'Pharping', 'Phutung', 'Pulchowk', 'Purano Naikap', 'Putalisadak', 'Radhe Radh', 'Raktakali', 'Ramkot', 'Rani Pokhari', 'Ranibari', 'Ratnapark', 'Ratopul', 'Ravi Bhawan', 'Sahayogi Nagar', 'Sahid Gate', 'Sainbu', 'Sallaghari', 'Samakhusi', 'Sanepa', 'Sangla', 'Sankhamul', 'Sankhu', 'Sano Bharyang', 'Sanothimi', 'Satdobato', 'Satikhel', 'Satungal', 'Shanti Goreto', 'Shantinagar', 'Siddhdipur', 'Simaltar', 'Sinamangal', 'Singha Durbar', 'Siphal', 'Sitapaila', 'Sobhabhagawati', 'Soltimode', 'Sorhakhutte', 'Srijana Nagar', 'Subidhanagar', 'Sukedhara', 'Sunakothi', 'Sundhara', 'Suryabinayak', 'Swayambhu', 'Syuchatar', 'Tahachal', 'Tamsipakha', 'Tangal', 'Taudaha', 'Taukhel', 'Teaching Hospital', 'Tebahal', 'Teku', 'Tengal', 'Thaiba', 'Thaina', 'Thali', 'Thamel', 'Thankot', 'Thapathali', 'Thimi', 'Thulo Bharyang', 'Tikathali', 'Tilganga', 'Tinchuli', 'Tinkune', 'Tinthana', 'Tokha Chandeshwari', 'Tokha Saraswoti', 'Tripureshwor', 'Tundikhel', 'Tusal', 'Yetkha', 'Bhaktapur Durbar Square'],
       'Outside Valley': ['Select District', 'Achham', 'Arghakhanchi', 'Baglung', 'Baitadi', 'Bajhang', 'Bajura', 'Banke', 'Bara', 'Bardiya', 'Bhojpur', 'Chitwan', 'Dadeldhura', 'Dailekh', 'Dang', 'Darchula', 'Dhading', 'Dhankuta', 'Dhanusa', 'Dolakha', 'Dolpa', 'Doti', 'Gorkha', 'Gulmi', 'Humla', 'Ilam', 'Jajarkot', 'Jhapa', 'Jumla', 'Kailali', 'Kalikot', 'Kanchanpur', 'Kapilvastu', 'Kaski', 'Kavrepalanchok', 'Khotang', 'Lamjung', 'Mahottari', 'Makwanpur', 'Manang', 'Morang', 'Mugu', 'Mustang', 'Myagdi', 'Nawalparasi', 'Nuwakot', 'Okhaldhunga', 'Palpa', 'Panchthar', 'Parbat', 'Parsa', 'Pyuthan', 'Ramechhap', 'Rasuwa', 'Rautahat', 'Rolpa', 'Rukum', 'Rupandehi', 'Salyan', 'Sankhuwasabha', 'Saptari', 'Sarlahi', 'Sindhuli', 'Sindhupalchok', 'Siraha', 'Solukhumbu', 'Sunsari', 'Surkhet', 'Syangja', 'Tanahu', 'Taplejung', 'Terhathum', 'Udayapur']
     };
     let allAreas = [];
@@ -428,7 +513,7 @@
     async function showAreaDropdown(query){
       const filtered = allAreas.filter(a => 
         a.toLowerCase().includes(query.toLowerCase()) && a !== 'Select Area' && a !== 'Select District'
-      ).slice(0, 5);
+      );
       
       let html = '';
       
@@ -522,43 +607,65 @@
     
     function updatePaymentUI(){
       const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
-      const qrSection = document.getElementById('esewaQrSection');
       const esewaLabel = document.getElementById('esewaLabel');
       const codLabel = document.getElementById('codLabel');
       
       if(paymentMethod === 'esewa'){
-        qrSection.style.display = 'block';
-        esewaLabel.style.borderColor = '#4caf50';
-        esewaLabel.style.background = '#f1f8f4';
-        codLabel.style.borderColor = '#ddd';
-        codLabel.style.background = 'transparent';
+        esewaLabel.classList.add('active');
+        codLabel.classList.remove('active');
       } else {
-        qrSection.style.display = 'none';
-        codLabel.style.borderColor = '#4caf50';
-        codLabel.style.background = '#f1f8f4';
-        esewaLabel.style.borderColor = '#ddd';
-        esewaLabel.style.background = 'transparent';
+        codLabel.classList.add('active');
+        esewaLabel.classList.remove('active');
       }
     }
     
     document.querySelectorAll('input[name="payment"]').forEach(radio => {
-      radio.addEventListener('change', updatePaymentUI);
+      radio.addEventListener('change', function(e) {
+        updatePaymentUI();
+        // Only open modal if user manually clicked eSewa (not auto-selected)
+        if(e.target.value === 'esewa' && e.isTrusted) {
+          openEsewaModal();
+        }
+      });
+    });
+    
+    // Allow clicking eSewa label to open modal when already selected
+    document.getElementById('esewaLabel').addEventListener('click', function(e) {
+      if(document.getElementById('paymentEsewa').checked) {
+        openEsewaModal();
+      }
     });
     
     // Screenshot upload handling
     let uploadedScreenshot = null;
-    document.getElementById('paymentScreenshot').addEventListener('change', function(e){
-      const file = e.target.files[0];
-      if(file){
-        const reader = new FileReader();
-        reader.onload = function(event){
-          uploadedScreenshot = event.target.result;
-          document.getElementById('screenshotPreview').style.display = 'block';
-          console.log('Screenshot uploaded, size:', uploadedScreenshot.length);
-        };
-        reader.readAsDataURL(file);
-      }
-    });
+    const ssInput = document.getElementById('paymentScreenshot');
+    if(ssInput) {
+      ssInput.addEventListener('change', function(e){
+        const file = e.target.files[0];
+        if(file){
+          const reader = new FileReader();
+          reader.onload = function(event){
+            uploadedScreenshot = event.target.result;
+            const ssImg = document.getElementById('screenshotImage');
+            const ssPreview = document.getElementById('screenshotPreview');
+            const checkmark = document.getElementById('esewaCheckmark');
+            const closeBtn = document.getElementById('closeModalBtn');
+            const uploadLabel = document.getElementById('uploadLabel');
+            const uploadHint = document.getElementById('uploadHint');
+            
+            if(ssImg && ssPreview) {
+              ssImg.src = uploadedScreenshot;
+              ssPreview.classList.add('show');
+              if(checkmark) checkmark.style.display = 'inline';
+              if(closeBtn) closeBtn.style.display = 'block';
+              if(uploadLabel) uploadLabel.innerHTML = '<i class="fas fa-check"></i> Screenshot Uploaded';
+              if(uploadHint) uploadHint.textContent = 'You can now close this and place your order';
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
     
     updatePaymentOptions();
     updatePaymentUI();
@@ -601,9 +708,25 @@
       
       const name = document.getElementById('name').value;
       const mobile = document.getElementById('mobile').value;
+      const paymentMethod = document.querySelector('input[name="payment"]:checked')?.value || 'cod';
+      const areaVal = document.getElementById('areaValue').value;
+      const address = document.getElementById('address').value;
       
+      // Validate required fields
       if (!name || !mobile) {
         alert('Please fill in all required fields');
+        return;
+      }
+      
+      if(!address || !areaVal) {
+        alert('Please fill in all required fields');
+        return;
+      }
+      
+      // Validate payment screenshot for eSewa BEFORE OTP
+      if(paymentMethod === 'esewa' && !uploadedScreenshot){
+        openEsewaModal();
+        alert('Please upload payment screenshot for eSewa payment');
         return;
       }
       
@@ -616,15 +739,15 @@
     });
     
     async function submitOrder() {
-      const areaValue = document.getElementById('area')?.value || '';
-      const paymentMethod = document.querySelector('input[name="payment"]:checked')?.value || 'esewa';
+      const paymentMethod = document.querySelector('input[name="payment"]:checked')?.value || 'cod';
+      const areaVal = document.getElementById('areaValue').value;
       
       const formData = {
         name: document.getElementById('name')?.value || '',
         mobile: document.getElementById('mobile')?.value || '',
         email: document.getElementById('email')?.value || '',
         region: document.getElementById('region')?.value || 'Inside Valley',
-        area: areaValue,
+        area: areaVal,
         address: document.getElementById('address')?.value || '',
         notes: document.getElementById('notes')?.value || '',
         subtotal: parseInt(document.getElementById('subtotal')?.textContent || '0'),
@@ -633,32 +756,10 @@
         paymentMethod: paymentMethod,
         paymentScreenshot: uploadedScreenshot
       };
-      
-      console.log('Submitting order with screenshot:', !!formData.paymentScreenshot);
-      
-      // Get selected area
-      const areaVal = document.getElementById('areaValue').value;
-      formData.area = areaVal;
-      
-      // Validate
-      if(!formData.name || !formData.mobile || !formData.address || !areaVal) {
-        alert('Please fill in all required fields');
-        return;
-      }
-      
-      // Validate payment screenshot for eSewa
-      console.log('Payment validation:', { paymentMethod, hasScreenshot: !!uploadedScreenshot });
-      if(paymentMethod === 'esewa' && !uploadedScreenshot){
-        alert('Please upload payment screenshot for eSewa payment');
-        return;
-      }
-      
       try {
-        // Disable submit button
         const submitBtn = document.querySelector('.place-order-btn');
         submitBtn.disabled = true;
         submitBtn.textContent = 'Placing order...';
-        
         // Submit order to server
         const response = await fetch('/checkout/', {
           method: 'POST',

@@ -325,6 +325,23 @@
           <p><strong>Address:</strong> ${order.address}, ${order.area}, ${order.region}</p>
         </div>
       `;
+      
+      // Payment information
+      if (order.payment_method || order.payment_screenshot) {
+        html += `
+          <div class="delivery-info" style="margin-top: 1.5rem;">
+            <h4>💳 Payment Information</h4>
+            <p><strong>Method:</strong> ${order.payment_method === 'esewa' ? 'eSewa' : 'Cash on Delivery'}</p>
+            ${order.payment_screenshot ? `
+              <p><strong>Payment Screenshot:</strong></p>
+              <div style="margin-top: 0.75rem;">
+                <img src="${order.payment_screenshot}" alt="Payment Screenshot" style="max-width: 100%; max-height: 250px; border-radius: 6px; border: 2px solid #4caf50; cursor: pointer; display: block;" onclick="window.open('${order.payment_screenshot}', '_blank')" />
+                <p style="font-size: 0.75rem; color: #6c757d; margin-top: 0.5rem; text-align: center;">Click image to view full size</p>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
 
       return html;
     }
