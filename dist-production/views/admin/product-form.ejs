@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title><%= item? 'Edit':'New' %> Product - Admin</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="/staticfiles/admin-style.css?v=3.0" />
+  <style>
+    .attr-btn {
+      padding: 0.5rem 1rem;
+      border: 2px solid #dee2e6;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+    }
+    .attr-btn:hover {
+      border-color: #2b90d9;
+      background: #f0f8ff;
+    }
+    .attr-btn.active {
+      background: #2b90d9;
+      color: white;
+      border-color: #2b90d9;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="admin-navbar">
+    <div class="admin-navbar-container">
+      <a href="/admin/" class="admin-brand">
+        <% if(siteSetting && siteSetting.logo_url){ %>
+          <img src="<%= siteSetting.logo_url %>" alt="Logo" />
+        <% } %>
+      </a>
+      
+      <!-- Desktop Navigation Links -->
+      <div class="desktop-nav-links">
+        <a href="/admin/" class="nav-link">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="/admin/products" class="nav-link active">
+          <span class="nav-icon">📦</span>
+          <span>Products</span>
+        </a>
+        <a href="/admin/categories" class="nav-link">
+          <span class="nav-icon">📁</span>
+          <span>Categories</span>
+        </a>
+        <a href="/admin/hero-images" class="nav-link">
+          <span class="nav-icon">🖼️</span>
+          <span>Hero Images</span>
+        </a>
+        <a href="/admin/settings" class="nav-link">
+          <span class="nav-icon">⚙️</span>
+          <span>Settings</span>
+        </a>
+        <form method="POST" action="/admin/logout" style="display: inline;">
+          <button type="submit" class="nav-link nav-logout-btn">
+            <span class="nav-icon">🚪</span>
+            <span>Logout</span>
+          </button>
+        </form>
+      </div>
+      
+      <!-- Mobile Hamburger Menu -->
+      <button class="mobile-menu-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Sidebar -->
+  <div class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar-content">
+      <div class="sidebar-header">
+        <% if(siteSetting && siteSetting.logo_url){ %>
+          <img src="<%= siteSetting.logo_url %>" alt="Logo" class="sidebar-logo" />
+        <% } %>
+        <h3 class="sidebar-title"><%= (siteSetting && siteSetting.name) || 'Admin Panel' %></h3>
+        <button class="sidebar-close" onclick="toggleSidebar()" aria-label="Close menu">&times;</button>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <a href="/admin/" class="sidebar-link">
+          <span class="sidebar-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="/admin/products" class="sidebar-link active">
+          <span class="sidebar-icon">📦</span>
+          <span>Products</span>
+        </a>
+        <a href="/admin/categories" class="sidebar-link">
+          <span class="sidebar-icon">📁</span>
+          <span>Categories</span>
+        </a>
+        <a href="/admin/hero-images" class="sidebar-link">
+          <span class="sidebar-icon">🖼️</span>
+          <span>Hero Images</span>
+        </a>
+        <a href="/admin/settings" class="sidebar-link">
+          <span class="sidebar-icon">⚙️</span>
+          <span>Settings</span>
+        </a>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <form method="POST" action="/admin/logout">
+          <button type="submit" class="sidebar-logout-btn">
+            <span class="sidebar-icon">🚪</span>
+            <span>Logout</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="admin-container">
+    <div class="page-header">
+      <h1 class="page-title"><%= item? 'Edit':'New' %> Product</h1>
+      <a href="/admin/products" class="btn btn-outline-primary">← Back to Products</a>
+    </div>
+
+    <div style="max-width: 800px;">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Product Information</h2>
+        </div>
+        <div class="card-body">
+          <form method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+              <label class="form-label">Product Name *</label>
+              <input name="name" class="form-control" value="<%= item? item.name:'' %>" required placeholder="e.g., Op-Op Fruit Pillow" />
+              <small class="form-text">Give your product a descriptive name</small>
+            </div>
+
+            <div class="grid-2-cols">
+              <div class="form-group">
+                <label class="form-label">Price (Rs.) *</label>
+                <input name="price" type="number" step="0.01" class="form-control" value="<%= item? item.price:45 %>" required placeholder="450" />
+                <small class="form-text">Price in Nepali Rupees</small>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Type</label>
+                <input name="type" class="form-control" value="<%= item? item.type:'Product' %>" placeholder="e.g., Product, Pillow" />
+                <small class="form-text">Product type or variant</small>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Category *</label>
+              <select name="category" class="form-control" required>
+                <option value="">-- Select a category --</option>
+                <% categories.forEach(c => { %>
+                  <option value="<%= c.name || c %>" <%= item && item.category === (c.name||c) ? 'selected':'' %>>
+                    <%= c.name || c %>
+                  </option>
+                <% }) %>
+              </select>
+              <small class="form-text">Choose the category for this product</small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Short Description (≤ 30 words)</label>
+              <textarea name="short_description" class="form-control" rows="2" maxlength="400" placeholder="e.g., Ultra-soft collectible pillow inspired by the One Piece universe."><%= item && item.short_description ? item.short_description : '' %></textarea>
+              <small class="form-text">Brief marketing summary. First sentence users see in modal. Keep it punchy.</small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Long Description (HTML Allowed)</label>
+              <textarea name="long_description" class="form-control" rows="8" placeholder="<p>Full rich description (HTML allowed). You can include <strong>bold</strong>, lists, and paragraphs.</p>"><%= item && item.long_description ? item.long_description : '' %></textarea>
+              <small class="form-text">Optional rich content. If provided, bullet list is still generated from lines above; this renders below them on the product page.</small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Product Image</label>
+              <div style="margin-bottom: 1rem;">
+                <input type="file" name="imageFile" id="imageFile" class="form-control" accept="image/*" onchange="previewImage(event)" />
+                <small class="form-text">Upload an image from your computer (JPG, PNG, WebP, max 5MB)</small>
+              </div>
+              <div style="margin-top: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--gray-700);">Or enter image URL:</label>
+                <input name="image" id="imageUrl" class="form-control" value="<%= item? item.image:'' %>" placeholder="/media/123_file.jpg or https://..." />
+                <small class="form-text">If you upload a file, it will override the URL</small>
+              </div>
+            </div>
+
+            <% if(item && item.image) { %>
+              <div class="form-group">
+                <label class="form-label">Current Image</label>
+                <div style="padding: 1rem; background: var(--gray-100); border-radius: var(--border-radius-sm); display: inline-block;">
+                  <img src="<%= item.image %>" id="currentImage" style="max-height: 150px; max-width: 100%; object-fit: contain;" alt="Product preview">
+                </div>
+              </div>
+            <% } %>
+            
+            <div class="form-group" id="newImagePreview" style="display: none;">
+              <label class="form-label">New Image Preview</label>
+              <div style="padding: 1rem; background: var(--gray-100); border-radius: var(--border-radius-sm); display: inline-block;">
+                <img id="previewImg" style="max-height: 150px; max-width: 100%; object-fit: contain;" alt="Preview">
+              </div>
+            </div>
+
+            <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--gray-200);">
+
+            <!-- Variant System -->
+            <div class="form-group" style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" id="hasVariants" name="has_variants" <%= item && item.has_variants ? 'checked' : '' %> onchange="toggleVariantSection()" />
+                <strong>This product has variants (Size, Color, etc.)</strong>
+              </label>
+              <small style="color: #666; display: block; margin-top: 0.5rem;">Enable if product comes in different sizes, colors, or other variations</small>
+            </div>
+
+            <!-- Simple Product Fields -->
+            <div id="simpleFields" style="<%= item && item.has_variants ? 'display:none;' : '' %>">
+              <div class="grid-2-cols">
+                <div class="form-group">
+                  <label class="form-label">SKU</label>
+                  <input name="base_sku" class="form-control" value="<%= item? item.base_sku:'' %>" placeholder="PROD-001" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Stock</label>
+                  <input name="stock" type="number" class="form-control" value="<%= item? item.stock:0 %>" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Variant Builder -->
+            <div id="variantSection" style="<%= item && item.has_variants ? '' : 'display:none;' %> border: 2px dashed #dee2e6; padding: 1.5rem; border-radius: 8px; margin-top: 1rem; background: #fff;">
+              <h3 style="font-size: 18px; margin-bottom: 1.5rem; font-weight: 600;">Configure Product Variants</h3>
+              
+              <!-- Step 1: Select Attributes -->
+              <div style="margin-bottom: 2rem;">
+                <label style="font-weight: 600; margin-bottom: 0.75rem; display: block;">Step 1: Select Attributes</label>
+                <div id="attributeSelector" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                  <button type="button" class="attr-btn" data-attr="size">📏 Size</button>
+                  <button type="button" class="attr-btn" data-attr="color">🎨 Color</button>
+                  <button type="button" class="attr-btn" data-attr="weight">⚖️ Weight</button>
+                  <button type="button" class="attr-btn" data-attr="material">🧵 Material</button>
+                  <button type="button" class="attr-btn" data-attr="custom">✨ Custom</button>
+                </div>
+              </div>
+
+              <!-- Step 2: Configure Attribute Values -->
+              <div id="attributeConfig" style="margin-bottom: 2rem;"></div>
+
+              <!-- Step 3: Generate Variants -->
+              <div style="margin-bottom: 1rem;">
+                <button type="button" class="btn btn-primary" onclick="generateVariants()" style="padding: 0.75rem 1.5rem;">⚡ Generate All Combinations</button>
+                <small style="display: block; margin-top: 0.5rem; color: #666;">This will create all possible combinations from selected attributes</small>
+              </div>
+
+              <!-- Generated Variants List -->
+              <div id="variantList" style="margin-top: 1.5rem;"></div>
+            </div>
+
+            <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--gray-200);">
+
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+              <button type="submit" class="btn btn-success">
+                <%= item? 'Update Product':'Create Product' %>
+              </button>
+              <a href="/admin/products" class="btn btn-outline-primary">Cancel</a>
+              
+              <% if(item){ %>
+                <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+                  <form method="POST" action="/admin/products/<%= item.id %>/toggle-active" style="margin: 0;">
+                    <button type="submit" class="btn btn-outline-warning">
+                      <%= item.active? '🔒 Disable':'✓ Enable' %>
+                    </button>
+                  </form>
+                  <form method="POST" action="/admin/products/<%= item.id %>/delete" style="margin: 0;" onsubmit="return confirm('Are you sure you want to delete this product? This action cannot be undone.');">
+                    <button type="submit" class="btn btn-outline-danger">🗑 Delete</button>
+                  </form>
+                </div>
+              <% } %>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <% if(item){ %>
+        <div class="card mt-3">
+          <div class="card-header">
+            <h2 class="card-title">Product Status</h2>
+          </div>
+          <div class="card-body">
+            <table style="width: 100%;">
+              <tr style="border-bottom: 1px solid var(--gray-200);">
+                <td style="padding: 0.75rem 0; font-weight: 500; color: var(--gray-700);">Status</td>
+                <td style="padding: 0.75rem 0; text-align: right;">
+                  <span class="badge <%= item.active? 'badge-success':'badge-secondary' %>">
+                    <%= item.active? 'Active':'Inactive' %>
+                  </span>
+                </td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--gray-200);">
+                <td style="padding: 0.75rem 0; font-weight: 500; color: var(--gray-700);">Product ID</td>
+                <td style="padding: 0.75rem 0; text-align: right; color: var(--gray-900);"><%= item.id %></td>
+              </tr>
+              <tr>
+                <td style="padding: 0.75rem 0; font-weight: 500; color: var(--gray-700);">Category</td>
+                <td style="padding: 0.75rem 0; text-align: right; color: var(--gray-900);"><%= item.category %></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="admin-footer">
+    &copy; <%= new Date().getFullYear() %> <%= (siteSetting && siteSetting.name) || 'Admin' %>. All rights reserved.
+  </footer>
+
+  <script src="/staticfiles/admin-enhancements.js?v=3.0"></script>
+  <script>
+    console.log('Variant system loaded');
+    
+    function previewImage(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('previewImg').src = e.target.result;
+          document.getElementById('newImagePreview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        document.getElementById('newImagePreview').style.display = 'none';
+      }
+    }
+
+    const selectedAttrs = new Set();
+    const attrValues = {};
+    let variantCounter = 0;
+
+    function toggleVariantSection() {
+      const hasVariants = document.getElementById('hasVariants').checked;
+      document.getElementById('simpleFields').style.display = hasVariants ? 'none' : 'block';
+      document.getElementById('variantSection').style.display = hasVariants ? 'block' : 'none';
+    }
+
+    // Bind attribute button clicks after page loads
+    window.addEventListener('load', function() {
+      console.log('Binding attribute buttons');
+      const buttons = document.querySelectorAll('.attr-btn');
+      console.log('Found buttons:', buttons.length);
+      buttons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          const attr = this.getAttribute('data-attr');
+          console.log('Button clicked:', attr);
+          toggleAttribute(attr);
+        });
+      });
+    });
+
+    function toggleAttribute(attr) {
+      console.log('toggleAttribute called:', attr);
+      const btn = document.querySelector(`[data-attr="${attr}"]`);
+      console.log('Button found:', btn);
+      if (selectedAttrs.has(attr)) {
+        selectedAttrs.delete(attr);
+        btn.classList.remove('active');
+        delete attrValues[attr];
+      } else {
+        selectedAttrs.add(attr);
+        btn.classList.add('active');
+        attrValues[attr] = [];
+      }
+      console.log('Selected attrs:', Array.from(selectedAttrs));
+      renderAttributeConfig();
+    }
+
+    function renderAttributeConfig() {
+      const container = document.getElementById('attributeConfig');
+      if (selectedAttrs.size === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      let html = '<label style="font-weight: 600; margin-bottom: 0.75rem; display: block;">Step 2: Define Values for Each Attribute</label>';
+      
+      selectedAttrs.forEach(attr => {
+        html += `<div style="margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 6px;">`;
+        html += `<strong style="display: block; margin-bottom: 0.5rem; text-transform: capitalize;">${attr}</strong>`;
+        
+        if (attr === 'size') {
+          html += `
+            <div style="margin-bottom: 0.5rem;">
+              <label style="font-size: 13px; color: #666;">Size Type:</label>
+              <select onchange="updateSizeOptions('${attr}', this.value)" style="padding: 0.25rem; margin-left: 0.5rem;">
+                <option value="">Select type</option>
+                <option value="clothing">Clothing (XS, S, M, L, XL, XXL)</option>
+                <option value="shoes">Shoes (6, 7, 8, 9, 10, 11, 12)</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            <div id="size-values" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
+          `;
+        } else if (attr === 'color') {
+          html += `
+            <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;">
+              <input type="text" id="color-name" placeholder="Color name" style="padding: 0.25rem; flex: 1;" />
+              <input type="color" id="color-hex" value="#000000" style="width: 50px; height: 30px;" />
+              <button type="button" onclick="addColorValue()" class="btn btn-sm btn-outline-primary">Add</button>
+            </div>
+            <div id="color-values" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
+          `;
+        } else if (attr === 'weight') {
+          html += `
+            <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;">
+              <input type="number" id="weight-value" placeholder="Value" style="padding: 0.25rem; width: 100px;" />
+              <select id="weight-unit" style="padding: 0.25rem;">
+                <option value="kg">kg</option>
+                <option value="g">g</option>
+                <option value="lb">lb</option>
+                <option value="oz">oz</option>
+              </select>
+              <button type="button" onclick="addWeightValue()" class="btn btn-sm btn-outline-primary">Add</button>
+            </div>
+            <div id="weight-values" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
+          `;
+        } else if (attr === 'material') {
+          html += `
+            <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;">
+              <input type="text" id="material-value" placeholder="e.g., Cotton, Polyester" style="padding: 0.25rem; flex: 1;" />
+              <button type="button" onclick="addMaterialValue()" class="btn btn-sm btn-outline-primary">Add</button>
+            </div>
+            <div id="material-values" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
+          `;
+        } else if (attr === 'custom') {
+          html += `
+            <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;">
+              <input type="text" id="custom-name" placeholder="Attribute name" style="padding: 0.25rem; width: 150px;" />
+              <input type="text" id="custom-value" placeholder="Value" style="padding: 0.25rem; flex: 1;" />
+              <button type="button" onclick="addCustomValue()" class="btn btn-sm btn-outline-primary">Add</button>
+            </div>
+            <div id="custom-values" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
+          `;
+        }
+        
+        html += `</div>`;
+      });
+      
+      container.innerHTML = html;
+    }
+
+    function updateSizeOptions(attr, type) {
+      const container = document.getElementById('size-values');
+      attrValues[attr] = [];
+      
+      if (type === 'clothing') {
+        ['XS', 'S', 'M', 'L', 'XL', 'XXL'].forEach(size => {
+          attrValues[attr].push(size);
+        });
+      } else if (type === 'shoes') {
+        [6, 7, 8, 9, 10, 11, 12].forEach(size => {
+          attrValues[attr].push(size.toString());
+        });
+      }
+      
+      renderAttrValues('size');
+    }
+
+    function addColorValue() {
+      const name = document.getElementById('color-name').value.trim();
+      const hex = document.getElementById('color-hex').value;
+      if (!name) return alert('Enter color name');
+      
+      attrValues.color.push({ name, hex });
+      document.getElementById('color-name').value = '';
+      renderAttrValues('color');
+    }
+
+    function addWeightValue() {
+      const value = document.getElementById('weight-value').value;
+      const unit = document.getElementById('weight-unit').value;
+      if (!value) return alert('Enter weight value');
+      
+      attrValues.weight.push(`${value}${unit}`);
+      document.getElementById('weight-value').value = '';
+      renderAttrValues('weight');
+    }
+
+    function addMaterialValue() {
+      const value = document.getElementById('material-value').value.trim();
+      if (!value) return alert('Enter material');
+      
+      attrValues.material.push(value);
+      document.getElementById('material-value').value = '';
+      renderAttrValues('material');
+    }
+
+    function addCustomValue() {
+      const name = document.getElementById('custom-name').value.trim();
+      const value = document.getElementById('custom-value').value.trim();
+      if (!name || !value) return alert('Enter both name and value');
+      
+      attrValues.custom.push({ name, value });
+      document.getElementById('custom-value').value = '';
+      renderAttrValues('custom');
+    }
+
+    function renderAttrValues(attr) {
+      const container = document.getElementById(`${attr}-values`);
+      const values = attrValues[attr] || [];
+      
+      container.innerHTML = values.map((v, i) => {
+        const display = typeof v === 'object' ? (v.name || v.value) : v;
+        const style = attr === 'color' && v.hex ? `background: ${v.hex}; color: white;` : '';
+        return `<span style="padding: 0.25rem 0.75rem; background: #e7f3ff; border-radius: 20px; font-size: 13px; ${style}">
+          ${display}
+          <button type="button" onclick="removeAttrValue('${attr}', ${i})" style="border: none; background: none; margin-left: 0.25rem; cursor: pointer;">×</button>
+        </span>`;
+      }).join('');
+    }
+
+    function removeAttrValue(attr, index) {
+      attrValues[attr].splice(index, 1);
+      renderAttrValues(attr);
+    }
+
+    function generateVariants() {
+      const attrs = Array.from(selectedAttrs);
+      console.log('generateVariants called, selected:', attrs);
+      console.log('attrValues:', attrValues);
+      if (attrs.length === 0) return alert('Select at least one attribute');
+      
+      const hasValues = attrs.every(attr => attrValues[attr] && attrValues[attr].length > 0);
+      if (!hasValues) return alert('Add values for all selected attributes');
+      
+      const combinations = cartesianProduct(attrs.map(attr => 
+        attrValues[attr].map(v => ({ attr, value: v }))
+      ));
+      
+      renderVariants(combinations);
+    }
+
+    function cartesianProduct(arrays) {
+      return arrays.reduce((acc, array) => 
+        acc.flatMap(x => array.map(y => [...x, y])), [[]]
+      );
+    }
+
+    function renderVariants(combinations) {
+      const container = document.getElementById('variantList');
+      container.innerHTML = '<h4 style="margin-bottom: 1rem; font-size: 16px;">Generated Variants (' + combinations.length + ')</h4>';
+      
+      const timestamp = Date.now();
+      
+      combinations.forEach((combo, idx) => {
+        const label = combo.map(c => {
+          const val = typeof c.value === 'object' ? c.value.name : c.value;
+          return `${c.attr}: ${val}`;
+        }).join(', ');
+        
+        const comboData = {};
+        combo.forEach(c => {
+          comboData[c.attr] = typeof c.value === 'object' ? c.value.name : c.value;
+        });
+        
+        const comboStr = JSON.stringify(comboData).replace(/"/g, '&quot;');
+        
+        // Generate unique SKU with timestamp to avoid duplicates
+        const skuSuffix = combo.map(c => {
+          const val = typeof c.value === 'object' ? c.value.name : c.value;
+          return val.substring(0, 3).toUpperCase();
+        }).join('-');
+        const uniqueSku = `VAR-${timestamp}-${skuSuffix}-${idx+1}`;
+        
+        const html = `
+          <div style="border: 1px solid #dee2e6; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; background: #fff;">
+            <input type="hidden" name="variants[${idx}][combination]" value="${comboStr}" />
+            <div style="font-weight: 600; margin-bottom: 0.75rem; color: #333;">${label}</div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;">
+              <div>
+                <label style="font-size: 12px; color: #666;">SKU *</label>
+                <input type="text" name="variants[${idx}][sku]" class="form-control" value="${uniqueSku}" required />
+                <small style="font-size: 11px; color: #999;">Must be unique</small>
+              </div>
+              <div>
+                <label style="font-size: 12px; color: #666;">Price Adjustment</label>
+                <input type="number" name="variants[${idx}][price_adjustment]" class="form-control" step="0.01" value="0" />
+              </div>
+              <div>
+                <label style="font-size: 12px; color: #666;">Stock</label>
+                <input type="number" name="variants[${idx}][stock]" class="form-control" value="10" />
+                <small style="font-size: 11px; color: #999;">Default: 10</small>
+              </div>
+              <div style="grid-column: 1 / -1;">
+                <label style="font-size: 12px; color: #666;">Image URL (optional)</label>
+                <input type="text" name="variants[${idx}][image]" class="form-control" />
+              </div>
+            </div>
+          </div>
+        `;
+        container.innerHTML += html;
+      });
+    }
+
+    // Load existing variants on edit
+    <% if(item && item.has_variants && item.variants && item.variants.length > 0) { %>
+      window.addEventListener('load', function() {
+        console.log('Loading existing variants...');
+        const existingVariants = <%- JSON.stringify(item.variants) %>;
+        console.log('Existing variants:', existingVariants);
+        
+        // Auto-select attributes and populate values
+        const attrs = new Set();
+        existingVariants.forEach(v => {
+          Object.keys(v.attribute_combination || {}).forEach(attr => attrs.add(attr));
+        });
+        
+        // Click attribute buttons
+        attrs.forEach(attr => {
+          const btn = document.querySelector(`[data-attr="${attr}"]`);
+          if (btn) btn.click();
+        });
+        
+        // Populate values
+        setTimeout(() => {
+          existingVariants.forEach(v => {
+            Object.entries(v.attribute_combination || {}).forEach(([attr, val]) => {
+              if (!attrValues[attr]) attrValues[attr] = [];
+              if (!attrValues[attr].includes(val)) {
+                attrValues[attr].push(val);
+              }
+            });
+          });
+          
+          // Render attribute values
+          Object.keys(attrValues).forEach(attr => renderAttrValues(attr));
+          
+          // Generate and populate variants
+          setTimeout(() => {
+            generateVariants();
+            
+            // Fill in existing data
+            setTimeout(() => {
+              existingVariants.forEach((v, idx) => {
+                const skuInput = document.querySelector(`[name="variants[${idx}][sku]"]`);
+                const priceInput = document.querySelector(`[name="variants[${idx}][price_adjustment]"]`);
+                const stockInput = document.querySelector(`[name="variants[${idx}][stock]"]`);
+                const imageInput = document.querySelector(`[name="variants[${idx}][image]"]`);
+                
+                if (skuInput) skuInput.value = v.sku || '';
+                if (priceInput) priceInput.value = v.price_adjustment || 0;
+                if (stockInput) stockInput.value = v.stock || 0;
+                if (imageInput) imageInput.value = v.image || '';
+              });
+            }, 100);
+          }, 100);
+        }, 200);
+      });
+    <% } %>
+  </script>
+</body>
+</html>

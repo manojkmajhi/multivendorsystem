@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title><%= activeCategory %> | All Strawhats</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.css" />
+  <link rel="stylesheet" href="/staticfiles/style.blue.css" />
+  <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>" />
+  <link rel="stylesheet" href="/staticfiles/floating-button.css" />
+  <link rel="stylesheet" href="/staticfiles/product-quickview.css?v=1" />
+  <link rel="stylesheet" href="/staticfiles/image-loading.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@300;400;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Martel+Sans:wght@300;400;800&display=swap" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    body {
+      font-family: 'Libre Franklin', Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .main-content {
+      flex: 1 0 auto;
+    }
+    footer {
+      flex-shrink: 0;
+    }
+    /* Use the exact navbar markup/style from home for consistency */
+    nav.navbar{box-shadow:0 2px 6px rgba(0,0,0,.05); background:#fff;}
+  /* Inline minimal breadcrumb (no box) */
+  .nav-spacer{height:120px;} /* pushes content below fixed nav */
+  .breadcrumb-inline{margin-top:0; margin-bottom:10px; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;}
+  @media (max-width:575.98px){ .nav-spacer{height:130px;} }
+  .breadcrumb{background:transparent; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; margin:0; padding:0;}
+    .breadcrumb-item + .breadcrumb-item::before{content:'/'; color:#999; padding:0 6px;}
+    .breadcrumb-item a{color:#555;}
+    .breadcrumb-item a:hover{color:#000; text-decoration:none;}
+    .breadcrumb-item.active{color:#000; font-weight:600;}
+    /* Sidebar categories */
+    .category-box{background:#0a0a0a; padding:14px 18px;}
+    .category-box strong{color:#fff; font-size:11px; letter-spacing:1px;}
+    .category-list a{display:block; color:#555; padding:4px 0; font-size:14px; text-decoration:none; transition:color .25s;}
+    .category-list a.active,.category-list a:hover{color:#000; font-weight:600;}
+    /* Product cards mimic home page */
+    .product-grid .product{background:#f8f8f8; border:1px solid #f8f8f8; min-height:100%; transition:box-shadow .25s, transform .25s; border-radius:2px;}
+    .product-grid .product:hover{box-shadow:0 6px 18px -6px rgba(0,0,0,.12); transform:translateY(-3px);}    
+    .product-grid .product img{height:150px; width:100%; object-fit:contain; transition:transform .3s; display:block;}
+    .product-grid .product:hover img{transform:scale(1.04);}    
+    .product-grid .product h5{font-size:13px; line-height:16px; font-weight:600; margin-top:0; min-height:32px;}
+    .product-grid .product h5 a{color:#000; text-decoration:none;}
+    .product-grid .product ul{margin-bottom:6px !important;}
+    .product-grid .btn-dark{background:#000; border-color:#000; font-size:12px;}
+    .product-grid .btn-outline-dark{border-color:#000; font-size:12px;}
+    .show-added-message{position:absolute; top:6px; left:6px; background:#0a0a0a; color:#fff; padding:2px 6px; font-size:11px; border-radius:3px; display:none;}
+    .range-indicator{font-size:12px; letter-spacing:1px;}
+    .pagination .page-link{color:#000; font-size:12px; border:none; background:transparent;}
+    .pagination .page-item.active .page-link{background:#000; border-radius:2px; color:#fff;}
+    .pagination .page-item:not(.active) .page-link:hover{background:#000; color:#fff; border-radius:2px;}
+  /* Mobile categories dropdown - Clean UX Design */
+  .category-heading-btn{outline:none; background:#fff; border:2px solid #e0e0e0; border-radius:8px; padding:11px 16px; font-size:13px; font-weight:700; color:#000; display:flex; align-items:center; justify-content:space-between; width:100%; transition:all .2s ease; letter-spacing:.5px; text-transform:uppercase;}
+  .category-heading-btn:hover{background:#f8f9fa; border-color:#ccc;}
+  .category-heading-btn:focus{box-shadow:0 0 0 3px rgba(0,0,0,.05); border-color:#000;}
+  .category-heading-btn .current-cat{flex:1; text-align:left;}
+  .category-heading-btn .caret-icon{font-size:10px; margin-left:8px; transition:transform .3s ease;}
+  .category-heading-btn.active{background:#fff; border-color:#000;}
+  .category-heading-btn.active .caret-icon{transform:rotate(180deg);}
+  .product-header-row{position:relative;}
+  #mobileCatPanel{position:absolute; top:calc(100% + 10px); left:0; right:0; background:#fff; border:none; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,.15); padding:20px 18px; transform:translateY(-10px) scale(.95); transform-origin:top center; opacity:0; pointer-events:none; transition:all .3s cubic-bezier(.34,1.56,.64,1); z-index:1200; max-height:65vh; overflow-y:auto;}
+  #mobileCatPanel.open{opacity:1; transform:translateY(0) scale(1); pointer-events:auto;}
+  #mobileCatPanel .panel-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;}
+  #mobileCatPanel .panel-header span{font-size:11px; letter-spacing:1.5px; font-weight:700; color:#999; text-transform:uppercase;}
+  #mobileCatPanel .close-panel{background:transparent; color:#999; border:none; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:300; cursor:pointer; transition:all .2s ease;}
+  #mobileCatPanel .close-panel:hover{color:#000; transform:scale(1.1);}
+  #mobileCatPanel .close-panel:active{transform:scale(.9);}
+  #mobileCatPanel ul{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;}
+  #mobileCatPanel ul li{margin:0;}
+  #mobileCatPanel a.cat-chip{display:flex; align-items:center; justify-content:center; background:#fff; padding:14px 12px; border-radius:10px; font-size:13px; letter-spacing:.3px; text-decoration:none; color:#666; font-weight:600; text-align:center; border:2px solid #e0e0e0; transition:all .2s ease; min-height:52px;}
+  #mobileCatPanel a.cat-chip:hover{background:#f8f9fa; color:#000; border-color:#ccc;}
+  #mobileCatPanel a.cat-chip.active{background:#000; color:#fff; border-color:#000; box-shadow:0 4px 12px rgba(0,0,0,.2);}
+  #mobileCatPanel a.cat-chip.active:hover{background:#111; border-color:#111;}
+  #mobileCatOverlay{position:fixed; inset:0; background:rgba(0,0,0,.5); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:all .3s ease; z-index:1100;}
+  #mobileCatOverlay.show{opacity:1; pointer-events:auto;}
+  @supports not (backdrop-filter: blur(3px)){ #mobileCatOverlay{background:rgba(0,0,0,.6);} }
+  @media (max-width:576px){
+    #mobileCatPanel{padding:18px 16px; border-radius:14px;}
+    #mobileCatPanel a.cat-chip{padding:12px 10px; font-size:12px; min-height:48px;}
+  }
+    .one{background:#fff; border:1px solid #e5e5e5; border-radius:6px; box-shadow:0 12px 30px -8px rgba(0,0,0,.25);} 
+    @media (max-width: 991.98px){ .desktop-sidebar{display:none;} }
+  </style>
+</head>
+<body>
+  <!-- Consistent navbar from home page -->
+  <nav class="navbar navbar-light fixed-top py-0 px-2">
+    <div class="container px-0 px-lg-3">
+  <a class="navbar-brand" href="/"><img src="<%= (siteSetting && siteSetting.logo_url) || '/staticfiles/brand.svg' %>" height="60"></a>
+  <form method="POST" id="search-form-in-navbar">
+        <div class="input-group search-input-group">
+          <input class="form-control form-control-lg search" id="search" name="search" type="text" placeholder="Search Products">
+          <div class="input-group-append">
+            <button class="input-group-text search-icon" id="search-icon-id"><i class="fas fa-search"></i></button>
+          </div>
+        </div>
+      </form>
+      <ul class="navbar-nav ml-auto phone-in-navbar" style="display: none;">
+        <li class="nav-item"><a class="nav-link" href="tel:9814789009"> <i class="fas fa-phone-alt"></i> 9814789009<sup><small> NP</small></sup></a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <%- include('partials/floating-cart') %>
+
+  <div class="main-content">
+
+  <div class="nav-spacer"></div>
+  <!-- Inline breadcrumb (no box) -->
+  <div class="container breadcrumb-inline">
+    <div class="d-flex align-items-center justify-content-between flex-wrap">
+      <nav aria-label="breadcrumb" class="mb-2 mb-sm-0">
+        <ol class="breadcrumb px-0 mb-0">
+          <li class="breadcrumb-item"><a href="/">Home</a></li>
+          <li class="breadcrumb-item"><a href="/shop/All/">Shop</a></li>
+          <% if(activeCategory && activeCategory.toLowerCase()!=='all'){ %>
+            <li class="breadcrumb-item active" aria-current="page"><%= activeCategory %></li>
+          <% } %>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <div class="container py-3">
+    <div class="row">
+      <!-- Sidebar -->
+      <div class="col-lg-3 desktop-sidebar mt-2 mt-lg-4">
+        <div class="category-box mb-3"><strong class="small text-uppercase">CATEGORIES</strong></div>
+        <ul class="list-unstyled pl-lg-3 mb-4 category-list">
+          <li class="mb-2"><a class="reset-anchor <%= activeCategory.toLowerCase()==='all' ? 'active':'' %>" href="/shop/All/">All</a></li>
+          <% categories.forEach(c=>{ %>
+            <li class="mb-2 <%= activeCategory.toLowerCase()===c.name.toLowerCase() ? 'font-weight-bold text-dark':'' %>"><a class="reset-anchor <%= activeCategory.toLowerCase()===c.name.toLowerCase() ? 'active':'' %>" href="/shop/<%= c.name %>/"><%= c.name %></a></li>
+          <% }) %>
+        </ul>
+      </div>
+
+      <!-- Products -->
+      <div class="col-lg-9 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2 mt-2 mt-lg-4 product-header-row">
+          <!-- Desktop plain heading -->
+          <h4 class="text-uppercase mb-0 d-none d-lg-block" style="font-weight:400; letter-spacing:1px;">
+            <%= activeCategory %>
+            <% if (typeof searchQuery !== 'undefined' && searchQuery) { %>
+              <span style="font-size: 0.75em; color: #666; font-weight: 300;"> - "<%= searchQuery %>"</span>
+            <% } %>
+          </h4>
+          <!-- Mobile button triggers modal category picker -->
+          <div class="d-lg-none mb-0" style="width:100%;">
+            <button id="mobileCatToggle" class="category-heading-btn" type="button">
+              <span class="current-cat"><%= activeCategory %></span>
+              <span class="caret-icon">▼</span>
+            </button>
+            <!-- Hidden panel -->
+            <div id="mobileCatPanel" aria-hidden="true">
+              <div class="panel-header">
+                <span>CATEGORIES</span>
+                <button class="close-panel" type="button" aria-label="Close">&times;</button>
+              </div>
+              <ul>
+                <li><a class="cat-chip <%= activeCategory.toLowerCase()==='all' ? 'active':'' %>" href="/shop/All/">All</a></li>
+                <% categories.forEach(c=>{ %>
+                  <li><a class="cat-chip <%= activeCategory.toLowerCase()===c.name.toLowerCase() ? 'active':'' %>" href="/shop/<%= c.name %>/"><%= c.name %></a></li>
+                <% }) %>
+              </ul>
+            </div>
+          </div>
+          <div class="range-indicator d-none d-md-block ml-auto"> <% if(total){ %>SHOWING <%= showingStart %>-<%= showingEnd %> OF <%= total %><% } %> </div>
+        </div>
+        <div class="range-indicator d-md-none mb-2"> <% if(total){ %><%= showingStart %>-<%= showingEnd %> OF <%= total %><% } %> </div>
+        <div class="row product-grid">
+          <% if (!products.length) { %>
+            <div class="col-12"><p class="text-muted">No products found.</p></div>
+          <% } %>
+          <% products.forEach(p=>{ %>
+            <div class="col-xl-3 col-lg-4 col-6 px-1 py-1">
+              <div class="product text-center pt-2 bg-light" style="border:1px solid #f8f8f8; height:100%!important;">
+                <div class="position-relative mb-1">
+                  <div class="<%= p.id %>-added-message show-added-message" style="z-index:2;"></div>
+                  <a class="d-block" href="/details/<%= p.id %>/">
+                    <div class="product-img-container">
+                      <img src="<%= p.image %>" alt="<%- p.name.replace(/"/g,'&quot;') %>" loading="lazy" decoding="async">
+                      <div class="skeleton-loader"></div>
+                    </div>
+                  </a>
+                </div>
+                <ul class="mb-2 mt-0 list-inline">
+                  <% if(p.has_variants) { %>
+                    <li class="list-inline-item m-0 p-0"><a href="/details/<%= p.id %>/" class="btn btn-sm btn-dark py-1 px-2" style="min-width:90px;">Select Options</a></li>
+                  <% } else { %>
+                    <li class="list-inline-item m-0 p-0"><button class="btn btn-sm btn-dark py-1 px-2" style="min-width:90px;" onclick="addToCart('<%= p.id %>', '1', false)">Add to Cart</button></li>
+                  <% } %>
+                  <li class="list-inline-item mr-0"><a class="btn btn-sm btn-outline-dark py-1 px-2 view-btn" data-id="<%= p.id %>" data-img="<%= p.image %>" data-name="<%- p.name.replace(/"/g,'&quot;') %>" data-price="<%= p.price %>" data-link="/details/<%= p.id %>/" data-short="<%- (p.short_description || '').replace(/"/g,'&quot;') %>" data-has-variants="<%= p.has_variants ? 'true' : 'false' %>"><i class="fas fa-expand"></i></a></li>
+                </ul>
+                <h5 class="mb-0 text-sm"><a class="reset-anchor" href="/details/<%= p.id %>/"><%= p.name %></a></h5>
+                <p class="small text-muted mb-2">Rs. <%= p.price %></p>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+        <% if(totalPages > 1){ %>
+          <nav aria-label="Page navigation" class="mt-2">
+            <ul class="pagination pagination-sm justify-content-center justify-content-lg-end">
+              <li class="page-item <%= page===1 ? 'disabled':'' %>"><a class="page-link" href="<%= page===1 ? '#' : ('?page='+(page-1)) %>">«</a></li>
+              <% for(let p=1; p<= totalPages; p++){ %>
+                <li class="page-item <%= p===page ? 'active':'' %>"><a class="page-link" href="<%= p===page ? '#' : ('?page='+p) %>"><%= p %></a></li>
+              <% } %>
+              <li class="page-item <%= page===totalPages ? 'disabled':'' %>"><a class="page-link" href="<%= page===totalPages ? '#' : ('?page='+(page+1)) %>">»</a></li>
+            </ul>
+          </nav>
+        <% } %>
+      </div>
+    </div>
+  </div>
+  <!-- Overlay for mobile category panel -->
+  <div id="mobileCatOverlay" class="d-lg-none" aria-hidden="true"></div>
+  <div class="modal fade quickview-modal" id="productQuickView" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="quickview-wrap">
+          <button class="close quickview-close" type="button" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+          <div class="quickview-grid">
+            <div class="quickview-media">
+              <a id="quickview-img-link" href="#" class="d-block"><img id="quickview-img" class="quickview-img" src="" alt="Product"></a>
+            </div>
+            <div class="quickview-info">
+              <h3 class="quickview-title" id="quickview-title"></h3>
+              <div class="quickview-price" id="quickview-price"></div>
+              <div class="quickview-description" id="quickview-description"></div>
+              <!-- Example size variant (optional) -->
+              <div class="variant-block" id="quickview-size-block" style="display:none;">
+                <div class="quickview-section-label">Size</div>
+                <select id="quickview-size" class="quickview-select"></select>
+              </div>
+              <!-- Example color swatches (optional) -->
+              <div class="variant-block" id="quickview-color-block" style="display:none;">
+                <div class="quickview-section-label">Color</div>
+                <div class="variant-row" id="quickview-colors"></div>
+              </div>
+              <div class="add-to-cart-row mt-2">
+                <div class="quantity-bar">
+                  <button type="button" id="quickview-dec">‹</button>
+                  <input type="text" id="quickview-qty" value="1" aria-label="Quantity">
+                  <button type="button" id="quickview-inc">›</button>
+                </div>
+                <button id="quickview-add-to-cart" class="btn btn-dark btn-sm">Add to Cart</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div> <!-- End main-content -->
+
+  <!-- Floating cart partial included earlier; removed duplicated markup and JS -->
+  <script>
+    // Product quick view logic retained
+  // Quickview logic
+  let quickviewSelectedId = null; let quickviewVariants=null; let quickviewSelectedVariant=null;
+  function openQuickview(id,image,name,price,shortDescription,link,variantData){
+    quickviewSelectedId = id; quickviewVariants=variantData; quickviewSelectedVariant=null;
+    $('#quickview-img').attr('src', image);
+    $('#quickview-img-link').attr('href', link);
+    $('#quickview-title').text(name);
+    $('#quickview-price').text('Rs. '+price);
+    const desc = (shortDescription && shortDescription.trim()) ? shortDescription : 'Premium quality product perfect for you.';
+    $('#quickview-description').text(desc);
+    $('#quickview-qty').val('1');
+    
+    console.log('🛠️ Opening quickview with variant data:', variantData);
+    $('.variant-blocks-container').remove();
+    
+    if(variantData && variantData.attributes && variantData.attributes.length){
+      console.log('✅ Creating variant selectors for', variantData.attributes.length, 'attributes');
+      const $container = $('<div class="variant-blocks-container"></div>');
+      
+      variantData.attributes.forEach(attr => {
+        console.log('  ➡️ Adding attribute:', attr.name, 'with', attr.values?.length, 'values');
+        const $block = $('<div class="variant-block"></div>');
+        $block.append('<span class="quickview-section-label">' + attr.name + ':</span> ');
+        
+        const $select = $('<select class="quickview-select variant-selector" data-attr="' + attr.slug + '"></select>');
+        $select.append('<option value="">Select</option>');
+        attr.values.forEach(v => $select.append('<option value="' + v.value + '">' + v.value + '</option>'));
+        $block.append($select);
+        $container.append($block);
+      });
+      
+      $('#quickview-description').after($container);
+      $('.variant-selector').on('change', updateQuickviewVariant);
+      $('#quickview-add-to-cart').prop('disabled', true).text('Select Options');
+      console.log('✅ Variant selectors created');
+    } else {
+      console.log('⚠️ No variant data, showing regular add to cart');
+      $('#quickview-add-to-cart').prop('disabled', false).text('Add to Cart');
+    }
+    
+    $('#productQuickView').modal('show');
+  }
+  
+  function updateQuickviewVariant(){
+    if(!quickviewVariants) return;
+    
+    const selections = {};
+    let allSelected = true;
+    $('.variant-selector').each(function(){
+      const val = $(this).val();
+      if(val) selections[$(this).data('attr')] = val;
+      else allSelected = false;
+    });
+    
+    if(allSelected && quickviewVariants.variants){
+      quickviewSelectedVariant = quickviewVariants.variants.find(v => {
+        const combo = v.attribute_combination || {};
+        return Object.keys(selections).every(k => combo[k] === selections[k]);
+      });
+      
+      if(quickviewSelectedVariant){
+        const finalPrice = quickviewVariants.basePrice + parseFloat(quickviewSelectedVariant.price_adjustment || 0);
+        $('#quickview-price').text('Rs. ' + finalPrice.toFixed(2));
+        $('#quickview-add-to-cart').prop('disabled', quickviewSelectedVariant.stock === 0).text(quickviewSelectedVariant.stock === 0 ? 'Out of Stock' : 'Add to Cart');
+        if(quickviewSelectedVariant.image && quickviewSelectedVariant.image.trim()) {
+          $('#quickview-img').attr('src', quickviewSelectedVariant.image);
+          console.log('✅ Updated quickview image:', quickviewSelectedVariant.image);
+        }
+      }
+    } else {
+      $('#quickview-add-to-cart').prop('disabled', true).text('Select Options');
+    }
+  }
+  $(document).on('click','.view-btn', function(){
+    const $t=$(this);
+    const hasVariants = $t.data('has-variants') === 'true' || $t.data('has-variants') === true;
+    const productId = $t.data('id');
+    let shortLine = ($t.data('short')||'').trim();
+    if(shortLine){
+      shortLine = shortLine.replace(/^[✓✔☑•\-*]\s*/, '');
+      const words = shortLine.split(/\s+/);
+      if(words.length>40){ shortLine = words.slice(0,40).join(' ')+'…'; }
+    }
+    
+    console.log('👁️ Quick view clicked:', { productId, hasVariants });
+    
+    if(hasVariants){
+      console.log('🔄 Fetching variants for:', productId);
+      $.get('/api/product-variants/' + productId, function(data){
+        console.log('✅ Variant data received:', data);
+        const variantData = { attributes: data.attributes, variants: data.variants, basePrice: parseFloat($t.data('price')) };
+        openQuickview(productId, $t.data('img'), $t.data('name'), $t.data('price'), shortLine, $t.data('link'), variantData);
+      }).fail(function(err){
+        console.error('❌ Failed to fetch variants:', err);
+        openQuickview(productId, $t.data('img'), $t.data('name'), $t.data('price'), shortLine, $t.data('link'), null);
+      });
+    } else {
+      openQuickview(productId, $t.data('img'), $t.data('name'), $t.data('price'), shortLine, $t.data('link'), null);
+    }
+  });
+  $('#quickview-dec').on('click', function(){ let v=parseInt($('#quickview-qty').val(),10)||1; v=Math.max(1,v-1); $('#quickview-qty').val(v); });
+  $('#quickview-inc').on('click', function(){ let v=parseInt($('#quickview-qty').val(),10)||1; v=Math.min(999,v+1); $('#quickview-qty').val(v); });
+  $('#quickview-qty').on('input', function(){ let v=this.value.replace(/[^0-9]/g,''); if(!v) v='1'; v=parseInt(v,10); if(v<1) v=1; if(v>999) v=999; this.value=v; });
+  $('#quickview-add-to-cart').on('click', function(){ if(!quickviewSelectedId) return; const variantId = quickviewSelectedVariant ? quickviewSelectedVariant.id : null; addToCart(quickviewSelectedId, $('#quickview-qty').val(), true, variantId); $('#productQuickView').modal('hide'); });
+    $('#search-form-in-navbar').submit(function(e){ e.preventDefault(); var search_term=$('#search').val(); if(search_term){ window.location=window.location.origin+'/search/all/?q='+search_term; }});
+    // Custom mobile category panel logic
+    var $panel = $('#mobileCatPanel');
+    var $overlay = $('#mobileCatOverlay');
+    var $toggle = $('#mobileCatToggle');
+    function openPanel(){ $toggle.addClass('active'); $panel.addClass('open').attr('aria-hidden','false'); $overlay.addClass('show').attr('aria-hidden','false'); }
+    function closePanel(){ $toggle.removeClass('active'); $panel.removeClass('open').attr('aria-hidden','true'); $overlay.removeClass('show').attr('aria-hidden','true'); }
+    $toggle.on('click', function(e){ e.stopPropagation(); if($panel.hasClass('open')){ closePanel(); } else { openPanel(); } });
+    $panel.on('click', 'a.cat-chip', function(){ closePanel(); });
+    $panel.on('click', '.close-panel', function(){ closePanel(); });
+    $overlay.on('click', function(){ closePanel(); });
+    $(window).on('resize', function(){ if(window.innerWidth >= 992){ closePanel(); } });
+    // Close on escape
+    $(document).on('keydown', function(e){ if(e.key==='Escape'){ closePanel(); } });
+  </script>
+
+  <footer class="bg-dark text-white shadow" style="color: #fff; margin-top: 40px;">
+    <div class="container py-4">
+      <div class="row">
+        <div class="col-lg-6">
+          <p class="small text-gray mb-0">© <%= new Date().getFullYear() %> All rights reserved.</p>
+          <p class="small text-gray mb-0">Crafted by <a class="text-white reset-anchor" href="https://gauravsah.com.np" target="_blank">Gaurav Sah</a></p>
+        </div>
+        <div class="col-lg-6 text-lg-right">
+          <p class="small mb-0">FIND US &nbsp;
+            <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.facebook_url) ? socialLinks.facebook_url : 'https://facebook.com/allstrawhats/' %>" target="_blank"><i class="fab fa-facebook-square mr-1" style="color: #f5f5f5;"></i></a>
+            <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.instagram_url) ? socialLinks.instagram_url : 'https://instagram.com/allstrawhats/' %>" target="_blank"><i class="fab fa-instagram" style="color: #f5f5f5;"></i></a>
+          </p>
+          <p class="text-sm text-gray mb-0"><a class="text-gray reset-anchor" href="mailto:<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@allstrawhats.com' %>" target="_blank"><i class="fas fa-envelope"></i> &nbsp;<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@allstrawhats.com' %></a></p>
+          <p class="text-sm text-gray mb-0 mt-2"><a class="text-white reset-anchor" href="/track-order"><i class="fas fa-shipping-fast"></i> Track Order</a></p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/staticfiles/image-loading.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
+  <script src="/staticfiles/owl.carousel2.thumbs.min.js"></script>
+  <script src="/staticfiles/cart-optimized.js?v=3" defer></script>
+  <script src="/staticfiles/front.js"></script>
+  <script src="https://kit.fontawesome.com/d6db3c2373.js" crossorigin="anonymous"></script>
+  <script>
+    (function(){
+      function minimalInit(){
+        var imgs = document.querySelectorAll('img.lazy-image');
+        imgs.forEach(function(img){ img.classList.add('blur-up');
+          if ('loading' in HTMLImageElement.prototype) {
+            img.addEventListener('load', function(){ img.classList.add('loaded'); });
+            var ds = img.getAttribute('data-src'); if (ds && (!img.src || img.src.indexOf('placeholder-blur') !== -1)) img.src = ds;
+          } else {
+            var onScroll = function(){ if (img.getBoundingClientRect().top < window.innerHeight + 200 && !img.classList.contains('loaded')){ var s=img.getAttribute('data-src'); if(s){ var t=new Image(); t.onload=function(){ img.src=s; img.classList.add('loaded'); }; t.src=s; } window.removeEventListener('scroll', onScroll);} };
+            window.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+          }
+        });
+      }
+      if (window.ImageOptimizer && typeof window.ImageOptimizer.init === 'function') {
+        try{ window.ImageOptimizer.addOptimizationCSS(); }catch(e){}
+        try{ window.ImageOptimizer.init(); }catch(e){}
+      } else {
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', minimalInit);
+        else minimalInit();
+      }
+    })();
+  </script>
+</body>
+</html>

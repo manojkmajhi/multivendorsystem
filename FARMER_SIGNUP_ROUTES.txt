@@ -1,0 +1,94 @@
+// ADD THESE ROUTES TO server.js AFTER THE EXISTING FARMER ROUTES (around line with app.get('/farmers/login'))
+
+// In-memory OTP storage (use Redis in production)
+const otpStore = {};
+
+app.get('/farmers/signup', (req,res)=>{
+  res.render('farmer-signup', { siteSetting: res.locals.siteSetting });
+});
+
+app.get('/farmers/forgot-password', (req,res)=>{
+  res.render('farmer-forgot-password', { siteSetting: res.locals.siteSetting });
+});
+
+// Signup: Send OTP
+app.post('/api/farmers/send-otp', async (req,res)=>{
+  try {
+    const { email } = req.body;
+    if(!email.endsWith('@cropsay.com')) return res.json({ success:false, message:'Only @cropsay.com emails allowed' });
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    otpStore[email] = { otp, expires: Date.now() + 300000 };
+    const { error } = await supabase.auth.signInWithOtp({ email, options: { data: { otp } } });
+    console.log('OTP sent:', otp, 'to', email);
+    res.json({ success:true });
+  } catch(e){
+    res.json({ success:false, message:e.message });
+  }
+});
+
+// Signup: Verify OTP
+app.post('/api/farmers/verify-otp', async (req,res)=>{
+  try {
+    const { email, otp } = req.body;
+    const stored = otpStore[email];
+    if(!stored || stored.expires < Date.now()) return res.json({ success:false, message:'OTP expired' });
+    if(stored.otp !== otp) return res.json({ success:false, message:'Invalid OTP' });
+    delete otpStore[email];
+    res.json({ success:true });
+  } catch(e){
+    res.json({ success:false, message:e.message });
+  }
+});
+
+// Signup: Complete
+app.post('/api/farmers/complete-signup', async (req,res)=>{
+  try {
+    const { email, full_name, phone, password, business_name, location, bio } = req.body;
+    const password_hash = await bcrypt.hash(password, 10);
+    await supabase.from('farmers').insert({ email, full_name, phone, password_hash, business_name, location, bio, status:'approved' });
+    res.json({ success:true });
+  } catch(e){
+    res.json({ success:false, message:e.message });
+  }
+});
+
+// Forgot Password: Send OTP
+app.post('/api/farmers/forgot-password', async (req,res)=>{
+  try {
+    const { email } = req.body;
+    const { data: farmer } = await supabase.from('farmers').select('id').eq('email', email).single();
+    if(!farmer) return res.json({ success:false, message:'Email not found' });
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    otpStore[email] = { otp, expires: Date.now() + 300000 };
+    console.log('Reset OTP:', otp, 'for', email);
+    res.json({ success:true });
+  } catch(e){
+    res.json({ success:false, message:e.message });
+  }
+});
+
+// Forgot Password: Verify OTP
+app.post('/api/farmers/verify-reset-otp', async (req,res)=>{
+  try {
+    const { email, otp } = req.body;
+    const stored = otpStore[email];
+    if(!stored || stored.expires < Date.now()) return res.json({ success:false, message:'OTP expired' });
+    if(stored.otp !== otp) return res.json({ success:false, message:'Invalid OTP' });
+    res.json({ success:true });
+  } catch(e){
+    res.json({ success:false, message:e.message });
+  }
+});
+
+// Forgot Password: Reset
+app.post('/api/farmers/reset-password', async (req,res)=>{
+  try {
+    const { email, password } = req.body;
+    delete otpStore[email];
+    const password_hash = await bcrypt.hash(password, 10);
+    await supabase.from('farmers').update({ password_hash }).eq('email', email);
+    res.json({ success:true });
+  } catch(e){
+    res.json({ success:false, message:e.message });
+  }
+});

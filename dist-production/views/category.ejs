@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= category.name %> | Anime Store</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/staticfiles/style.blue.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+  <nav class="navbar navbar-light fixed-top py-0 px-2">
+    <div class="container px-0 px-lg-3">
+  <a class="navbar-brand" href="/"><img src="<%= (siteSetting && siteSetting.logo_url) || '/staticfiles/brand.svg' %>" height="60" alt="<%= (siteSetting && siteSetting.name) || 'All Strawhats' %>"></a>
+  <form method="POST" id="search-form-in-navbar">
+        <div class="input-group search-input-group">
+          <input class="form-control form-control-lg search" id="search" name="search" type="text" placeholder="Search Anime Products">
+          <div class="input-group-append">
+            <button class="input-group-text search-icon" id="search-icon-id"><i class="fas fa-search"></i></button>
+          </div>
+        </div>
+      </form>
+      <ul class="navbar-nav ml-auto phone-in-navbar" style="display: none;">
+        <li class="nav-item"><a class="nav-link" href="tel:9814789009"> <i class="fas fa-phone-alt"></i> 9814789009<sup><small> NP</small></sup></a></li>
+      </ul>
+    </div>
+  </nav>
+  <div style="height:80px;"></div>
+  <div class="container py-3">
+    <h1 class="h4 mb-3"><%= category.name %></h1>
+    <div class="row">
+      <% products.forEach(p => { %>
+        <div class="col-md-3 col-6 mb-3">
+          <div class="border p-2 h-100 d-flex flex-column">
+            <img class="img-fluid mb-2 blur-up lazy-image" data-src="<%= p.image %>" src="/staticfiles/placeholder-blur.jpg" alt="<%= p.name %>" style="max-height:160px;object-fit:contain;" loading="lazy" decoding="async" />
+            <h6 class="mb-1"><%= p.name %></h6>
+            <p class="text-muted mb-2">Rs. <%= p.price %></p>
+            <button class="btn btn-sm btn-dark mt-auto" onclick="addToCart('<%= p.id %>', 1, true)">Add to Cart</button>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+  <footer class="text-center text-muted py-4">
+    <small>&copy; <%= new Date().getFullYear() %> All Strawhats</small>
+  </footer>
+  <script src="/staticfiles/cart-optimized.js?v=3" defer></script>
+  <script>
+    function addToCart(id, qty){
+      window.addToCart(id, qty, true);
+    }
+    (function(){
+      function minimalInit(){
+        var imgs = document.querySelectorAll('img.lazy-image');
+        imgs.forEach(function(img){ img.classList.add('blur-up');
+          if ('loading' in HTMLImageElement.prototype) {
+            img.addEventListener('load', function(){ img.classList.add('loaded'); });
+            var ds = img.getAttribute('data-src'); if (ds && (!img.src || img.src.indexOf('placeholder-blur') !== -1)) img.src = ds;
+          } else {
+            var onScroll = function(){ if (img.getBoundingClientRect().top < window.innerHeight + 200 && !img.classList.contains('loaded')){ var s=img.getAttribute('data-src'); if(s){ var t=new Image(); t.onload=function(){ img.src=s; img.classList.add('loaded'); }; t.src=s; } window.removeEventListener('scroll', onScroll);} };
+            window.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+          }
+        });
+      }
+      if (window.ImageOptimizer && typeof window.ImageOptimizer.init === 'function') {
+        try{ window.ImageOptimizer.addOptimizationCSS(); }catch(e){}
+        try{ window.ImageOptimizer.init(); }catch(e){}
+      } else {
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', minimalInit);
+        else minimalInit();
+      }
+    })();
+  </script>
+</body>
+</html>

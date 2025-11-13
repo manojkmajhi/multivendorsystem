@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Farmer Signup - <%= siteSetting.name || 'Cropsay' %></title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/custom-theme.css">
+  <style>
+    .back-link { color: #666; text-decoration: none; transition: color 0.2s; }
+    .back-link:hover { color: #333; text-decoration: underline; }
+    
+    .section { display: none; }
+    .section.active { display: block; }
+    
+    .step-indicator {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 25px;
+      justify-content: center;
+    }
+    
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ddd;
+      transition: all 0.3s;
+    }
+    
+    .step-dot.active {
+      background: #333;
+      width: 24px;
+      border-radius: 4px;
+    }
+    
+    .otp-input-section {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .otp-input-label {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 15px;
+      display: block;
+    }
+    
+    .otp-input-boxes {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: nowrap;
+    }
+    
+    .otp-box {
+      width: 50px;
+      height: 60px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 24px;
+      font-weight: 600;
+      text-align: center;
+      transition: all 0.2s;
+      font-family: 'Courier New', monospace;
+      padding: 0;
+    }
+    
+    .otp-box:focus {
+      outline: none;
+      border-color: #333;
+      box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+    }
+    
+    .otp-box.filled {
+      border-color: #333;
+    }
+    
+    .error-message {
+      color: #dc3545;
+      font-size: 13px;
+      margin-top: 10px;
+      text-align: center;
+      display: none;
+    }
+    
+    .error-message.show {
+      display: block;
+    }
+    
+    .info-text {
+      font-size: 13px;
+      color: #999;
+      text-align: center;
+      margin-top: 10px;
+    }
+    
+    .btn-action {
+      margin-top: 15px;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .card {
+        border-radius: 12px;
+      }
+
+      .card-body {
+        padding: 30px 20px !important;
+      }
+
+      h3 {
+        font-size: 22px;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      .form-group label {
+        font-size: 12px;
+      }
+
+      .form-control {
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+
+      .btn-dark,
+      .btn-outline-secondary {
+        padding: 10px 16px;
+        font-size: 13px;
+      }
+
+      .step-indicator {
+        gap: 6px;
+        margin-bottom: 20px;
+      }
+
+      .otp-input-boxes {
+        gap: 8px;
+      }
+
+      .otp-box {
+        width: 45px;
+        height: 55px;
+        font-size: 20px;
+      }
+
+      .otp-input-label {
+        font-size: 12px;
+        margin-bottom: 12px;
+      }
+
+      .info-text {
+        font-size: 12px;
+      }
+
+      .text-center.mt-3 {
+        margin-top: 15px !important;
+      }
+
+      .text-center.mt-3 a {
+        display: block;
+        margin-bottom: 8px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .col-md-5 {
+        width: 100%;
+        max-width: 100%;
+        padding: 0 15px;
+      }
+
+      .card-body {
+        padding: 25px 15px !important;
+      }
+
+      h3 {
+        font-size: 20px;
+        margin-bottom: 15px !important;
+      }
+
+      .step-indicator {
+        gap: 5px;
+        margin-bottom: 18px;
+      }
+
+      .step-dot {
+        width: 6px;
+        height: 6px;
+      }
+
+      .step-dot.active {
+        width: 18px;
+      }
+
+      .form-group {
+        margin-bottom: 12px;
+      }
+
+      .form-group label {
+        font-size: 11px;
+        margin-bottom: 6px;
+      }
+
+      .form-control {
+        padding: 9px 10px;
+        font-size: 13px;
+      }
+
+      .btn-dark,
+      .btn-outline-secondary {
+        padding: 9px 12px;
+        font-size: 12px;
+      }
+
+      .btn-action {
+        margin-top: 10px;
+      }
+
+      .otp-input-boxes {
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+
+      .otp-box {
+        width: 40px;
+        height: 50px;
+        font-size: 18px;
+        border-radius: 6px;
+      }
+
+      .otp-input-label {
+        font-size: 11px;
+        margin-bottom: 10px;
+      }
+
+      .info-text {
+        font-size: 11px;
+        margin-top: 8px;
+      }
+
+      .text-center.mt-3 {
+        margin-top: 12px !important;
+      }
+
+      .back-link {
+        font-size: 12px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .card-body {
+        padding: 20px 12px !important;
+      }
+
+      h3 {
+        font-size: 18px;
+        margin-bottom: 12px !important;
+      }
+
+      .otp-box {
+        width: 35px;
+        height: 45px;
+        font-size: 16px;
+      }
+
+      .form-control {
+        padding: 8px 8px;
+        font-size: 12px;
+      }
+
+      .btn-dark,
+      .btn-outline-secondary {
+        padding: 8px 10px;
+        font-size: 11px;
+      }
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: 100vh;">
+      <div class="col-md-5">
+        <div class="card shadow">
+          <div class="card-body p-5">
+            <h3 class="text-center mb-4">Farmer Signup</h3>
+            
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+              <div class="step-dot active" id="step1Dot"></div>
+              <div class="step-dot" id="step2Dot"></div>
+              <div class="step-dot" id="step3Dot"></div>
+            </div>
+
+            <!-- Error Message -->
+            <div class="error-message" id="errorMsg"></div>
+
+            <!-- STEP 1: EMAIL -->
+            <div class="section active" id="step1">
+              <form id="emailForm">
+                <div class="form-group">
+                  <label>Email (@cropsay.com)</label>
+                  <input type="email" id="email" class="form-control" placeholder="yourname@cropsay.com" required pattern=".*@cropsay\.com$">
+                </div>
+                <button type="submit" class="btn btn-dark btn-block">Send OTP</button>
+              </form>
+              <div class="info-text">We'll send a 6-digit code to your email</div>
+            </div>
+
+            <!-- STEP 2: OTP VERIFICATION -->
+            <div class="section" id="step2">
+              <div class="otp-input-section">
+                <label class="otp-input-label" id="otpEmailDisplay"></label>
+                <div class="otp-input-boxes" id="otpBoxes"></div>
+                <input type="hidden" id="otpFullValue">
+                <div class="error-message" id="otpErrorMsg"></div>
+                <div class="info-text">Enter the 6-digit code from your email</div>
+              </div>
+              <button type="button" class="btn btn-dark btn-block btn-action" id="verifyOtpBtn">Verify OTP</button>
+              <button type="button" class="btn btn-outline-secondary btn-block btn-action" id="resendOtpBtn">Resend OTP</button>
+            </div>
+
+            <!-- STEP 3: PROFILE -->
+            <div class="section" id="step3">
+              <form id="profileForm">
+                <div class="form-group">
+                  <label>Full Name</label>
+                  <input type="text" id="farmerName" class="form-control" placeholder="Your name" required>
+                </div>
+                <div class="form-group">
+                  <label>Phone Number</label>
+                  <input type="tel" id="phone" class="form-control" placeholder="98xxxxxxxxx" required>
+                </div>
+                <div class="form-group">
+                  <label>Password</label>
+                  <input type="password" id="password" class="form-control" placeholder="Enter password" required>
+                </div>
+                <div class="form-group">
+                  <label>Farm/Business Name</label>
+                  <input type="text" id="businessName" class="form-control" placeholder="Your farm name" required>
+                </div>
+                <button type="submit" class="btn btn-dark btn-block">Complete Signup</button>
+                <button type="button" class="btn btn-outline-secondary btn-block btn-action" onclick="goBack(2)">Back</button>
+              </form>
+            </div>
+
+            <div class="text-center mt-3">
+              <a href="/farmers/login" class="back-link">Already have an account? Login</a><br>
+              <a href="/farmers/" class="back-link">← Back to Farmers</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script>
+    let currentEmail = '';
+    let otpBoxes = [];
+
+    // Create OTP input boxes
+    function createOtpBoxes() {
+      const container = $('#otpBoxes');
+      container.empty();
+      otpBoxes = [];
+      
+      for (let i = 0; i < 6; i++) {
+        const box = $('<input class="otp-box" type="text" maxlength="1" inputmode="numeric">');
+        container.append(box);
+        otpBoxes.push(box);
+        
+        box.on('input', function(e) {
+          if (this.value && !/[0-9]/.test(this.value)) {
+            this.value = '';
+            return;
+          }
+          
+          if (this.value && i < 5) {
+            otpBoxes[i + 1][0].focus();
+          }
+          
+          updateOtpValue();
+        });
+        
+        box.on('keydown', function(e) {
+          if (e.key === 'Backspace' && !this.value && i > 0) {
+            otpBoxes[i - 1][0].focus();
+          }
+          // Submit on Enter if all digits are filled
+          if (e.key === 'Enter' && $('#otpFullValue').val().length === 6) {
+            e.preventDefault();
+            $('#verifyOtpBtn').click();
+          }
+        });
+        
+        box.on('paste', function(e) {
+          e.preventDefault();
+          const pastedText = (e.originalEvent || e).clipboardData.getData('text');
+          const digits = pastedText.replace(/\D/g, '').slice(0, 6);
+          
+          if (digits.length > 0) {
+            for (let j = 0; j < digits.length && j < 6; j++) {
+              otpBoxes[j].val(digits[j]);
+            }
+            updateOtpValue();
+            
+            // Focus last filled box or next empty box
+            const nextIndex = Math.min(digits.length, 5);
+            otpBoxes[nextIndex][0].focus();
+          }
+        });
+      }
+    }
+
+    function updateOtpValue() {
+      const otp = otpBoxes.map(b => b.val()).join('');
+      $('#otpFullValue').val(otp);
+    }
+
+    function showError(message, fieldId = 'errorMsg') {
+      const errorEl = $('#' + fieldId);
+      errorEl.text(message).addClass('show');
+      setTimeout(() => errorEl.removeClass('show'), 5000);
+    }
+
+    function updateStepIndicator(step) {
+      $('.step-dot').removeClass('active');
+      for (let i = 1; i <= step; i++) {
+        $('#step' + i + 'Dot').addClass('active');
+      }
+    }
+
+    function showStep(stepNum) {
+      $('.section').removeClass('active');
+      $('#step' + stepNum).addClass('active');
+      updateStepIndicator(stepNum);
+      $('#errorMsg').removeClass('show');
+    }
+
+    function goBack(currentStep) {
+      if (currentStep === 2) {
+        // Going back from OTP to email
+        showStep(1);
+        $('#email').focus();
+        // Reset the email button to original state
+        const btn = $('#emailForm').find('button');
+        btn.prop('disabled', false).text('Send OTP');
+      } else if (currentStep === 3) {
+        // Going back from profile to OTP
+        showStep(2);
+        if (otpBoxes.length > 0) {
+          otpBoxes[0][0].focus();
+        }
+      }
+    }
+
+    // STEP 1: Send OTP
+    $('#emailForm').on('submit', function(e) {
+      e.preventDefault();
+      currentEmail = $('#email').val();
+      const btn = $(this).find('button');
+      
+      btn.prop('disabled', true).text('Sending...');
+      
+      $.post('/api/farmers/send-otp', { email: currentEmail }, function(res) {
+        if (res.success) {
+          createOtpBoxes();
+          $('#otpEmailDisplay').text('Sent to: ' + currentEmail);
+          showStep(2);
+          otpBoxes[0][0].focus();
+        } else {
+          showError(res.message || 'Failed to send OTP');
+          btn.prop('disabled', false).text('Send OTP');
+        }
+      }).fail(function() {
+        showError('Error sending OTP. Please try again.');
+        btn.prop('disabled', false).text('Send OTP');
+      });
+    });
+
+    // STEP 2: Resend OTP
+    $('#resendOtpBtn').on('click', function() {
+      const btn = $(this);
+      btn.prop('disabled', true).text('Sending...');
+      
+      $.post('/api/farmers/send-otp', { email: currentEmail }, function(res) {
+        if (res.success) {
+          showError('OTP resent to your email', 'otpErrorMsg');
+          otpBoxes.forEach(box => box.val(''));
+          updateOtpValue();
+          otpBoxes[0][0].focus();
+          btn.prop('disabled', false).text('Resend OTP');
+        } else {
+          showError(res.message || 'Failed to resend OTP', 'otpErrorMsg');
+          btn.prop('disabled', false).text('Resend OTP');
+        }
+      }).fail(function() {
+        showError('Error resending OTP', 'otpErrorMsg');
+        btn.prop('disabled', false).text('Resend OTP');
+      });
+    });
+
+    // STEP 2: Verify OTP
+    $('#verifyOtpBtn').on('click', function() {
+      const otp = $('#otpFullValue').val();
+      
+      if (otp.length !== 6) {
+        showError('Please enter complete 6-digit code', 'otpErrorMsg');
+        return;
+      }
+      
+      const btn = $(this);
+      btn.prop('disabled', true).text('Verifying...');
+      
+      $.post('/api/farmers/verify-otp', { email: currentEmail, otp: otp }, function(res) {
+        if (res.success) {
+          showStep(3);
+          $('#farmerName').focus();
+        } else {
+          showError(res.message || 'Invalid OTP. Please try again.', 'otpErrorMsg');
+          btn.prop('disabled', false).text('Verify OTP');
+          otpBoxes.forEach(box => box.val(''));
+          updateOtpValue();
+          otpBoxes[0][0].focus();
+        }
+      }).fail(function() {
+        showError('Error verifying OTP. Please try again.', 'otpErrorMsg');
+        btn.prop('disabled', false).text('Verify OTP');
+      });
+    });
+
+    // STEP 3: Complete Signup
+    $('#profileForm').on('submit', function(e) {
+      e.preventDefault();
+      
+      const data = {
+        email: currentEmail,
+        name: $('#farmerName').val(),
+        phone: $('#phone').val(),
+        password: $('#password').val(),
+        businessName: $('#businessName').val()
+      };
+      
+      const btn = $(this).find('button[type="submit"]');
+      btn.prop('disabled', true).text('Completing...');
+      
+      $.post('/api/farmers/complete-signup', data, function(res) {
+        if (res.success) {
+          // Auto-login: redirect to dashboard
+          window.location.href = res.redirectUrl || '/farmers/dashboard';
+        } else {
+          showError(res.message || 'Failed to complete signup');
+          btn.prop('disabled', false).text('Complete Signup');
+        }
+      }).fail(function() {
+        showError('Error completing signup. Please try again.');
+        btn.prop('disabled', false).text('Complete Signup');
+      });
+    });
+  </script>
+</body>
+</html>

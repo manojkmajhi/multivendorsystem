@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complete Profile - <%= siteSetting.name || 'Cropsay' %></title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/custom-theme.css">
+  <style>
+    body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+    .card { border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    .success-badge { background: #28a745; color: white; padding: 8px 16px; border-radius: 20px; display: inline-block; margin-bottom: 20px; }
+    .form-group label { font-weight: 600; color: #333; }
+    .btn-success { background: #667eea; border: none; padding: 12px; font-weight: 600; }
+    .btn-success:hover { background: #5568d3; }
+    .back-link { color: #667eea; text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: 100vh;">
+      <div class="col-md-5">
+        <div class="card">
+          <div class="card-body p-5">
+            <div class="text-center mb-4">
+              <div class="success-badge">✓ Email Verified</div>
+              <h3 class="mb-2">Complete Your Profile</h3>
+              <p class="text-muted">Almost done! Fill in your details to finish signup.</p>
+            </div>
+            
+            <form id="profileForm">
+              <div class="form-group">
+                <label>Full Name *</label>
+                <input type="text" id="full_name" class="form-control" placeholder="John Doe" required autofocus>
+              </div>
+              
+              <div class="form-group">
+                <label>Phone Number *</label>
+                <input type="tel" id="phone" class="form-control" placeholder="+977 98XXXXXXXX" required>
+              </div>
+              
+              <div class="form-group">
+                <label>Password *</label>
+                <input type="password" id="password" class="form-control" minlength="6" placeholder="At least 6 characters" required>
+              </div>
+              
+              <div class="form-group">
+                <label>Business/Farm Name</label>
+                <input type="text" id="business_name" class="form-control" placeholder="Optional">
+              </div>
+              
+              <div class="form-group">
+                <label>Location</label>
+                <input type="text" id="location" class="form-control" placeholder="City, Region">
+              </div>
+              
+              <div class="form-group">
+                <label>Bio / About Your Farm</label>
+                <textarea id="bio" class="form-control" rows="3" placeholder="Tell us about your farm or business..."></textarea>
+              </div>
+              
+              <button type="submit" class="btn btn-success btn-block btn-lg">
+                <span id="btnText">Complete Signup</span>
+                <span id="btnLoader" style="display:none;">
+                  <span class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>
+                  Creating account...
+                </span>
+              </button>
+            </form>
+
+            <div class="text-center mt-3">
+              <a href="/farmers/login" class="back-link">Already have an account? Login →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script>
+    $('#profileForm').on('submit', function(e) {
+      e.preventDefault();
+      
+      // Validate
+      const fullName = $('#full_name').val().trim();
+      const phone = $('#phone').val().trim();
+      const password = $('#password').val();
+      
+      if(!fullName || !phone || !password) {
+        alert('Please fill in all required fields');
+        return;
+      }
+      
+      // Show loading
+      $('#btnText').hide();
+      $('#btnLoader').show();
+      $('button[type="submit"]').prop('disabled', true);
+      
+      // Submit
+      $.post('/api/farmers/complete-signup', {
+        full_name: fullName,
+        phone: phone,
+        password: password,
+        business_name: $('#business_name').val() || '',
+        location: $('#location').val() || '',
+        bio: $('#bio').val() || ''
+      })
+        .done(function(res) {
+          if (res.success) {
+            // Show success message
+            $('#profileForm').html('<div class="alert alert-success"><h5>✓ Account Created!</h5><p>Redirecting to your dashboard...</p></div>');
+            setTimeout(() => {
+              window.location = '/farmers/dashboard';
+            }, 2000);
+          } else {
+            alert(res.message || 'Signup failed. Please try again.');
+            $('#btnText').show();
+            $('#btnLoader').hide();
+            $('button[type="submit"]').prop('disabled', false);
+          }
+        })
+        .fail(function(err) {
+          console.error('Error:', err);
+          alert('Error completing signup. Please try again.');
+          $('#btnText').show();
+          $('#btnLoader').hide();
+          $('button[type="submit"]').prop('disabled', false);
+        });
+    });
+  </script>
+</body>
+</html>

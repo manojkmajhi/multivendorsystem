@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Track Order | <%= siteSetting.name %></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/staticfiles/style.blue.css" />
+  <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <style>
+    body { font-family: 'Libre Franklin', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+    .main-content { flex: 1; }
+    .track-container { max-width: 800px; margin: 0 auto; padding: 2rem 1rem; }
+    .track-header { text-align: center; margin-bottom: 2rem; }
+    .track-header h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .track-header p { color: #6c757d; }
+    .search-box { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 2rem; }
+    .search-box input { height: 50px; font-size: 1rem; }
+    .search-box button { height: 50px; }
+    .order-result { display: none; }
+    .order-card { background: #fff; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 2rem; margin-bottom: 1.5rem; }
+    .order-header { border-bottom: 2px solid #f0f0f0; padding-bottom: 1rem; margin-bottom: 1.5rem; }
+    .order-number { font-size: 1.3rem; font-weight: 700; color: #212529; }
+    .order-date { color: #6c757d; font-size: 0.9rem; }
+    .orders-header { text-align: center; margin-bottom: 2rem; }
+    .orders-header h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .orders-header p { color: #6c757d; }
+    .status-timeline { position: relative; padding: 2rem 0; }
+    .status-step { position: relative; padding-left: 60px; margin-bottom: 2rem; }
+    .status-step:last-child { margin-bottom: 0; }
+    .status-icon { position: absolute; left: 0; top: 0; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; z-index: 2; }
+    .status-step.completed .status-icon { background: #28a745; color: #fff; }
+    .status-step.active .status-icon { background: #007bff; color: #fff; animation: pulse 2s infinite; }
+    .status-step.pending .status-icon { background: #e9ecef; color: #6c757d; }
+    .status-step.cancelled .status-icon { background: #dc3545; color: #fff; }
+    .status-line { position: absolute; left: 19px; top: 40px; bottom: -2rem; width: 2px; background: #e9ecef; z-index: 1; }
+    .status-step:last-child .status-line { display: none; }
+    .status-step.completed .status-line { background: #28a745; }
+    .status-content h4 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.3rem; }
+    .status-date { color: #6c757d; font-size: 0.85rem; margin-bottom: 0.5rem; }
+    .status-note { background: #f8f9fa; padding: 0.75rem; border-radius: 4px; font-size: 0.9rem; color: #495057; margin-top: 0.5rem; }
+    .order-items { margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #f0f0f0; }
+    .order-items h3 { font-size: 1.2rem; font-weight: 600; margin-bottom: 1rem; }
+    .item-row { display: flex; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #f0f0f0; }
+    .item-row:last-child { border-bottom: none; }
+    .item-img { width: 60px; height: 60px; object-fit: contain; margin-right: 1rem; border-radius: 4px; background: #f8f9fa; }
+    .item-details { flex: 1; }
+    .item-name { font-weight: 600; margin-bottom: 0.2rem; }
+    .item-qty { color: #6c757d; font-size: 0.9rem; }
+    .order-total { text-align: right; margin-top: 1rem; padding-top: 1rem; border-top: 2px solid #f0f0f0; }
+    .order-total .total-label { font-size: 1.1rem; font-weight: 600; }
+    .order-total .total-amount { font-size: 1.3rem; font-weight: 700; color: #28a745; }
+    .error-message { background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 1rem; border-radius: 4px; text-align: center; display: none; }
+    @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(0,123,255,0.7); } 50% { box-shadow: 0 0 0 10px rgba(0,123,255,0); } }
+    @media (max-width: 576px) {
+      .track-container { padding: 1rem 0.5rem; }
+      .search-box, .order-result { padding: 1.5rem 1rem; }
+      .status-step { padding-left: 50px; }
+      .status-icon { width: 35px; height: 35px; font-size: 1rem; }
+      .status-line { left: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-light fixed-top py-0 px-2">
+    <div class="container px-0 px-lg-3">
+      <a class="navbar-brand" href="/"><img src="<%= siteSetting.logo_url %>" height="60"></a>
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item"><a class="nav-link" href="/"><i class="fas fa-home"></i> Home</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div style="margin-top: 80px;"></div>
+
+  <div class="main-content">
+    <div class="track-container">
+      <div class="track-header">
+        <h1><i class="fas fa-shipping-fast"></i> Track Your Orders</h1>
+        <p>Enter your mobile number to view all your orders</p>
+      </div>
+
+      <div class="search-box">
+        <form id="track-form">
+          <div class="input-group">
+            <input type="tel" class="form-control" id="phone-number" placeholder="Enter your mobile number (e.g., 9814789009)" required>
+            <div class="input-group-append">
+              <button class="btn btn-dark" type="submit"><i class="fas fa-search"></i> Track Orders</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="error-message" id="error-message"></div>
+
+      <div class="order-result" id="order-result">
+        <div id="orders-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Details Modal -->
+  <div class="modal fade" id="orderModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document" style="max-width: 600px;">
+      <div class="modal-content">
+        <div class="modal-header" style="padding: 1rem 1.25rem;">
+          <h5 class="modal-title" style="font-size: 1.1rem;">Order Details</h5>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body" id="orderModalBody" style="padding: 1.25rem;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="bg-dark text-white shadow" style="margin-top: 40px;">
+    <div class="container py-4">
+      <div class="row">
+        <div class="col-lg-6">
+          <p class="small text-gray mb-0">© <%= new Date().getFullYear() %> All rights reserved.</p>
+          <p class="small text-gray mb-0">Crafted by <a class="text-white reset-anchor" href="https://gauravsah.com.np" target="_blank">Gaurav Sah</a></p>
+        </div>
+        <div class="col-lg-6 text-lg-right">
+          <p class="small mb-0">FIND US &nbsp;
+            <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.facebook_url) ? socialLinks.facebook_url : 'https://facebook.com/allstrawhats/' %>" target="_blank"><i class="fab fa-facebook-square mr-1" style="color: #f5f5f5;"></i></a>
+            <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.instagram_url) ? socialLinks.instagram_url : 'https://instagram.com/allstrawhats/' %>" target="_blank"><i class="fab fa-instagram" style="color: #f5f5f5;"></i></a>
+          </p>
+          <p class="text-sm text-gray mb-0"><a class="text-gray reset-anchor" href="mailto:<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@allstrawhats.com' %>" target="_blank"><i class="fas fa-envelope"></i> &nbsp;<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@allstrawhats.com' %></a></p>
+          <p class="text-sm text-gray mb-1 mt-2"><a class="text-white reset-anchor" href="/track-order"><i class="fas fa-shipping-fast"></i> Track Order</a></p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+  <script>
+    const statusConfig = {
+      pending: { icon: 'fa-clock', label: 'Order Placed', defaultMsg: 'Your order has been received and is being processed.', defaultDays: '1-2 days' },
+      confirmed: { icon: 'fa-check-circle', label: 'Confirmed', defaultMsg: 'Your order has been confirmed and is being prepared.', defaultDays: '2-3 days' },
+      processing: { icon: 'fa-box', label: 'Processing', defaultMsg: 'Your order is being packed and prepared for shipment.', defaultDays: '3-4 days' },
+      shipped: { icon: 'fa-truck', label: 'Shipped', defaultMsg: 'Your order is on the way! Our delivery partner will contact you soon.', defaultDays: '4-6 days' },
+      delivered: { icon: 'fa-home', label: 'Delivered', defaultMsg: 'Your order has been delivered. Thank you for shopping with us!', defaultDays: 'Completed' },
+      cancelled: { icon: 'fa-times-circle', label: 'Cancelled', defaultMsg: 'This order has been cancelled.', defaultDays: 'N/A' }
+    };
+
+    const statusOrder = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
+
+    $('#track-form').on('submit', function(e) {
+      e.preventDefault();
+      const phoneNumber = $('#phone-number').val().trim();
+      if (!phoneNumber) return;
+
+      $('#error-message').hide();
+      $('#order-result').hide();
+
+      $.ajax({
+        url: '/api/track-order',
+        method: 'GET',
+        data: { phone: phoneNumber },
+        success: function(data) {
+          if (data.success) {
+            ordersData = data.orders;
+            displayOrders(data.orders, phoneNumber);
+          } else {
+            showError(data.message || 'No orders found for this phone number');
+          }
+        },
+        error: function() {
+          showError('Failed to fetch orders. Please try again.');
+        }
+      });
+    });
+
+    function showError(message) {
+      $('#error-message').text(message).fadeIn();
+    }
+
+    function displayOrders(orders, phone) {
+      if (!orders || orders.length === 0) {
+        showError('No orders found for this phone number');
+        return;
+      }
+
+      const ordersList = $('#orders-list').empty();
+      
+      ordersList.append(`
+        <div class="orders-header">
+          <h2>Your Orders</h2>
+          <p>Found ${orders.length} order${orders.length > 1 ? 's' : ''} for ${phone}</p>
+        </div>
+      `);
+
+      const grid = $('<div class="orders-grid"></div>');
+      orders.forEach(order => {
+        grid.append(renderCompactCard(order));
+      });
+      ordersList.append(grid);
+
+      $('#order-result').fadeIn();
+    }
+
+    function renderCompactCard(order) {
+      const statusColors = {
+        pending: '#ffc107', confirmed: '#17a2b8', processing: '#007bff',
+        shipped: '#28a745', delivered: '#28a745', cancelled: '#dc3545'
+      };
+      const statusColor = statusColors[order.status] || '#6c757d';
+      const itemCount = order.items.length;
+      const itemText = itemCount === 1 ? '1 item' : `${itemCount} items`;
+      
+      return `
+        <div class="order-card" onclick="showOrderDetails('${order.id}')">
+          <div class="order-card-header">
+            <div class="order-number">#${order.order_number.split('-').pop()}</div>
+            <span class="order-status-badge" style="background: ${statusColor}; color: white;">${order.status}</span>
+          </div>
+          <div class="order-date"><i class="far fa-calendar"></i> ${new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+          <div class="order-summary">${itemText}</div>
+          <div class="order-total">Rs. ${order.total}</div>
+          <div class="view-details-btn"><i class="fas fa-eye"></i> View Details</div>
+        </div>
+      `;
+    }
+
+    let ordersData = [];
+    window.showOrderDetails = function(orderId) {
+      const order = ordersData.find(o => o.id === orderId);
+      if (!order) return;
+      
+      $('#orderModalBody').html(renderOrderDetails(order));
+      $('#orderModal').modal('show');
+    };
+
+    function renderOrderDetails(order) {
+      let html = `
+        <div class="modal-order-header">
+          <div class="modal-order-number">Order #${order.order_number}</div>
+          <div class="modal-order-date">Placed on ${new Date(order.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+        </div>
+      `;
+
+      // Build timeline
+      html += '<div class="status-timeline">';
+      const currentStatus = order.status;
+      const currentIndex = statusOrder.indexOf(currentStatus);
+      const isCancelled = currentStatus === 'cancelled';
+
+      statusOrder.forEach((status, index) => {
+        const config = statusConfig[status];
+        const tracking = order.tracking_info && order.tracking_info[status];
+        let stepClass = 'pending';
+        
+        if (isCancelled && status === 'cancelled') {
+          stepClass = 'cancelled';
+        } else if (isCancelled) {
+          stepClass = 'pending';
+        } else if (index < currentIndex) {
+          stepClass = 'completed';
+        } else if (index === currentIndex) {
+          stepClass = 'active';
+        }
+
+        const estimatedDate = tracking && tracking.estimated_date ? tracking.estimated_date : config.defaultDays;
+        const note = tracking && tracking.note ? tracking.note : config.defaultMsg;
+
+        html += `
+          <div class="status-step ${stepClass}">
+            <div class="status-icon"><i class="fas ${config.icon}"></i></div>
+            <div class="status-line"></div>
+            <div class="status-content">
+              <h4>${config.label}</h4>
+              <div class="status-date"><i class="far fa-calendar"></i> ${estimatedDate}</div>
+              <div class="status-note">${note}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      if (isCancelled) {
+        const config = statusConfig.cancelled;
+        const tracking = order.tracking_info && order.tracking_info.cancelled;
+        const note = tracking && tracking.note ? tracking.note : config.defaultMsg;
+        html += `
+          <div class="status-step cancelled">
+            <div class="status-icon"><i class="fas ${config.icon}"></i></div>
+            <div class="status-content">
+              <h4>${config.label}</h4>
+              <div class="status-note">${note}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      html += '</div>'; // Close timeline
+
+      // Display items
+      html += '<div class="order-items"><h3>Order Items</h3>';
+      order.items.forEach(item => {
+        html += `
+          <div class="item-row">
+            <img src="${item.image || '/staticfiles/brand.svg'}" class="item-img" alt="${item.productName}">
+            <div class="item-details">
+              <div class="item-name">${item.productName}</div>
+              <div class="item-qty">Qty: ${item.qty} × Rs. ${item.price}</div>
+            </div>
+            <div style="font-weight: 600;">Rs. ${item.subtotal}</div>
+          </div>
+        `;
+      });
+
+      html += `
+        <div class="modal-order-total">
+          <span class="total-label">Total: </span>
+          <span class="total-amount">Rs. ${order.total}</span>
+        </div>
+      </div>`;
+
+      html += `
+        <div class="delivery-info">
+          <h4>Delivery Information</h4>
+          <p><strong>Name:</strong> ${order.customer_name}</p>
+          <p><strong>Mobile:</strong> ${order.customer_mobile}</p>
+          <p><strong>Address:</strong> ${order.address}, ${order.area}, ${order.region}</p>
+        </div>
+      `;
+      
+      // Payment information
+      if (order.payment_method || order.payment_screenshot) {
+        html += `
+          <div class="delivery-info" style="margin-top: 1.5rem;">
+            <h4>💳 Payment Information</h4>
+            <p><strong>Method:</strong> ${order.payment_method === 'esewa' ? 'eSewa' : 'Cash on Delivery'}</p>
+            ${order.payment_screenshot ? `
+              <p><strong>Payment Screenshot:</strong></p>
+              <div style="margin-top: 0.75rem;">
+                <img src="${order.payment_screenshot}" alt="Payment Screenshot" style="max-width: 100%; max-height: 250px; border-radius: 6px; border: 2px solid #4caf50; cursor: pointer; display: block;" onclick="window.open('${order.payment_screenshot}', '_blank')" />
+                <p style="font-size: 0.75rem; color: #6c757d; margin-top: 0.5rem; text-align: center;">Click image to view full size</p>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
+
+      return html;
+    }
+  </script>
+</body>
+</html>

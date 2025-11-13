@@ -1,0 +1,99 @@
+# 📧 Simple OTP Email - Copy & Paste Ready
+
+## Ready to Use Template
+
+**Copy this and paste into Supabase Email Template:**
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .content { max-width: 500px; margin: 20px auto; padding: 20px; }
+        .code { font-size: 36px; font-weight: bold; letter-spacing: 5px; text-align: center; padding: 20px; background: #f0f0f0; border-radius: 5px; font-family: monospace; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <p>Hi,</p>
+        
+        <p>Your OTP code is:</p>
+        
+        <div class="code">{{ .OTP }}</div>
+        
+        <p>Enter this code in the signup form. This code expires in 15 minutes.</p>
+        
+        <p>If you didn't request this code, ignore this email.</p>
+    </div>
+</body>
+</html>
+```
+
+---
+
+## How to Paste
+
+1. **Go to Supabase Dashboard**
+   ```
+   https://app.supabase.com
+   ```
+
+2. **Select Your Project**
+
+3. **Navigate to Email Template**
+   ```
+   Authentication
+   → Email Templates
+   → One-Time Password
+   ```
+
+4. **Click Edit HTML**
+
+5. **Clear existing content** (if any)
+
+6. **Paste the template above**
+
+7. **Click Save**
+
+---
+
+## Email Preview
+
+This is what users will see:
+
+```
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ From: noreply@project.supabase.co ┃
+┃ To: user@cropsay.com              ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+Hi,
+
+Your OTP code is:
+
+┌──────────────────┐
+│  1 2 3 4 5 6     │
+└──────────────────┘
+
+Enter this code in the signup form. This code expires in 15 minutes.
+
+If you didn't request this code, ignore this email.
+```
+
+---
+
+## What the Template Uses
+
+- `{{ .OTP }}` = The actual 6-digit OTP code (e.g., 123456)
+- Simple gray background for OTP
+- Large, bold numbers
+- Clean, minimal text
+- Mobile-friendly design
+
+---
+
+## That's It!
+
+Just copy, paste, and save. Your OTP emails are ready to go! 🚀

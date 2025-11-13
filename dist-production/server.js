@@ -4,7 +4,6 @@ const cookieParser = require('cookie-parser');
 const multer = require('multer');
 const fs = require('fs');
 const compression = require('compression');
-const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
@@ -46,27 +45,6 @@ if (process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || proces
 } else {
   console.warn('Supabase environment variables not set. Admin features disabled until configured.');
 }
-
-// Email transporter setup removed - using Supabase email for magic links
-// const emailTransporter = nodemailer.createTransport({...});
-
-// Deprecated - OTP email function removed (using Supabase magic links instead)
-// async function sendOTPEmail(email, otp) {
-//   try {
-//     const mailOptions = {
-//       from: process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER,
-//       to: email,
-//       subject: 'Your OTP Code',
-//       html: `...`
-//     };
-//     await emailTransporter.sendMail(mailOptions);
-//     console.log('✓ OTP email sent to:', email);
-//     return true;
-//   } catch(err) {
-//     console.error('Email send error:', err.message);
-//     return false;
-//   }
-// }
 
 // Settings helpers with aggressive caching
 async function getSetting(key, fallback = null){
@@ -118,16 +96,16 @@ app.use((req,res,next)=>{
 // -------- Site Setting Injection (for dynamic logo/name in admin UI) --------
 let siteCache = { value: null, fetchedAt: 0 };
 async function loadSiteSetting(force=false){
-  if(!supabase) return { name: 'Cropsay', logo_url: '/staticfiles/brand.svg' };
+  if(!supabase) return { name: 'All Strawhats', logo_url: '/staticfiles/brand.svg' };
   if(!force && siteCache.value && Date.now() - siteCache.fetchedAt < 60_000){
     return siteCache.value;
   }
   try {
-    const site = await getSetting('site', { name: 'Cropsay', logo_url: '/staticfiles/brand.svg' });
+    const site = await getSetting('site', { name: 'All Strawhats', logo_url: '/staticfiles/brand.svg' });
     siteCache = { value: site, fetchedAt: Date.now() };
     return site;
   } catch(e){
-    return { name: 'Cropsay', logo_url: '/staticfiles/brand.svg' };
+    return { name: 'All Strawhats', logo_url: '/staticfiles/brand.svg' };
   }
 }
 
@@ -237,7 +215,6 @@ app.use(async (req,res,next)=>{
 
 // In-memory storage (per process). In production use a DB or persistent store.
 const carts = {}; // key: device id, value: array of cart line items
-const otpStore = {}; // OTP storage for farmer signup/reset
 
 // Cached product lookup with automatic refresh
 async function getCachedProduct(id) {
@@ -2082,362 +2059,6 @@ app.get('/set_cart_qty/', (req, res) => {
     entry.qty = q;
   }
   return res.json({ ok:true });
-});
-
-// -------- FARMER/SELLER ROUTES --------
-function farmerGuard(req,res,next){
-  const token = req.cookies.farmer_session;
-  if(!token) return res.redirect('/farmers/login');
-  next();
-}
-
-app.get('/farmers/', async (req,res)=>{
-  try {
-    let farmers = [];
-    if(supabase){
-      const { data } = await supabase.from('farmers').select('*').eq('status', 'approved');
-      farmers = data || [];
-    }
-    const categories = await dbFetchCategories();
-    res.render('farmers', { farmers, categories, siteSetting: res.locals.siteSetting });
-  } catch(e){
-    console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to load farmers.' });
-  }
-});
-
-app.get('/farmers/signup', (req,res)=>{
-  res.render('farmer-signup', { siteSetting: res.locals.siteSetting });
-});
-
-app.get('/farmers/forgot-password', (req,res)=>{
-  res.render('farmer-forgot-password', { siteSetting: res.locals.siteSetting });
-});
-
-app.post('/api/farmers/send-otp', async (req,res)=>{
-  try {
-    const { email } = req.body;
-    if(!email.endsWith('@cropsay.com')) return res.json({ success:false, message:'Only @cropsay.com emails allowed' });
-    
-    // Use Supabase OTP
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email,
-      options: {
-        emailRedirectTo: `${process.env.APP_URL || 'http://localhost:3000'}/farmers/signup`
-      }
-    });
-
-    if(error) {
-      console.error('Supabase OTP Error:', error);
-      return res.json({ success:false, message:'Failed to send OTP' });
-    }
-
-    console.log('OTP sent to', email);
-    res.json({ success:true, message:'OTP sent to your email' });
-  } catch(e){
-    console.error('Send OTP Error:', e);
-    res.json({ success:false, message:e.message });
-  }
-});
-
-app.post('/api/farmers/verify-otp', async (req,res)=>{
-  try {
-    const { email, otp } = req.body;
-    
-    // Verify OTP with Supabase
-    const { data, error } = await supabase.auth.verifyOtp({
-      email: email,
-      token: otp,
-      type: 'email'
-    });
-
-    if(!error && data.user) {
-      res.json({ success:true });
-    } else {
-      return res.json({ success:false, message:'Invalid or expired OTP' });
-    }
-  } catch(e){
-    console.error('Verify OTP Error:', e);
-    res.json({ success:false, message:e.message });
-  }
-});
-
-app.post('/api/farmers/complete-signup', async (req,res)=>{
-  try {
-    const { email, name, phone, password, businessName } = req.body;
-    
-    // Validate required fields
-    if (!email || !name || !phone || !password || !businessName) {
-      return res.json({ success: false, message: 'All fields are required' });
-    }
-
-    // Check if farmer already exists
-    const { data: existingFarmer, error: checkError } = await supabase
-      .from('farmers')
-      .select('id')
-      .eq('email', email)
-      .single();
-
-    if (existingFarmer) {
-      return res.json({ success: false, message: 'Farmer already exists with this email' });
-    }
-
-    // Create farmer record using service role (bypass RLS)
-    const { data: newFarmer, error: insertError } = await supabase
-      .from('farmers')
-      .insert({
-        email,
-        full_name: name,
-        phone,
-        business_name: businessName,
-        status: 'approved' // Auto-approve for now
-      })
-      .select()
-      .single();
-
-    if (insertError) {
-      console.error('Farmer insert error:', insertError);
-      return res.json({ success: false, message: 'Failed to create farmer account: ' + insertError.message });
-    }
-
-    if (!newFarmer) {
-      console.error('No farmer returned after insert');
-      return res.json({ success: false, message: 'Failed to create farmer account: No data returned' });
-    }
-
-    // Create session cookie for automatic login
-    const sessionCookie = jwt.sign(
-      {
-        farmer_id: newFarmer.id,
-        email: email,
-        name: name,
-        type: 'farmer'
-      },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '7d' }
-    );
-
-    res.cookie('farmer_session', sessionCookie, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      sameSite: 'lax'
-    });
-
-    console.log('Farmer created successfully:', newFarmer.id, email);
-
-    res.json({ 
-      success: true, 
-      message: 'Signup successful',
-      redirectUrl: '/farmers/dashboard'
-    });
-
-  } catch(e){
-    console.error('Complete signup error:', e);
-    res.json({ success: false, message: 'Error completing signup: ' + e.message });
-  }
-});
-
-app.post('/api/farmers/forgot-password', async (req,res)=>{
-  try {
-    const { email } = req.body;
-    const { data: farmer } = await supabase.from('farmers').select('id').eq('email', email).single();
-    if(!farmer) return res.json({ success:false, message:'Email not found' });
-    
-    // Send password reset OTP
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.APP_URL || 'http://localhost:3000'}/farmers/reset-password`
-    });
-
-    if(error) {
-      console.error('Reset Password Error:', error);
-      return res.json({ success:false, message:'Failed to send reset link' });
-    }
-
-    console.log('Password reset link sent to', email);
-    res.json({ success:true, message:'Password reset link sent to your email' });
-  } catch(e){
-    console.error('Forgot Password Error:', e);
-    res.json({ success:false, message:e.message });
-  }
-});
-
-// Deprecated - verify-reset-otp removed (using magic links instead)
-// app.post('/api/farmers/verify-reset-otp', async (req,res)=>{
-//   ...
-// });
-
-app.post('/api/farmers/reset-password', async (req,res)=>{
-  try {
-    const { email, password } = req.body;
-    delete otpStore[email];
-    const password_hash = await bcrypt.hash(password, 10);
-    await supabase.from('farmers').update({ password_hash }).eq('email', email);
-    res.json({ success:true });
-  } catch(e){
-    res.json({ success:false, message:e.message });
-  }
-});
-
-app.get('/farmers/login', (req,res)=>{
-  res.render('farmer-login', { siteSetting: res.locals.siteSetting });
-});
-
-app.post('/farmers/login', async (req,res)=>{
-  const { email, password } = req.body;
-  if(!supabase) return res.status(500).render('simple-message', { title:'Error', message:'Database not configured.' });
-  try {
-    const { data: farmer } = await supabase.from('farmers').select('*').eq('email', email).eq('status', 'approved').single();
-    if(!farmer) return res.status(401).render('simple-message', { title:'Error', message:'Invalid credentials.' });
-    const ok = await bcrypt.compare(password, farmer.password_hash || '');
-    if(!ok) return res.status(401).render('simple-message', { title:'Error', message:'Invalid credentials.' });
-    res.cookie('farmer_session', farmer.id, { httpOnly:true, sameSite:'lax', maxAge:7*24*3600*1000 });
-    res.redirect('/farmers/dashboard');
-  } catch(e){
-    console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Login failed.' });
-  }
-});
-
-app.post('/farmers/logout', (req,res)=>{
-  res.clearCookie('farmer_session');
-  res.redirect('/farmers/login');
-});
-
-app.get('/farmers/dashboard', farmerGuard, async (req,res)=>{
-  try {
-    // Decode JWT token to get farmer_id
-    const token = req.cookies.farmer_session;
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    const farmerId = decoded.farmer_id;
-
-    if (!farmerId) {
-      return res.status(401).render('simple-message', { title:'Error', message:'Invalid session. Please login again.' });
-    }
-
-    const { data: farmer, error: farmerError } = await supabase.from('farmers').select('*').eq('id', farmerId).single();
-    
-    if (farmerError || !farmer) {
-      console.error('Farmer not found:', farmerError);
-      return res.status(404).render('simple-message', { title:'Error', message:'Farmer profile not found.' });
-    }
-
-    const { data: products } = await supabase.from('products').select('*').eq('farmer_id', farmerId);
-    const { data: posts } = await supabase.from('farmer_posts').select('*').eq('farmer_id', farmerId).order('created_at', { ascending:false });
-    
-    res.render('farmer-dashboard', { farmer, products: products||[], posts: posts||[], siteSetting: res.locals.siteSetting });
-  } catch(e){
-    console.error('Dashboard error:', e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to load dashboard.' });
-  }
-});
-
-app.post('/farmers/profile/update', farmerGuard, upload.fields([{name:'profile_image'},{name:'cover_image'}]), async (req,res)=>{
-  try {
-    // Decode JWT to get farmer_id
-    const token = req.cookies.farmer_session;
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    const farmerId = decoded.farmer_id;
-
-    const { full_name, business_name, location, bio } = req.body;
-    const updateData = { full_name, business_name, location, bio };
-    if(req.files?.profile_image) updateData.profile_image = '/media/uploads/' + req.files.profile_image[0].filename;
-    if(req.files?.cover_image) updateData.cover_image = '/media/uploads/' + req.files.cover_image[0].filename;
-    
-    await supabase.from('farmers').update(updateData).eq('id', farmerId);
-    res.json({ success:true });
-  } catch(e){
-    res.status(500).json({ error:e.message });
-  }
-});
-
-app.post('/farmers/products/add', farmerGuard, upload.single('image'), async (req,res)=>{
-  try {
-    // Decode JWT to get farmer_id
-    const token = req.cookies.farmer_session;
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    const farmerId = decoded.farmer_id;
-
-    const { name, price, short_description, long_description, stock } = req.body;
-    const image = req.file ? '/media/uploads/' + req.file.filename : '';
-    await supabase.from('products').insert({ name, price:parseFloat(price), image, short_description, long_description, stock:parseInt(stock||0), farmer_id:farmerId, active:true, type:'Product', category:'Organic' });
-    res.json({ success:true });
-  } catch(e){
-    res.status(500).json({ error:e.message });
-  }
-});
-
-app.post('/farmers/posts/add', farmerGuard, upload.single('media_file'), async (req,res)=>{
-  try {
-    // Decode JWT to get farmer_id
-    const token = req.cookies.farmer_session;
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    const farmerId = decoded.farmer_id;
-
-    const { content, media_type, media_url } = req.body;
-    let finalUrl = media_url;
-    if(req.file) finalUrl = '/media/uploads/' + req.file.filename;
-    await supabase.from('farmer_posts').insert({ farmer_id:farmerId, content, media_type, media_url:finalUrl });
-    res.json({ success:true });
-  } catch(e){
-    res.status(500).json({ error:e.message });
-  }
-});
-
-app.get('/farmers/:id', async (req,res)=>{
-  try {
-    const { data: farmer } = await supabase.from('farmers').select('*').eq('id', req.params.id).eq('status', 'approved').single();
-    if(!farmer) return res.status(404).render('simple-message', { title:'Not Found', message:'Farmer not found.' });
-    const { data: posts } = await supabase.from('farmer_posts').select('*').eq('farmer_id', req.params.id).order('created_at', { ascending:false });
-    const { data: products } = await supabase.from('products').select('*').eq('farmer_id', req.params.id).eq('active', true);
-    res.render('farmer-profile', { farmer, posts: posts||[], products: products||[], siteSetting: res.locals.siteSetting });
-  } catch(e){
-    console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to load farmer profile.' });
-  }
-});
-
-app.post('/api/farmer-applications', async (req,res)=>{
-  try {
-    const { full_name, phone, email, business_name, location, message } = req.body;
-    await supabase.from('farmer_applications').insert({ full_name, phone, email, business_name, location, message });
-    res.json({ success:true });
-  } catch(e){
-    res.status(500).json({ error:e.message });
-  }
-});
-
-app.get('/admin/farmer-applications', adminGuard, async (req,res)=>{
-  try {
-    const { data: applications } = await supabase.from('farmer_applications').select('*').order('created_at', { ascending:false });
-    res.render('admin/farmer-applications', { applications: applications||[], msg: req.query.msg||'', siteSetting: res.locals.siteSetting });
-  } catch(e){
-    console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to load applications.' });
-  }
-});
-
-app.post('/admin/farmer-applications/approve', adminGuard, async (req,res)=>{
-  try {
-    const { application_id, email_prefix, password } = req.body;
-    const { data: app } = await supabase.from('farmer_applications').select('*').eq('id', application_id).single();
-    const email = email_prefix + '@cropsay.com';
-    const password_hash = await bcrypt.hash(password, 10);
-    await supabase.from('farmers').insert({ email, full_name:app.full_name, phone:app.phone, business_name:app.business_name, location:app.location, password_hash, status:'approved' });
-    await supabase.from('farmer_applications').update({ status:'approved', reviewed_at:new Date().toISOString() }).eq('id', application_id);
-    res.json({ success:true, email, password });
-  } catch(e){
-    res.status(500).json({ error:e.message });
-  }
-});
-
-app.post('/admin/farmer-applications/reject', adminGuard, async (req,res)=>{
-  try {
-    await supabase.from('farmer_applications').update({ status:'rejected', reviewed_at:new Date().toISOString() }).eq('id', req.body.application_id);
-    res.json({ success:true });
-  } catch(e){
-    res.status(500).json({ error:e.message });
-  }
 });
 
 // Serve remaining static assets with caching
