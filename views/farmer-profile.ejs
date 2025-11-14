@@ -17,11 +17,17 @@
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
     <div class="container">
-      <a class="navbar-brand" href="/"><strong><%= siteSetting.name %></strong></a>
+      <a class="navbar-brand" href="/">
+        <% if(siteSetting && siteSetting.logo_url){ %>
+          <img src="<%= siteSetting.logo_url %>" alt="<%= siteSetting.name || 'Cropsay' %>" style="height: 50px; width: auto;">
+        <% } else { %>
+          <span><%= siteSetting.name || 'Cropsay' %></span>
+        <% } %>
+      </a>
       <div class="ml-auto">
-        <a href="/farmers/" style="color: #333; text-decoration: none;">← Back to Farmers</a>
+        <a href="/farmers/" class="btn btn-sm btn-dark" style="color: white !important;">← Back to Farmers</a>
       </div>
     </div>
   </nav>

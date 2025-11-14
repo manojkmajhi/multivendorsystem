@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= item ? 'Edit' : 'New' %> Product - Farmer Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="/custom-theme.css">
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand" href="/farmers/dashboard">
+        <% if(siteSetting && siteSetting.logo_url){ %>
+          <img src="<%= siteSetting.logo_url %>" alt="<%= siteSetting.name || 'Cropsay' %>" style="height: 50px; width: auto;">
+        <% } else { %>
+          <span><%= siteSetting.name || 'Cropsay' %></span>
+        <% } %>
+      </a>
+      <div class="ml-auto">
+        <span class="text-white mr-3">Welcome, <%= farmer.full_name %></span>
+        <form action="/farmers/logout" method="POST" style="display: inline;">
+          <button type="submit" class="btn btn-sm btn-danger">Logout</button>
+        </form>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3><%= item ? 'Edit' : 'Add' %> Product</h3>
+      <a href="/farmers/products" class="btn btn-outline-secondary">← Back to Products</a>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <form method="POST" enctype="multipart/form-data" action="<%= item ? '/farmers/products/' + item.id + '/edit' : '/farmers/products/new' %>">
+          <div class="form-group">
+            <label>Product Name *</label>
+            <input name="name" class="form-control" value="<%= item ? item.name : '' %>" required placeholder="e.g., Organic Roma Tomatoes">
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Price (Rs.) *</label>
+                <input name="price" type="number" step="0.01" class="form-control" value="<%= item ? item.price : '' %>" required placeholder="150">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Stock *</label>
+                <input name="stock" type="number" class="form-control" value="<%= item ? item.stock : 0 %>" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Category *</label>
+            <select name="category" class="form-control" required>
+              <option value="">-- Select a category --</option>
+              <% categories.forEach(c => { %>
+                <option value="<%= c.name || c %>" <%= item && item.category === (c.name || c) ? 'selected' : '' %>>
+                  <%= c.name || c %>
+                </option>
+              <% }) %>
+            </select>
+            <small class="form-text text-muted">Defaulting to 'Organic' if unsure.</small>
+          </div>
+
+          <div class="form-group">
+            <label>Short Description</label>
+            <textarea name="short_description" class="form-control" rows="2" placeholder="A brief, catchy description of your product."><%= item && item.short_description ? item.short_description : '' %></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Long Description</label>
+            <textarea name="long_description" class="form-control" rows="5" placeholder="A detailed description of your product."><%= item && item.long_description ? item.long_description : '' %></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Product Image</label>
+            <input type="file" name="image" class="form-control-file" accept="image/*">
+            <% if (item && item.image) { %>
+              <div class="mt-2">
+                <small>Current image:</small>
+                <img src="<%= item.image %>" style="max-height: 100px; border-radius: 4px;">
+              </div>
+            <% } %>
+          </div>
+
+          <hr>
+          <button type="submit" class="btn btn-success"><%= item ? 'Update' : 'Create' %> Product</button>
+          <a href="/farmers/products" class="btn btn-secondary">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -4,9 +4,10 @@
 -- Farmers/Sellers table
 create table if not exists public.farmers (
   id uuid primary key default gen_random_uuid(),
-  email text unique not null, -- xxxx@cropsay.com domain email
+  email text unique, -- xxxx@cropsay.com domain email, can be null initially
+  password_hash text, -- Hashed password for login
   full_name text not null,
-  phone text not null,
+  phone text not null unique,
   business_name text,
   location text,
   bio text,

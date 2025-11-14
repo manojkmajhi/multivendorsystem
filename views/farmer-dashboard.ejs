@@ -11,11 +11,17 @@
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
-      <a class="navbar-brand" href="/"><%= siteSetting.name %></a>
+      <a class="navbar-brand" href="/">
+        <% if(siteSetting && siteSetting.logo_url){ %>
+          <img src="<%= siteSetting.logo_url %>" alt="<%= siteSetting.name || 'Cropsay' %>" style="height: 50px; width: auto;">
+        <% } else { %>
+          <span><%= siteSetting.name || 'Cropsay' %></span>
+        <% } %>
+      </a>
       <div class="ml-auto">
         <span class="text-white mr-3">Welcome, <%= farmer.full_name %></span>
         <form action="/farmers/logout" method="POST" style="display: inline;">
-          <button type="submit" class="btn btn-sm btn-outline-light">Logout</button>
+          <button type="submit" class="btn btn-sm btn-danger">Logout</button>
         </form>
       </div>
     </div>
@@ -44,6 +50,10 @@
                   <div class="form-group">
                     <label>Full Name</label>
                     <input type="text" name="full_name" class="form-control" value="<%= farmer.full_name %>" required>
+                  </div>
+                  <div class="form-group">
+                    <label>Phone</label>
+                    <input type="text" name="phone" class="form-control" value="<%= farmer.phone || '' %>" required>
                   </div>
                   <div class="form-group">
                     <label>Business Name</label>
@@ -81,23 +91,15 @@
 
           <!-- Products Tab -->
           <div id="products" class="tab-pane fade">
-            <h3>My Products <button class="btn btn-sm btn-success float-right" data-toggle="modal" data-target="#addProductModal">+ Add Product</button></h3>
-            <table class="table mt-3">
-              <thead>
-                <tr><th>Image</th><th>Name</th><th>Price</th><th>Stock</th><th>Status</th></tr>
-              </thead>
-              <tbody id="productsTable">
-                <% products.forEach(p => { %>
-                  <tr>
-                    <td><img src="<%= p.image %>" style="width: 50px; height: 50px; object-fit: cover;"></td>
-                    <td><%= p.name %></td>
-                    <td>Rs. <%= p.price %></td>
-                    <td><%= p.stock || 0 %></td>
-                    <td><span class="badge badge-<%= p.active ? 'success' : 'secondary' %>"><%= p.active ? 'Active' : 'Inactive' %></span></td>
-                  </tr>
-                <% }); %>
-              </tbody>
-            </table>
+            <h3>My Products</h3>
+            <p>Manage your product inventory, including adding, editing, and deleting products.</p>
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">Product Management</h5>
+                <p class="card-text">You have <%= products.length %> products listed.</p>
+                <a href="/farmers/products" class="btn btn-primary">Manage My Products</a>
+              </div>
+            </div>
           </div>
 
           <!-- Posts Tab -->
@@ -123,56 +125,6 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Add Product Modal -->
-  <div class="modal fade" id="addProductModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Add Product</h5>
-          <button type="button" class="close" data-dismiss="modal">&times;</button>
-        </div>
-        <form id="addProductForm" enctype="multipart/form-data">
-          <div class="modal-body">
-            <div class="form-group">
-              <label>Product Name *</label>
-              <input type="text" name="name" class="form-control" required>
-            </div>
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label>Price *</label>
-                  <input type="number" name="price" class="form-control" step="0.01" required>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label>Stock</label>
-                  <input type="number" name="stock" class="form-control" value="0">
-                </div>
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Short Description</label>
-              <textarea name="short_description" class="form-control" rows="2"></textarea>
-            </div>
-            <div class="form-group">
-              <label>Long Description</label>
-              <textarea name="long_description" class="form-control" rows="4"></textarea>
-            </div>
-            <div class="form-group">
-              <label>Product Image *</label>
-              <input type="file" name="image" class="form-control-file" accept="image/*" required>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-success">Add Product</button>
-          </div>
-        </form>
       </div>
     </div>
   </div>
@@ -247,26 +199,6 @@
         },
         error: function() {
           alert('Failed to update profile');
-        }
-      });
-    });
-
-    // Add product form
-    $('#addProductForm').on('submit', function(e) {
-      e.preventDefault();
-      const formData = new FormData(this);
-      $.ajax({
-        url: '/farmers/products/add',
-        method: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function() {
-          alert('Product added successfully!');
-          location.reload();
-        },
-        error: function() {
-          alert('Failed to add product');
         }
       });
     });
