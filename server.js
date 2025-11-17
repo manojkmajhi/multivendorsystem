@@ -283,6 +283,8 @@ app.use(async (req,res,next)=>{
   res.locals.customColors = customColors;
   const socialLinks = await getSetting('social', {});
   res.locals.socialLinks = socialLinks;
+  const seoSettings = await getSetting('seo', {});
+  res.locals.seo = seoSettings;
   next();
 });
 

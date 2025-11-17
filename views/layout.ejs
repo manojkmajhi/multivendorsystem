@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title><%= (siteSetting && siteSetting.name) ? siteSetting.name : 'Cropsay' %> - <%= title %></title>
+  <title><%= (siteSetting && siteSetting.name) ? siteSetting.name : 'Cropsay' %><% if(typeof seo !== 'undefined' && seo.site_tagline && title !== 'Home') { %> | <%= seo.site_tagline %><% } %><% if(title && title !== 'Home') { %> - <%= title %><% } %></title>
+  <% if(typeof seo !== 'undefined' && seo.meta_description) { %>
+  <meta name="description" content="<%= seo.meta_description %>" />
+  <% } %>
+  <% if(typeof seo !== 'undefined' && seo.meta_keywords) { %>
+  <meta name="keywords" content="<%= seo.meta_keywords %>" />
+  <% } %>
   <style>
     html{overflow-y:scroll;}html,body{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;}body{color:#111;background:#fff;}.navbar{background-color:#f8f9fa!important;box-shadow:0 5px 20px rgba(70,70,70,.4);padding:.5rem 1rem;position:fixed;top:0;left:0;right:0;z-index:1030;}.navbar .container{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;}.navbar-brand{display:inline-block;padding-top:.3125rem;padding-bottom:.3125rem;margin-right:1rem;}.navbar-brand img{height:60px;width:auto;}.search-input-group{display:flex;position:relative;flex-wrap:wrap;align-items:stretch;width:100%;}.search{border:1px solid #3f3f3f!important;border-radius:20px 0 0 20px!important;padding:.375rem .75rem;font-size:1rem;background-color:#fff;}.search-icon{border-radius:0 30px 30px 0!important;background-color:#fff!important;border:1px solid #3f3f3f!important;border-left:0!important;cursor:pointer;display:flex;align-items:center;padding:.375rem .75rem;}#search-form-in-navbar{width:28%;margin:0 auto;}.container{width:100%;padding-right:15px;padding-left:15px;margin-right:auto;margin-left:auto;}@media(min-width:576px){.container{max-width:540px;}}@media(min-width:768px){.container{max-width:720px;}}@media(min-width:992px){.container{max-width:960px;}}@media(min-width:1200px){.container{max-width:1140px;}}@media(max-width:768px){.navbar-brand img{height:45px;}#search-form-in-navbar{width:55%;}.search{height:35px;}}
   </style>

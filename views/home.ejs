@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title><%= siteSetting.name %> | Fresh From Farms, Direct to You</title>
+  <title><%= siteSetting.name %><% if(typeof seo !== 'undefined' && seo.site_tagline) { %> | <%= seo.site_tagline %><% } else { %> | Fresh From Farms, Direct to You<% } %></title>
+  <% if(typeof seo !== 'undefined' && seo.meta_description) { %>
+  <meta name="description" content="<%= seo.meta_description %>" />
+  <% } %>
+  <% if(typeof seo !== 'undefined' && seo.meta_keywords) { %>
+  <meta name="keywords" content="<%= seo.meta_keywords %>" />
+  <% } %>
   <style>body{opacity:0;transition:opacity .15s;}.body-loaded{opacity:1!important;}#search-form-in-navbar{width:28%;}#search-form-in-navbar input::placeholder{font-size:15px;}@media(max-width:600px){#search-form-in-navbar{width:55%;}#search-form-in-navbar input::placeholder{font-size:12px;}}</style>
   <script>window.addEventListener('load',function(){document.body.classList.add('body-loaded');});</script>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
@@ -64,7 +70,7 @@
       </a>
       <form method="POST" id="search-form-in-navbar" style="margin-left:auto;">
         <div class="input-group search-input-group">
-          <input class="form-control form-control-lg search" id="search" name="search" type="text" placeholder="Search Products">
+          <input class="form-control form-control-lg search" id="search" name="search" type="text" placeholder="Search Farm Products">
           <div class="input-group-append">
             <button class="input-group-text search-icon" id="search-icon-id"><i class="fas fa-search"></i></button>
           </div>
@@ -109,7 +115,7 @@
   <div class="container">
     <section class="pt-2 pt-sm-4">
       <header class="text-center mb-3">
-        <p class="small text-muted text-uppercase mb-1">Crafted With Love</p>
+        <p class="small text-muted text-uppercase mb-1">Fresh From Farm</p>
         <h2 class="h5 text-uppercase" style="letter-spacing:1.3px;">Browse Categories</h2>
       </header>
       <div class="scroll-menu-wrapper">
