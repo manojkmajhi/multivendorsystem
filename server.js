@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
-const { productCache, categoryCache, settingsCache, heroCache, cacheMiddleware, clearResponseCache } = require('./performance-optimizations');
+const { productCache, categoryCache, settingsCache, heroCache, cacheMiddleware, clearResponseCache } = require('./src/services/cacheService');
 
 const app = express();
 
@@ -432,10 +432,10 @@ app.set('view engine', 'ejs');
 // Serve static frontend (index.html) and assets.
 // Dynamic root resolution so we can rename legacy folder (stickersnepal.com -> mugiwara) without code changes.
 // Add any newly renamed static bundles here; order = priority.
-const STATIC_ROOT_CANDIDATES = ['strawhats', 'mugiwara', 'stickersnepal.com', 'allstrawhats'];
+const STATIC_ROOT_CANDIDATES = ['strawhats', 'mugiwara', 'allstrawhats'];
 const staticRoot = STATIC_ROOT_CANDIDATES.find(dir => {
   try { return fs.existsSync(path.join(__dirname, dir)); } catch(e){ return false; }
-}) || 'stickersnepal.com';
+}) || 'public';
 console.log('✓ Static root resolved:', staticRoot);
 // Serve static files with aggressive caching
 app.use('/media', express.static(path.join(__dirname, staticRoot, 'media'), {
@@ -445,6 +445,17 @@ app.use('/media', express.static(path.join(__dirname, staticRoot, 'media'), {
   immutable: true,
   setHeaders: (res, filePath) => {
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+  }
+}));
+
+// Serve uploads from public/uploads directory
+app.use('/media/uploads', express.static(path.join(__dirname, 'public', 'uploads'), {
+  maxAge: '365d',
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, filePath) => {
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
     res.setHeader('X-Content-Type-Options', 'nosniff');
   }
 }));
@@ -461,8 +472,8 @@ app.use('/staticfiles', express.static(path.join(__dirname, staticRoot, 'staticf
 // NOTE: root static ("/") is mounted at bottom after dynamic routes.
 
 // -------- Multer Configuration for File Uploads --------
-// Use dynamic staticRoot so uploaded media stays inside the active static directory
-const uploadDir = path.join(__dirname, staticRoot, 'media', 'uploads');
+// Use public/uploads directory for farmer uploads
+const uploadDir = path.join(__dirname, 'public', 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }

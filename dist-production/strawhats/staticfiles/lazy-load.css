@@ -1,9 +1,0 @@
-/* Minimal Lazy Loading */
-img.lazy-img {
-  opacity: 0;
-  transition: opacity 0.3s ease-in-out;
-}
-
-img.lazy-loaded {
-  opacity: 1;
-}
