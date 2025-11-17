@@ -2773,16 +2773,16 @@ app.post('/farmers/posts/add', sellerGuard, upload.single('media_file'), async (
   }
 });
 
-app.get('/farmers/:id', async (req,res)=>{
+app.get('/sellers/:id', async (req,res)=>{
   try {
-    const { data: farmer } = await supabase.from('farmers').select('*').eq('id', req.params.id).eq('status', 'approved').single();
-    if(!farmer) return res.status(404).render('simple-message', { title:'Not Found', message:'Farmer not found.' });
-    const { data: posts } = await supabase.from('farmer_posts').select('*').eq('farmer_id', req.params.id).order('created_at', { ascending:false });
-    const { data: products } = await supabase.from('products').select('*').eq('farmer_id', req.params.id).eq('active', true);
-    res.render('farmer-profile', { farmer, posts: posts||[], products: products||[], siteSetting: res.locals.siteSetting });
+    const { data: seller } = await supabase.from('sellers').select('*').eq('id', req.params.id).eq('status', 'approved').single();
+    if(!seller) return res.status(404).render('simple-message', { title:'Not Found', message:'Seller not found.' });
+    const { data: posts } = await supabase.from('seller_posts').select('*').eq('seller_id', req.params.id).order('created_at', { ascending:false });
+    const { data: products } = await supabase.from('products').select('*').eq('seller_id', req.params.id).eq('active', true);
+    res.render('farmer-profile', { farmer: seller, posts: posts||[], products: products||[], siteSetting: res.locals.siteSetting });
   } catch(e){
     console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to load farmer profile.' });
+    res.status(500).render('simple-message', { title:'Error', message:'Failed to load seller profile.' });
   }
 });
 
@@ -2841,7 +2841,7 @@ app.get('/admin/sellers', adminGuard, async (req, res) => {
     const searchQuery = req.query.search || '';
     const sortBy = req.query.sort || 'created_at';
     
-    let query = supabase.from('farmers').select('*', { count: 'exact' });
+    let query = supabase.from('sellers').select('*', { count: 'exact' });
     
     if (statusFilter) {
       query = query.eq('status', statusFilter);
@@ -2858,9 +2858,9 @@ app.get('/admin/sellers', adminGuard, async (req, res) => {
     
     // Get statistics
     const [totalRes, activeRes, pendingRes, productsRes] = await Promise.all([
-      supabase.from('farmers').select('*', { count: 'exact', head: true }),
-      supabase.from('farmers').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
-      supabase.from('farmers').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+      supabase.from('sellers').select('*', { count: 'exact', head: true }),
+      supabase.from('sellers').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+      supabase.from('sellers').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
       supabase.from('products').select('*', { count: 'exact', head: true })
     ]);
     
@@ -2894,8 +2894,8 @@ app.get('/admin/sellers', adminGuard, async (req, res) => {
 app.get('/admin/sellers/:id', adminGuard, async (req, res) => {
   try {
     const { data: seller, error } = await supabase
-      .from('farmers')
-      .select('*, product_count:products(count)')
+      .from('sellers')
+      .select('*')
       .eq('id', req.params.id)
       .single();
     
@@ -2917,7 +2917,7 @@ app.post('/admin/sellers/add', adminGuard, upload.single('profile_image'), async
     const tempPassword = Math.random().toString(36).slice(-8);
     const password_hash = await bcrypt.hash(tempPassword, 10);
     
-    const { data, error } = await supabase.from('farmers').insert({
+    const { data, error } = await supabase.from('sellers').insert({
       full_name,
       email,
       phone,
@@ -3012,7 +3012,7 @@ app.post('/admin/sellers/:id/delete', adminGuard, async (req, res) => {
 app.get('/admin/sellers/export', adminGuard, async (req, res) => {
   try {
     const { data: sellers, error } = await supabase
-      .from('farmers')
+      .from('sellers')
       .select('*')
       .order('created_at', { ascending: false });
     
@@ -3071,7 +3071,7 @@ app.post('/admin/seller-applications/approve', adminGuard, async (req, res) => {
     const { data: app } = await supabase.from('seller_applications').select('*').eq('id', application_id).single();
     const email = email_prefix + '@cropsay.com';
     const password_hash = await bcrypt.hash(password, 10);
-    await supabase.from('farmers').insert({ email, full_name: app.full_name, phone: app.phone, business_name: app.business_name, location: app.location, password_hash, status: 'approved' });
+    await supabase.from('sellers').insert({ email, full_name: app.full_name, phone: app.phone, business_name: app.business_name, location: app.location, password_hash, status: 'approved' });
     await supabase.from('seller_applications').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', application_id);
     res.json({ success: true, email, password });
   } catch (e) {
