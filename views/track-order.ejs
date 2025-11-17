@@ -119,6 +119,7 @@
     <div class="container py-4">
       <div class="row">
         <div class="col-lg-6">
+          <p class="small mb-2"><a class="text-white" href="/farmers/"><i class="fas fa-users"></i> Our Farmers</a></p>
           <p class="small text-gray mb-0">© <%= new Date().getFullYear() %> All rights reserved.</p>
           <p class="small text-gray mb-0">Crafted by <a class="text-white reset-anchor" href="https://gauravsah.com.np" target="_blank">Gaurav Sah</a></p>
         </div>
@@ -128,7 +129,7 @@
             <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.instagram_url) ? socialLinks.instagram_url : 'https://instagram.com/allstrawhats/' %>" target="_blank"><i class="fab fa-instagram" style="color: #f5f5f5;"></i></a>
           </p>
           <p class="text-sm text-gray mb-0"><a class="text-gray reset-anchor" href="mailto:<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@allstrawhats.com' %>" target="_blank"><i class="fas fa-envelope"></i> &nbsp;<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@allstrawhats.com' %></a></p>
-          <p class="text-sm text-gray mb-1 mt-2"><a class="text-white reset-anchor" href="/track-order"><i class="fas fa-shipping-fast"></i> Track Order</a></p>
+          <p class="text-sm text-gray mb-0 mt-2"><a class="text-white reset-anchor" href="/track-order"><i class="fas fa-shipping-fast"></i> Track Order</a></p>
         </div>
       </div>
     </div>
