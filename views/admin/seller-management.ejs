@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seller Management - Admin</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="/css/admin-style.css">
+  <link rel="stylesheet" href="/custom-theme.css">
+  <style>
+    .seller-card {
+      transition: all 0.3s ease;
+      border: 1px solid #e3e6f0;
+    }
+    .seller-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .status-badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+    }
+    .action-btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      margin: 0.1rem;
+    }
+    .seller-stats {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .stat-item {
+      text-align: center;
+    }
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+      display: block;
+    }
+    .stat-label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <%- include('../partials/admin-nav', { active: 'sellers' }) %>
+
+  <div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2><i class="fas fa-store"></i> Seller Management</h2>
+      <div>
+        <button class="btn btn-success" data-toggle="modal" data-target="#addSellerModal">
+          <i class="fas fa-plus"></i> Add Seller
+        </button>
+        <button class="btn btn-info" onclick="exportSellers()">
+          <i class="fas fa-download"></i> Export
+        </button>
+      </div>
+    </div>
+    
+    <% if (msg) { %>
+      <div class="alert alert-success alert-dismissible fade show">
+        <%= msg %>
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+      </div>
+    <% } %>
+
+    <!-- Statistics -->
+    <div class="seller-stats">
+      <div class="row">
+        <div class="col-md-3 stat-item">
+          <span class="stat-number"><%= stats.total %></span>
+          <span class="stat-label">Total Sellers</span>
+        </div>
+        <div class="col-md-3 stat-item">
+          <span class="stat-number"><%= stats.active %></span>
+          <span class="stat-label">Active Sellers</span>
+        </div>
+        <div class="col-md-3 stat-item">
+          <span class="stat-number"><%= stats.pending %></span>
+          <span class="stat-label">Pending Approval</span>
+        </div>
+        <div class="col-md-3 stat-item">
+          <span class="stat-number"><%= stats.totalProducts %></span>
+          <span class="stat-label">Total Products</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3">
+            <select id="statusFilter" class="form-control">
+              <option value="">All Status</option>
+              <option value="approved">Approved</option>
+              <option value="pending">Pending</option>
+              <option value="suspended">Suspended</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <input type="text" id="searchSeller" class="form-control" placeholder="Search sellers...">
+          </div>
+          <div class="col-md-3">
+            <select id="sortBy" class="form-control">
+              <option value="created_at">Sort by Date</option>
+              <option value="full_name">Sort by Name</option>
+              <option value="product_count">Sort by Products</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <button class="btn btn-primary btn-block" onclick="applyFilters()">
+              <i class="fas fa-filter"></i> Apply Filters
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sellers Grid -->
+    <div class="row" id="sellersGrid">
+      <% sellers.forEach(seller => { %>
+        <div class="col-md-6 col-lg-4 mb-4 seller-item" 
+             data-status="<%= seller.status %>" 
+             data-name="<%= seller.full_name.toLowerCase() %>"
+             data-products="<%= seller.product_count || 0 %>">
+          <div class="card seller-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span class="badge status-badge badge-<%= seller.status === 'approved' ? 'success' : seller.status === 'pending' ? 'warning' : 'danger' %>">
+                <%= seller.status.toUpperCase() %>
+              </span>
+              <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-toggle="dropdown">
+                  <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <div class="dropdown-menu">
+                  <a class="dropdown-item" href="#" onclick="viewSeller('<%= seller.id %>')">
+                    <i class="fas fa-eye"></i> View Details
+                  </a>
+                  <a class="dropdown-item" href="#" onclick="editSeller('<%= seller.id %>')">
+                    <i class="fas fa-edit"></i> Edit
+                  </a>
+                  <% if (seller.status === 'pending') { %>
+                    <a class="dropdown-item text-success" href="#" onclick="approveSeller('<%= seller.id %>')">
+                      <i class="fas fa-check"></i> Approve
+                    </a>
+                  <% } %>
+                  <% if (seller.status === 'approved') { %>
+                    <a class="dropdown-item text-warning" href="#" onclick="suspendSeller('<%= seller.id %>')">
+                      <i class="fas fa-pause"></i> Suspend
+                    </a>
+                  <% } %>
+                  <% if (seller.status === 'suspended') { %>
+                    <a class="dropdown-item text-success" href="#" onclick="reactivateSeller('<%= seller.id %>')">
+                      <i class="fas fa-play"></i> Reactivate
+                    </a>
+                  <% } %>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item text-danger" href="#" onclick="deleteSeller('<%= seller.id %>', '<%= seller.full_name %>')">
+                    <i class="fas fa-trash"></i> Delete
+                  </a>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="text-center mb-3">
+                <img src="<%= seller.profile_image || '/staticfiles/default-avatar.png' %>" 
+                     class="rounded-circle" 
+                     style="width: 60px; height: 60px; object-fit: cover;"
+                     alt="<%= seller.full_name %>">
+              </div>
+              <h6 class="card-title text-center mb-2"><%= seller.full_name %></h6>
+              <% if (seller.business_name) { %>
+                <p class="text-muted text-center small mb-2"><%= seller.business_name %></p>
+              <% } %>
+              <div class="row text-center small">
+                <div class="col-6">
+                  <strong><%= seller.product_count || 0 %></strong><br>
+                  <span class="text-muted">Products</span>
+                </div>
+                <div class="col-6">
+                  <strong><%= new Date(seller.created_at).toLocaleDateString() %></strong><br>
+                  <span class="text-muted">Joined</span>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="row">
+                <div class="col-6">
+                  <button class="btn btn-sm btn-primary btn-block" onclick="viewSeller('<%= seller.id %>')">
+                    <i class="fas fa-eye"></i> View
+                  </button>
+                </div>
+                <div class="col-6">
+                  <button class="btn btn-sm btn-outline-primary btn-block" onclick="editSeller('<%= seller.id %>')">
+                    <i class="fas fa-edit"></i> Edit
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+
+    <!-- Pagination -->
+    <nav aria-label="Sellers pagination">
+      <ul class="pagination justify-content-center">
+        <li class="page-item <%= currentPage <= 1 ? 'disabled' : '' %>">
+          <a class="page-link" href="?page=<%= currentPage - 1 %>&status=<%= statusFilter || '' %>&search=<%= searchQuery || '' %>">Previous</a>
+        </li>
+        <% for (let i = 1; i <= totalPages; i++) { %>
+          <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+            <a class="page-link" href="?page=<%= i %>&status=<%= statusFilter || '' %>&search=<%= searchQuery || '' %>"><%= i %></a>
+          </li>
+        <% } %>
+        <li class="page-item <%= currentPage >= totalPages ? 'disabled' : '' %>">
+          <a class="page-link" href="?page=<%= currentPage + 1 %>&status=<%= statusFilter || '' %>&search=<%= searchQuery || '' %>">Next</a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+
+  <!-- Add Seller Modal -->
+  <div class="modal fade" id="addSellerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add New Seller</h5>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <form id="addSellerForm" enctype="multipart/form-data">
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Full Name *</label>
+                  <input type="text" name="full_name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label>Email *</label>
+                  <input type="email" name="email" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label>Phone *</label>
+                  <input type="tel" name="phone" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label>Business Name</label>
+                  <input type="text" name="business_name" class="form-control">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Location</label>
+                  <input type="text" name="location" class="form-control">
+                </div>
+                <div class="form-group">
+                  <label>Status</label>
+                  <select name="status" class="form-control">
+                    <option value="approved">Approved</option>
+                    <option value="pending">Pending</option>
+                    <option value="suspended">Suspended</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Profile Image</label>
+                  <input type="file" name="profile_image" class="form-control-file" accept="image/*">
+                </div>
+                <div class="form-group">
+                  <label>Bio</label>
+                  <textarea name="bio" class="form-control" rows="3"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success">Add Seller</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Seller Modal -->
+  <div class="modal fade" id="viewSellerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Seller Details</h5>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body" id="sellerDetails">
+          <!-- Content loaded dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Filter functionality
+    function applyFilters() {
+      const status = $('#statusFilter').val();
+      const search = $('#searchSeller').val();
+      const sort = $('#sortBy').val();
+      
+      window.location.href = `?status=${status}&search=${search}&sort=${sort}`;
+    }
+
+    // Add seller form
+    $('#addSellerForm').on('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      
+      $.ajax({
+        url: '/admin/sellers/add',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(res) {
+          if (res.success) {
+            alert('Seller added successfully!');
+            location.reload();
+          } else {
+            alert('Error: ' + (res.error || 'Failed to add seller'));
+          }
+        },
+        error: function() {
+          alert('Failed to add seller');
+        }
+      });
+    });
+
+    // View seller details
+    function viewSeller(id) {
+      $.get(`/admin/sellers/${id}`)
+        .done(function(seller) {
+          const html = `
+            <div class="row">
+              <div class="col-md-4 text-center">
+                <img src="${seller.profile_image || '/staticfiles/default-avatar.png'}" 
+                     class="img-fluid rounded-circle mb-3" 
+                     style="width: 150px; height: 150px; object-fit: cover;">
+                <h5>${seller.full_name}</h5>
+                <span class="badge badge-${seller.status === 'approved' ? 'success' : seller.status === 'pending' ? 'warning' : 'danger'}">
+                  ${seller.status.toUpperCase()}
+                </span>
+              </div>
+              <div class="col-md-8">
+                <table class="table table-borderless">
+                  <tr><td><strong>Email:</strong></td><td>${seller.email || 'N/A'}</td></tr>
+                  <tr><td><strong>Phone:</strong></td><td>${seller.phone || 'N/A'}</td></tr>
+                  <tr><td><strong>Business:</strong></td><td>${seller.business_name || 'N/A'}</td></tr>
+                  <tr><td><strong>Location:</strong></td><td>${seller.location || 'N/A'}</td></tr>
+                  <tr><td><strong>Joined:</strong></td><td>${new Date(seller.created_at).toLocaleDateString()}</td></tr>
+                  <tr><td><strong>Products:</strong></td><td>${seller.product_count || 0}</td></tr>
+                </table>
+                ${seller.bio ? `<p><strong>Bio:</strong><br>${seller.bio}</p>` : ''}
+              </div>
+            </div>
+          `;
+          $('#sellerDetails').html(html);
+          $('#viewSellerModal').modal('show');
+        })
+        .fail(function() {
+          alert('Failed to load seller details');
+        });
+    }
+
+    // Edit seller
+    function editSeller(id) {
+      window.location.href = `/admin/sellers/${id}/edit`;
+    }
+
+    // Approve seller
+    function approveSeller(id) {
+      if (confirm('Approve this seller?')) {
+        $.post(`/admin/sellers/${id}/approve`)
+          .done(function() {
+            alert('Seller approved successfully!');
+            location.reload();
+          })
+          .fail(function() {
+            alert('Failed to approve seller');
+          });
+      }
+    }
+
+    // Suspend seller
+    function suspendSeller(id) {
+      if (confirm('Suspend this seller? They will not be able to sell products.')) {
+        $.post(`/admin/sellers/${id}/suspend`)
+          .done(function() {
+            alert('Seller suspended successfully!');
+            location.reload();
+          })
+          .fail(function() {
+            alert('Failed to suspend seller');
+          });
+      }
+    }
+
+    // Reactivate seller
+    function reactivateSeller(id) {
+      if (confirm('Reactivate this seller?')) {
+        $.post(`/admin/sellers/${id}/reactivate`)
+          .done(function() {
+            alert('Seller reactivated successfully!');
+            location.reload();
+          })
+          .fail(function() {
+            alert('Failed to reactivate seller');
+          });
+      }
+    }
+
+    // Delete seller
+    function deleteSeller(id, name) {
+      if (confirm(`Are you sure you want to delete seller "${name}"? This action cannot be undone.`)) {
+        $.post(`/admin/sellers/${id}/delete`)
+          .done(function() {
+            alert('Seller deleted successfully!');
+            location.reload();
+          })
+          .fail(function() {
+            alert('Failed to delete seller');
+          });
+      }
+    }
+
+    // Export sellers
+    function exportSellers() {
+      window.open('/admin/sellers/export', '_blank');
+    }
+
+    // Real-time search
+    $('#searchSeller').on('input', function() {
+      const query = $(this).val().toLowerCase();
+      $('.seller-item').each(function() {
+        const name = $(this).data('name');
+        if (name.includes(query)) {
+          $(this).show();
+        } else {
+          $(this).hide();
+        }
+      });
+    });
+
+    // Status filter
+    $('#statusFilter').on('change', function() {
+      const status = $(this).val();
+      $('.seller-item').each(function() {
+        const sellerStatus = $(this).data('status');
+        if (!status || sellerStatus === status) {
+          $(this).show();
+        } else {
+          $(this).hide();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

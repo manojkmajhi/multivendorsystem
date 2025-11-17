@@ -263,7 +263,7 @@ app.get('/admin/theme-customizer', adminGuard, async (req,res)=>{
     link_color: '#007bff', link_hover: '#0056b3',
     success_color: '#28a745', danger_color: '#dc3545'
   });
-  res.render('admin/theme-customizer', { colors, siteSetting: res.locals.siteSetting });
+  res.render('admin/theme-customizer', { active: 'theme', colors, siteSetting: res.locals.siteSetting });
 });
 
 app.post('/admin/theme-customizer/save', adminGuard, async (req,res)=>{
@@ -597,7 +597,7 @@ app.get('/admin/', adminGuard, async (req,res)=>{
       };
     }
     
-    res.render('admin/dashboard', { stats, siteSetting: res.locals.siteSetting });
+    res.render('admin/dashboard', { active: 'dashboard', stats, siteSetting: res.locals.siteSetting });
   } catch (e) {
     console.error(e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load dashboard.' });
@@ -644,7 +644,7 @@ app.get('/admin/products', adminGuard, async (req,res)=>{
       const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending:false }).limit(200);
       if (!error && data) list = data;
     }
-  res.render('admin/products', { items: list, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
+  res.render('admin/products', { active: 'products', items: list, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
   } catch(e){
     console.error(e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load products.' });
@@ -926,7 +926,7 @@ app.post('/admin/products/:id/toggle-active', adminGuard, async (req,res)=>{
 app.get('/admin/categories', adminGuard, async (req,res)=>{
   try {
     const list = await dbFetchCategories();
-    res.render('admin/categories', { items: list, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
+    res.render('admin/categories', { active: 'categories', items: list, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
   } catch(e){
     console.error(e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load categories.' });
@@ -1017,7 +1017,7 @@ app.get('/admin/settings', adminGuard, async (req,res)=>{
     const seo = await getSetting('seo', {});
     const social = await getSetting('social', {});
     const payment = await getSetting('payment', { esewa_qr: 'https://i.postimg.cc/mDPmcWp9/Whats-App-Image-2025-10-14-at-16-17-59-1cdf0cb6.jpg' });
-  res.render('admin/settings', { site, customColors, seo, social, payment, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
+  res.render('admin/settings', { active: 'settings', site, customColors, seo, social, payment, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
   } catch(e){
     console.error(e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load settings.' });
@@ -1108,7 +1108,7 @@ app.get('/admin/hero-images', adminGuard, async (req,res)=>{
       const { data, error } = await supabase.from('hero_images').select('*').order('position');
       if(!error && data) list = data;
     }
-  res.render('admin/hero-images', { items: list, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
+  res.render('admin/hero-images', { active: 'hero', items: list, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
   } catch(e){
     console.error(e);
     res.status(500).render('simple-message', { title:'Error', message:'Failed to load hero images.' });
@@ -1239,6 +1239,7 @@ app.get('/admin/orders', adminGuard, async (req,res)=>{
     };
     
     res.render('admin/orders', { 
+      active: 'orders',
       orders, 
       stats,
       filter,
@@ -2152,31 +2153,37 @@ app.get('/set_cart_qty/', (req, res) => {
   return res.json({ ok:true });
 });
 
-// -------- FARMER/SELLER ROUTES --------
-function farmerGuard(req,res,next){
-  const token = req.cookies.farmer_session;
-  if(!token) return res.redirect('/farmers/login');
+// -------- SELLER ROUTES --------
+function sellerGuard(req,res,next){
+  const token = req.cookies.seller_session;
+  if(!token) return res.redirect('/sellers/login');
   next();
 }
 
-app.get('/farmers/', async (req,res)=>{
+app.get('/sellers/', async (req,res)=>{
   try {
-    let farmers = [];
+    let sellers = [];
     if(supabase){
-      const { data } = await supabase.from('farmers').select('*').eq('status', 'approved');
-      farmers = data || [];
+      const { data } = await supabase.from('sellers').select('*').eq('status', 'approved');
+      sellers = data || [];
     }
     const categories = await dbFetchCategories();
-    res.render('farmers', { farmers, categories, siteSetting: res.locals.siteSetting });
+    res.render('sellers', { sellers, categories, siteSetting: res.locals.siteSetting });
   } catch(e){
     console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to load farmers.' });
+    res.status(500).render('simple-message', { title:'Error', message:'Failed to load sellers.' });
   }
 });
 
-app.get('/farmers/signup', (req,res)=>{
-  res.render('farmer-signup', { siteSetting: res.locals.siteSetting });
+// Keep backward compatibility
+app.get('/farmers/', (req,res) => res.redirect('/sellers/'));
+
+app.get('/sellers/signup', (req,res)=>{
+  res.render('seller-signup', { siteSetting: res.locals.siteSetting });
 });
+
+// Keep backward compatibility
+app.get('/farmers/signup', (req,res) => res.redirect('/sellers/signup'));
 
 app.get('/farmers/forgot-password', (req,res)=>{
   res.render('farmer-forgot-password', { siteSetting: res.locals.siteSetting, error: null });
@@ -2534,7 +2541,7 @@ app.post('/farmers/logout', (req,res)=>{
   res.redirect('/farmers/login');
 });
 
-app.get('/farmers/dashboard', farmerGuard, async (req,res)=>{
+app.get('/farmers/dashboard', sellerGuard, async (req,res)=>{
   try {
     // Decode JWT token to get farmer_id
     const token = req.cookies.farmer_session;
@@ -2565,7 +2572,7 @@ app.get('/farmers/dashboard', farmerGuard, async (req,res)=>{
 // ---- Farmer Product CRUD ----
 
 // List farmer's products
-app.get('/farmers/products', farmerGuard, async (req, res) => {
+app.get('/farmers/products', sellerGuard, async (req, res) => {
   try {
     const token = req.cookies.farmer_session;
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
@@ -2587,7 +2594,7 @@ app.get('/farmers/products', farmerGuard, async (req, res) => {
 });
 
 // Show form to create new product
-app.get('/farmers/products/new', farmerGuard, async (req, res) => {
+app.get('/farmers/products/new', sellerGuard, async (req, res) => {
   try {
     const token = req.cookies.farmer_session;
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
@@ -2608,7 +2615,7 @@ app.get('/farmers/products/new', farmerGuard, async (req, res) => {
 });
 
 // Handle creation of new product
-app.post('/farmers/products/new', farmerGuard, upload.single('image'), async (req, res) => {
+app.post('/farmers/products/new', sellerGuard, upload.single('image'), async (req, res) => {
   try {
     const token = req.cookies.farmer_session;
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
@@ -2640,7 +2647,7 @@ app.post('/farmers/products/new', farmerGuard, upload.single('image'), async (re
 });
 
 // Show form to edit a product
-app.get('/farmers/products/:id/edit', farmerGuard, async (req, res) => {
+app.get('/farmers/products/:id/edit', sellerGuard, async (req, res) => {
   try {
     const token = req.cookies.farmer_session;
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
@@ -2668,7 +2675,7 @@ app.get('/farmers/products/:id/edit', farmerGuard, async (req, res) => {
 });
 
 // Handle update of a product
-app.post('/farmers/products/:id/edit', farmerGuard, upload.single('image'), async (req, res) => {
+app.post('/farmers/products/:id/edit', sellerGuard, upload.single('image'), async (req, res) => {
   try {
     const token = req.cookies.farmer_session;
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
@@ -2707,7 +2714,7 @@ app.post('/farmers/products/:id/edit', farmerGuard, upload.single('image'), asyn
 });
 
 // Handle deletion of a product
-app.post('/farmers/products/:id/delete', farmerGuard, async (req, res) => {
+app.post('/farmers/products/:id/delete', sellerGuard, async (req, res) => {
   try {
     const token = req.cookies.farmer_session;
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
@@ -2730,7 +2737,7 @@ app.post('/farmers/products/:id/delete', farmerGuard, async (req, res) => {
   }
 });
 
-app.post('/farmers/profile/update', farmerGuard, upload.fields([{name:'profile_image'},{name:'cover_image'}]), async (req,res)=>{
+app.post('/farmers/profile/update', sellerGuard, upload.fields([{name:'profile_image'},{name:'cover_image'}]), async (req,res)=>{
   try {
     // Decode JWT to get farmer_id
     const token = req.cookies.farmer_session;
@@ -2749,7 +2756,7 @@ app.post('/farmers/profile/update', farmerGuard, upload.fields([{name:'profile_i
   }
 });
 
-app.post('/farmers/posts/add', farmerGuard, upload.single('media_file'), async (req,res)=>{
+app.post('/farmers/posts/add', sellerGuard, upload.single('media_file'), async (req,res)=>{
   try {
     // Decode JWT to get farmer_id
     const token = req.cookies.farmer_session;
@@ -2792,7 +2799,7 @@ app.post('/api/farmer-applications', async (req,res)=>{
 app.get('/admin/farmer-applications', adminGuard, async (req,res)=>{
   try {
     const { data: applications } = await supabase.from('farmer_applications').select('*').order('created_at', { ascending:false });
-    res.render('admin/farmer-applications', { applications: applications||[], msg: req.query.msg||'', siteSetting: res.locals.siteSetting });
+    res.render('admin/farmer-applications', { active: 'farmer-applications', applications: applications||[], msg: req.query.msg||'', siteSetting: res.locals.siteSetting });
   } catch(e){
     console.error(e);
     res.status(500).render('simple-message', { title:'Error', message:'Failed to load applications.' });
@@ -2819,6 +2826,265 @@ app.post('/admin/farmer-applications/reject', adminGuard, async (req,res)=>{
     res.json({ success:true });
   } catch(e){
     res.status(500).json({ error:e.message });
+  }
+});
+
+// -------- COMPREHENSIVE SELLER MANAGEMENT ROUTES --------
+
+// Seller management dashboard
+app.get('/admin/sellers', adminGuard, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 20;
+    const offset = (page - 1) * limit;
+    const statusFilter = req.query.status || '';
+    const searchQuery = req.query.search || '';
+    const sortBy = req.query.sort || 'created_at';
+    
+    let query = supabase.from('farmers').select('*', { count: 'exact' });
+    
+    if (statusFilter) {
+      query = query.eq('status', statusFilter);
+    }
+    
+    if (searchQuery) {
+      query = query.or(`full_name.ilike.%${searchQuery}%,business_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+    }
+    
+    query = query.order(sortBy, { ascending: sortBy === 'full_name' }).range(offset, offset + limit - 1);
+    
+    const { data: sellers, error, count } = await query;
+    if (error) throw error;
+    
+    // Get statistics
+    const [totalRes, activeRes, pendingRes, productsRes] = await Promise.all([
+      supabase.from('farmers').select('*', { count: 'exact', head: true }),
+      supabase.from('farmers').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+      supabase.from('farmers').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+      supabase.from('products').select('*', { count: 'exact', head: true })
+    ]);
+    
+    const stats = {
+      total: totalRes.count || 0,
+      active: activeRes.count || 0,
+      pending: pendingRes.count || 0,
+      totalProducts: productsRes.count || 0
+    };
+    
+    const totalPages = Math.ceil((count || 0) / limit);
+    
+    res.render('admin/seller-management', {
+      active: 'sellers',
+      sellers: sellers || [],
+      stats,
+      currentPage: page,
+      totalPages,
+      statusFilter,
+      searchQuery,
+      msg: req.query.msg || '',
+      siteSetting: res.locals.siteSetting
+    });
+  } catch (e) {
+    console.error('SELLER_MANAGEMENT_ERROR', e);
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load seller management.' });
+  }
+});
+
+// Get single seller details
+app.get('/admin/sellers/:id', adminGuard, async (req, res) => {
+  try {
+    const { data: seller, error } = await supabase
+      .from('farmers')
+      .select('*, product_count:products(count)')
+      .eq('id', req.params.id)
+      .single();
+    
+    if (error) throw error;
+    res.json(seller);
+  } catch (e) {
+    console.error('SELLER_FETCH_ERROR', e);
+    res.status(500).json({ error: 'Failed to fetch seller' });
+  }
+});
+
+// Add new seller
+app.post('/admin/sellers/add', adminGuard, upload.single('profile_image'), async (req, res) => {
+  try {
+    const { full_name, email, phone, business_name, location, status, bio } = req.body;
+    const profile_image = req.file ? '/media/uploads/' + req.file.filename : null;
+    
+    // Generate temporary password
+    const tempPassword = Math.random().toString(36).slice(-8);
+    const password_hash = await bcrypt.hash(tempPassword, 10);
+    
+    const { data, error } = await supabase.from('farmers').insert({
+      full_name,
+      email,
+      phone,
+      business_name,
+      location,
+      status: status || 'approved',
+      bio,
+      profile_image,
+      password_hash
+    }).select().single();
+    
+    if (error) throw error;
+    
+    res.json({ 
+      success: true, 
+      seller: data,
+      tempPassword,
+      message: 'Seller added successfully' 
+    });
+  } catch (e) {
+    console.error('ADD_SELLER_ERROR', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Approve seller
+app.post('/admin/sellers/:id/approve', adminGuard, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('farmers')
+      .update({ status: 'approved', updated_at: new Date().toISOString() })
+      .eq('id', req.params.id);
+    
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (e) {
+    console.error('APPROVE_SELLER_ERROR', e);
+    res.status(500).json({ error: 'Failed to approve seller' });
+  }
+});
+
+// Suspend seller
+app.post('/admin/sellers/:id/suspend', adminGuard, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('farmers')
+      .update({ status: 'suspended', updated_at: new Date().toISOString() })
+      .eq('id', req.params.id);
+    
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (e) {
+    console.error('SUSPEND_SELLER_ERROR', e);
+    res.status(500).json({ error: 'Failed to suspend seller' });
+  }
+});
+
+// Reactivate seller
+app.post('/admin/sellers/:id/reactivate', adminGuard, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('farmers')
+      .update({ status: 'approved', updated_at: new Date().toISOString() })
+      .eq('id', req.params.id);
+    
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (e) {
+    console.error('REACTIVATE_SELLER_ERROR', e);
+    res.status(500).json({ error: 'Failed to reactivate seller' });
+  }
+});
+
+// Delete seller
+app.post('/admin/sellers/:id/delete', adminGuard, async (req, res) => {
+  try {
+    // First, update all products to remove seller reference
+    await supabase.from('products').update({ farmer_id: null }).eq('farmer_id', req.params.id);
+    
+    // Then delete the seller
+    const { error } = await supabase.from('farmers').delete().eq('id', req.params.id);
+    
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (e) {
+    console.error('DELETE_SELLER_ERROR', e);
+    res.status(500).json({ error: 'Failed to delete seller' });
+  }
+});
+
+// Export sellers to CSV
+app.get('/admin/sellers/export', adminGuard, async (req, res) => {
+  try {
+    const { data: sellers, error } = await supabase
+      .from('farmers')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    // Create CSV content
+    const headers = ['ID', 'Full Name', 'Email', 'Phone', 'Business Name', 'Location', 'Status', 'Created At'];
+    const csvContent = [
+      headers.join(','),
+      ...sellers.map(seller => [
+        seller.id,
+        `"${seller.full_name || ''}"`,
+        `"${seller.email || ''}"`,
+        `"${seller.phone || ''}"`,
+        `"${seller.business_name || ''}"`,
+        `"${seller.location || ''}"`,
+        seller.status,
+        new Date(seller.created_at).toISOString().split('T')[0]
+      ].join(','))
+    ].join('\n');
+    
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="sellers-${new Date().toISOString().split('T')[0]}.csv"`);
+    res.send(csvContent);
+  } catch (e) {
+    console.error('EXPORT_SELLERS_ERROR', e);
+    res.status(500).json({ error: 'Failed to export sellers' });
+  }
+});
+
+// Seller applications (using seller_applications view)
+app.post('/api/seller-applications', async (req, res) => {
+  try {
+    const { full_name, phone, email, business_name, location, message } = req.body;
+    await supabase.from('seller_applications').insert({ full_name, phone, email, business_name, location, message });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Admin seller applications management
+app.get('/admin/seller-applications', adminGuard, async (req, res) => {
+  try {
+    const { data: applications } = await supabase.from('seller_applications').select('*').order('created_at', { ascending: false });
+    res.render('admin/seller-applications', { active: 'seller-applications', applications: applications || [], msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
+  } catch (e) {
+    console.error(e);
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load applications.' });
+  }
+});
+
+app.post('/admin/seller-applications/approve', adminGuard, async (req, res) => {
+  try {
+    const { application_id, email_prefix, password } = req.body;
+    const { data: app } = await supabase.from('seller_applications').select('*').eq('id', application_id).single();
+    const email = email_prefix + '@cropsay.com';
+    const password_hash = await bcrypt.hash(password, 10);
+    await supabase.from('farmers').insert({ email, full_name: app.full_name, phone: app.phone, business_name: app.business_name, location: app.location, password_hash, status: 'approved' });
+    await supabase.from('seller_applications').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', application_id);
+    res.json({ success: true, email, password });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/admin/seller-applications/reject', adminGuard, async (req, res) => {
+  try {
+    await supabase.from('seller_applications').update({ status: 'rejected', reviewed_at: new Date().toISOString() }).eq('id', req.body.application_id);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 

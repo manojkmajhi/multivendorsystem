@@ -7,49 +7,7 @@
   <link rel="stylesheet" href="/css/admin-style.css?v=3.0" />
 </head>
 <body>
-  <nav class="admin-navbar">
-    <div class="admin-navbar-container">
-      <a href="/admin/" class="admin-brand">
-        <% if(siteSetting && siteSetting.logo_url){ %>
-          <img src="<%= siteSetting.logo_url %>" alt="Logo" />
-        <% } %>
-      </a>
-      <div class="desktop-nav-links">
-        <a href="/admin/" class="nav-link"><span class="nav-icon">📊</span><span>Dashboard</span></a>
-        <a href="/admin/orders" class="nav-link"><span class="nav-icon">🛒</span><span>Orders</span></a>
-        <a href="/admin/products" class="nav-link"><span class="nav-icon">📦</span><span>Products</span></a>
-        <a href="/admin/categories" class="nav-link"><span class="nav-icon">📁</span><span>Categories</span></a>
-        <a href="/admin/hero-images" class="nav-link"><span class="nav-icon">🖼️</span><span>Hero Images</span></a>
-        <a href="/admin/settings" class="nav-link active"><span class="nav-icon">⚙️</span><span>Settings</span></a>
-        <form method="POST" action="/admin/logout" style="display: inline;">
-          <button type="submit" class="nav-link nav-logout-btn"><span class="nav-icon">🚪</span><span>Logout</span></button>
-        </form>
-      </div>
-      <button class="mobile-menu-toggle" onclick="toggleSidebar()" aria-label="Toggle menu"><span></span><span></span><span></span></button>
-    </div>
-  </nav>
-
-  <div class="admin-sidebar" id="adminSidebar">
-    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-    <div class="sidebar-content">
-      <div class="sidebar-header">
-        <% if(siteSetting && siteSetting.logo_url){ %><img src="<%= siteSetting.logo_url %>" alt="Logo" class="sidebar-logo" /><% } %>
-        <h3 class="sidebar-title"><%= (siteSetting && siteSetting.name) || 'Admin Panel' %></h3>
-        <button class="sidebar-close" onclick="toggleSidebar()" aria-label="Close menu">&times;</button>
-      </div>
-      <nav class="sidebar-nav">
-        <a href="/admin/" class="sidebar-link"><span class="sidebar-icon">📊</span><span>Dashboard</span></a>
-        <a href="/admin/orders" class="sidebar-link"><span class="sidebar-icon">🛒</span><span>Orders</span></a>
-        <a href="/admin/products" class="sidebar-link"><span class="sidebar-icon">📦</span><span>Products</span></a>
-        <a href="/admin/categories" class="sidebar-link"><span class="sidebar-icon">📁</span><span>Categories</span></a>
-        <a href="/admin/hero-images" class="sidebar-link"><span class="sidebar-icon">🖼️</span><span>Hero Images</span></a>
-        <a href="/admin/settings" class="sidebar-link active"><span class="sidebar-icon">⚙️</span><span>Settings</span></a>
-      </nav>
-      <div class="sidebar-footer">
-        <form method="POST" action="/admin/logout"><button type="submit" class="sidebar-logout-btn"><span class="sidebar-icon">🚪</span><span>Logout</span></button></form>
-      </div>
-    </div>
-  </div>
+  <%- include('../partials/admin-nav', { active: 'settings' }) %>
 
   <div class="admin-container">
     <div class="page-header"><h1 class="page-title">Settings</h1></div>
