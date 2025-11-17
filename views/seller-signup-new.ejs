@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seller Signup - <%= siteSetting.name %></title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/custom-theme.css">
+  <style>
+    .back-link { color: #666; text-decoration: none; transition: color 0.2s; }
+    .back-link:hover { color: #333; text-decoration: underline; }
+    .section { display: none; }
+    .section.active { display: block; }
+    .step-indicator { display: flex; gap: 8px; margin-bottom: 25px; justify-content: center; }
+    .step-dot { width: 8px; height: 8px; border-radius: 50%; background: #ddd; transition: all 0.3s; }
+    .step-dot.active { background: #333; width: 24px; border-radius: 4px; }
+    .otp-input-boxes { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
+    .otp-box { width: 50px; height: 60px; border: 2px solid #ddd; border-radius: 8px; font-size: 24px; font-weight: 600; text-align: center; font-family: 'Courier New', monospace; }
+    .otp-box:focus { outline: none; border-color: #333; box-shadow: 0 0 0 3px rgba(0,0,0,0.05); }
+    .error-message { color: #dc3545; font-size: 13px; margin-top: 10px; text-align: center; display: none; }
+    .error-message.show { display: block; }
+    .info-text { font-size: 13px; color: #999; text-align: center; margin-top: 10px; }
+    .password-field { position: relative; }
+    .password-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); border: none; background: transparent; cursor: pointer; color: #6c757d; padding: 5px; z-index: 10; }
+    .password-input { padding-right: 40px; }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: 100vh;">
+      <div class="col-md-5">
+        <div class="card shadow">
+          <div class="card-body p-5">
+            <h3 class="text-center mb-4">Seller Signup</h3>
+            
+            <div class="step-indicator">
+              <div class="step-dot active" id="step1Dot"></div>
+              <div class="step-dot" id="step2Dot"></div>
+            </div>
+
+            <div class="error-message" id="errorMsg"></div>
+
+            <!-- STEP 1: Email & Password -->
+            <div class="section active" id="step1">
+              <form id="signupForm">
+                <div class="form-group">
+                  <label>Email (@cropsay.com)</label>
+                  <input type="email" id="email" class="form-control" placeholder="yourname@cropsay.com" required pattern=".*@cropsay\.com$">
+                </div>
+                <div class="form-group">
+                  <label>Password</label>
+                  <div class="password-field">
+                    <input type="password" id="password" class="form-control password-input" minlength="6" required>
+                    <button type="button" class="password-toggle" onclick="togglePassword('password')" tabindex="-1">
+                      <span id="password-eye">👁</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Confirm Password</label>
+                  <div class="password-field">
+                    <input type="password" id="confirm_password" class="form-control password-input" minlength="6" required>
+                    <button type="button" class="password-toggle" onclick="togglePassword('confirm_password')" tabindex="-1">
+                      <span id="confirm_password-eye">👁</span>
+                    </button>
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-dark btn-block">Send OTP</button>
+              </form>
+              <div class="info-text">We'll send a verification code to your email</div>
+            </div>
+
+            <!-- STEP 2: OTP Verification -->
+            <div class="section" id="step2">
+              <div class="otp-input-section">
+                <label class="info-text" id="otpEmailDisplay"></label>
+                <div class="otp-input-boxes" id="otpBoxes"></div>
+                <input type="hidden" id="otpFullValue">
+                <div class="error-message" id="otpErrorMsg"></div>
+                <div class="info-text">Enter the 6-digit code from your email</div>
+              </div>
+              <button type="button" class="btn btn-dark btn-block" id="verifyOtpBtn">Verify & Create Account</button>
+              <button type="button" class="btn btn-outline-secondary btn-block mt-2" id="resendOtpBtn">Resend OTP</button>
+            </div>
+
+            <div class="text-center mt-3">
+              <a href="/sellers/login" class="back-link">Already have an account? Login</a><br>
+              <a href="/sellers/" class="back-link">← Back to Sellers</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script>
+    let currentEmail = '';
+    let currentPassword = '';
+    let otpBoxes = [];
+
+    function createOtpBoxes() {
+      const container = $('#otpBoxes');
+      container.empty();
+      otpBoxes = [];
+      
+      for (let i = 0; i < 6; i++) {
+        const box = $('<input class="otp-box" type="text" maxlength="1" inputmode="numeric">');
+        container.append(box);
+        otpBoxes.push(box);
+        
+        box.on('input', function() {
+          if (this.value && !/[0-9]/.test(this.value)) {
+            this.value = '';
+            return;
+          }
+          if (this.value && i < 5) otpBoxes[i + 1][0].focus();
+          updateOtpValue();
+        });
+        
+        box.on('keydown', function(e) {
+          if (e.key === 'Backspace' && !this.value && i > 0) otpBoxes[i - 1][0].focus();
+          if (e.key === 'Enter' && $('#otpFullValue').val().length === 6) {
+            e.preventDefault();
+            $('#verifyOtpBtn').click();
+          }
+        });
+        
+        box.on('paste', function(e) {
+          e.preventDefault();
+          const digits = (e.originalEvent || e).clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+          if (digits.length > 0) {
+            for (let j = 0; j < digits.length && j < 6; j++) otpBoxes[j].val(digits[j]);
+            updateOtpValue();
+            otpBoxes[Math.min(digits.length, 5)][0].focus();
+          }
+        });
+      }
+    }
+
+    function updateOtpValue() {
+      $('#otpFullValue').val(otpBoxes.map(b => b.val()).join(''));
+    }
+
+    function showError(message, fieldId = 'errorMsg') {
+      const errorEl = $('#' + fieldId);
+      errorEl.text(message).addClass('show');
+      setTimeout(() => errorEl.removeClass('show'), 5000);
+    }
+
+    function showStep(stepNum) {
+      $('.section').removeClass('active');
+      $('#step' + stepNum).addClass('active');
+      $('.step-dot').removeClass('active');
+      for (let i = 1; i <= stepNum; i++) $('#step' + i + 'Dot').addClass('active');
+      $('#errorMsg').removeClass('show');
+    }
+
+    function togglePassword(fieldId) {
+      const field = document.getElementById(fieldId);
+      const eye = document.getElementById(fieldId + '-eye');
+      if (field.type === 'password') {
+        field.type = 'text';
+        eye.textContent = '🙈';
+      } else {
+        field.type = 'password';
+        eye.textContent = '👁';
+      }
+    }
+
+    $('#signupForm').on('submit', function(e) {
+      e.preventDefault();
+      currentEmail = $('#email').val();
+      currentPassword = $('#password').val();
+      const confirmPassword = $('#confirm_password').val();
+      
+      if (currentPassword !== confirmPassword) {
+        showError('Passwords do not match');
+        return;
+      }
+      
+      const btn = $(this).find('button');
+      btn.prop('disabled', true).text('Sending...');
+      
+      $.post('/api/sellers/signup-send-otp', { email: currentEmail }, function(res) {
+        if (res.success) {
+          createOtpBoxes();
+          $('#otpEmailDisplay').text('Code sent to: ' + currentEmail);
+          showStep(2);
+          otpBoxes[0][0].focus();
+        } else {
+          showError(res.message || 'Failed to send OTP');
+          btn.prop('disabled', false).text('Send OTP');
+        }
+      }).fail(function() {
+        showError('Error sending OTP');
+        btn.prop('disabled', false).text('Send OTP');
+      });
+    });
+
+    $('#resendOtpBtn').on('click', function() {
+      const btn = $(this);
+      btn.prop('disabled', true).text('Sending...');
+      
+      $.post('/api/sellers/signup-send-otp', { email: currentEmail }, function(res) {
+        if (res.success) {
+          showError('OTP resent', 'otpErrorMsg');
+          otpBoxes.forEach(box => box.val(''));
+          updateOtpValue();
+          otpBoxes[0][0].focus();
+        } else {
+          showError(res.message || 'Failed to resend OTP', 'otpErrorMsg');
+        }
+        btn.prop('disabled', false).text('Resend OTP');
+      });
+    });
+
+    $('#verifyOtpBtn').on('click', function() {
+      const otp = $('#otpFullValue').val();
+      if (otp.length !== 6) {
+        showError('Please enter complete 6-digit code', 'otpErrorMsg');
+        return;
+      }
+      
+      const btn = $(this);
+      btn.prop('disabled', true).text('Creating Account...');
+      
+      $.post('/api/sellers/signup-verify', { email: currentEmail, otp: otp, password: currentPassword }, function(res) {
+        if (res.success) {
+          window.location.href = '/sellers/dashboard';
+        } else {
+          showError(res.message || 'Invalid OTP', 'otpErrorMsg');
+          btn.prop('disabled', false).text('Verify & Create Account');
+          otpBoxes.forEach(box => box.val(''));
+          updateOtpValue();
+          otpBoxes[0][0].focus();
+        }
+      }).fail(function() {
+        showError('Error verifying OTP', 'otpErrorMsg');
+        btn.prop('disabled', false).text('Verify & Create Account');
+      });
+    });
+  </script>
+</body>
+</html>

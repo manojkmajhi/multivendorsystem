@@ -439,6 +439,13 @@ const staticRoot = STATIC_ROOT_CANDIDATES.find(dir => {
   try { return fs.existsSync(path.join(__dirname, dir)); } catch(e){ return false; }
 }) || 'public';
 console.log('✓ Static root resolved:', staticRoot);
+
+// Log debug endpoints in development
+if (process.env.NODE_ENV !== 'production') {
+  console.log('🔧 Debug endpoints available:');
+  console.log('  - GET /admin/debug/farmer?email=EMAIL');
+  console.log('  - POST /admin/debug/test-password (body: {email, password})');
+}
 // Serve static files with aggressive caching
 app.use('/media', express.static(path.join(__dirname, staticRoot, 'media'), {
   maxAge: '365d',
@@ -641,7 +648,9 @@ app.get('/admin/products', adminGuard, async (req,res)=>{
   try {
     let list = products; // fallback in-memory
     if (supabase) {
-      const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending:false }).limit(200);
+      const { data, error } = await supabase.from('products')
+        .select('*, seller:seller_id(full_name, business_name)')
+        .order('created_at', { ascending:false }).limit(200);
       if (!error && data) list = data;
     }
   res.render('admin/products', { active: 'products', items: list, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
@@ -1405,7 +1414,17 @@ app.get('/shop/:category/', cacheMiddleware(30), async (req, res) => {
 app.get('/details/:id/', cacheMiddleware(60), async (req,res)=>{
   try {
     const id = req.params.id;
-    const product = await dbFetchProductById(id);
+    let product = null;
+    
+    if (supabase) {
+      const { data } = await supabase.from('products')
+        .select('*, seller:seller_id(full_name, business_name, profile_image)')
+        .eq('id', id).single();
+      product = data;
+    } else {
+      product = await dbFetchProductById(id);
+    }
+    
     if(!product) return res.status(404).render('simple-message', { title:'Not Found', message:'Product not found.' });
     
     // Fetch variants if product has them
@@ -2155,9 +2174,21 @@ app.get('/set_cart_qty/', (req, res) => {
 
 // -------- SELLER ROUTES --------
 function sellerGuard(req,res,next){
-  const token = req.cookies.seller_session;
-  if(!token) return res.redirect('/sellers/login');
-  next();
+  const token = req.cookies.farmer_session;
+  if(!token) return res.redirect('/farmers/login');
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    if(!decoded || decoded.type !== 'farmer') {
+      res.clearCookie('farmer_session');
+      return res.redirect('/farmers/login');
+    }
+    req.farmer = decoded;
+    next();
+  } catch(e) {
+    res.clearCookie('farmer_session');
+    return res.redirect('/farmers/login');
+  }
 }
 
 app.get('/sellers/', async (req,res)=>{
@@ -2179,7 +2210,53 @@ app.get('/sellers/', async (req,res)=>{
 app.get('/farmers/', (req,res) => res.redirect('/sellers/'));
 
 app.get('/sellers/signup', (req,res)=>{
-  res.render('seller-signup', { siteSetting: res.locals.siteSetting });
+  res.render('seller-signup-new', { siteSetting: res.locals.siteSetting });
+});
+
+app.post('/api/sellers/signup-send-otp', async (req,res)=>{
+  try {
+    const { email } = req.body;
+    if(!email.endsWith('@cropsay.com')) return res.json({ success:false, message:'Only @cropsay.com emails allowed' });
+    
+    const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+    if(error) return res.json({ success:false, message:'Failed to send OTP' });
+    
+    console.log('✅ Signup OTP sent to', email);
+    res.json({ success:true });
+  } catch(e){
+    res.json({ success:false, message:e.message });
+  }
+});
+
+app.post('/api/sellers/signup-verify', async (req,res)=>{
+  try {
+    const { email, otp, password } = req.body;
+    
+    const { data, error } = await supabase.auth.verifyOtp({ email, token: otp, type: 'email' });
+    if(error || !data.user) return res.json({ success:false, message:'Invalid OTP' });
+    
+    const password_hash = await bcrypt.hash(password, 10);
+    const username = email.split('@')[0];
+    
+    const { data: seller, error: createError } = await supabase.from('sellers').insert({
+      email,
+      full_name: username.charAt(0).toUpperCase() + username.slice(1),
+      phone: '+977-' + Math.floor(Math.random() * 9000000000 + 1000000000),
+      business_name: username + ' Business',
+      password_hash,
+      status: 'approved'
+    }).select().single();
+    
+    if(createError) return res.json({ success:false, message:'Failed to create account' });
+    
+    const sessionCookie = jwt.sign({ farmer_id: seller.id, email, name: seller.full_name, type: 'farmer' }, process.env.JWT_SECRET || 'your-secret-key', { expiresIn: '7d' });
+    res.cookie('farmer_session', sessionCookie, { httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge: 7*24*60*60*1000, sameSite: 'lax' });
+    
+    console.log('✅ Seller created and logged in:', seller.id);
+    res.json({ success:true });
+  } catch(e){
+    res.json({ success:false, message:e.message });
+  }
 });
 
 // Keep backward compatibility
@@ -2340,60 +2417,89 @@ app.post('/api/farmers/complete-signup', async (req,res)=>{
 app.post('/api/farmers/forgot-password', async (req,res)=>{
   try {
     const { email } = req.body;
-    const { data: farmer } = await supabase.from('farmers').select('id').eq('email', email).single();
-    if(!farmer) return res.json({ success:false, message:'Email not found' });
     
-    // Generate 6-digit OTP
-    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    if(!email.endsWith('@cropsay.com')) {
+      return res.json({ success:false, message:'Only @cropsay.com emails are allowed' });
+    }
     
-    // Store OTP with expiry in memory
-    otpStore[email] = {
-      otp: otp,
-      expiry: Date.now() + OTP_EXPIRY
-    };
+    // Check sellers table for the email
+    let { data: seller, error: queryError } = await supabase
+      .from('sellers')
+      .select('id, email, status')
+      .eq('email', email)
+      .single();
+    
+    // If seller doesn't exist, create one automatically
+    if(queryError || !seller) {
+      console.log('📝 Creating new seller for:', email);
+      const username = email.split('@')[0];
+      const { data: newSeller, error: createError } = await supabase
+        .from('sellers')
+        .insert({
+          email,
+          full_name: username.charAt(0).toUpperCase() + username.slice(1),
+          phone: '+977-' + Math.floor(Math.random() * 9000000000 + 1000000000),
+          business_name: username + ' Business',
+          status: 'approved'
+        })
+        .select('id, email, status')
+        .single();
+      
+      if(createError) {
+        console.error('❌ Failed to create seller:', createError);
+        return res.json({ success:false, message:'Failed to create account' });
+      }
+      
+      seller = newSeller;
+      console.log('✅ New seller created:', seller.id);
+    }
+    
+    if(seller.status !== 'approved') {
+      console.log('❌ Account not approved:', email, 'Status:', seller.status);
+      return res.json({ success:false, message:'Account not approved' });
+    }
+    
+    // Use Supabase OTP for email
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email,
+      options: {
+        shouldCreateUser: false
+      }
+    });
 
-    // Send OTP via email if configured
-    const emailSent = await sendOTPEmail(email, otp);
+    if(error) {
+      console.error('❌ Supabase OTP Error:', error);
+      return res.json({ success:false, message:'Failed to send OTP' });
+    }
 
-    console.log('='.repeat(50));
-    console.log('Password Reset OTP for:', email);
-    console.log('OTP Code:', otp);
-    console.log('Email Sent:', emailSent ? 'Yes' : 'No (check console)');
-    console.log('Expires in 10 minutes');
-    console.log('='.repeat(50));
-
+    console.log('✅ OTP sent to', email);
     res.json({ success:true, message:'OTP sent to your email' });
   } catch(e){
-    console.error('Forgot Password Error:', e);
+    console.error('💥 Forgot Password Error:', e);
     res.json({ success:false, message:e.message });
   }
 });
 
-// Verify OTP for password reset
 app.post('/api/farmers/verify-reset-otp', async (req,res)=>{
   try {
     const { email, otp } = req.body;
     
-    // Check if OTP exists for this email
-    if (!otpStore[email]) {
-      return res.json({ success: false, message: 'OTP expired or not found' });
+    // Verify OTP with Supabase
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: email,
+      token: otp,
+      type: 'email'
+    });
+
+    if(error || !data.user) {
+      return res.json({ success: false, message: 'Invalid or expired OTP' });
     }
+
+    // Store verified email for password reset
+    otpStore[email] = { verified: true, expiry: Date.now() + (10 * 60 * 1000) };
     
-    // Check if OTP matches
-    if (otpStore[email].otp !== otp) {
-      return res.json({ success: false, message: 'Invalid OTP' });
-    }
-    
-    // Check if OTP is expired
-    if (Date.now() > otpStore[email].expiry) {
-      delete otpStore[email];
-      return res.json({ success: false, message: 'OTP expired' });
-    }
-    
-    console.log('✓ OTP verified for:', email);
     res.json({ success: true, message: 'OTP verified' });
   } catch(e) {
-    console.error('OTP verify error:', e);
     res.json({ success: false, message: e.message });
   }
 });
@@ -2402,32 +2508,75 @@ app.post('/api/farmers/reset-password', async (req,res)=>{
   try {
     const { email, password } = req.body;
     
+    // Check if OTP was verified
+    if (!otpStore[email] || !otpStore[email].verified || Date.now() > otpStore[email].expiry) {
+      return res.json({ success: false, message: 'OTP verification expired. Please verify OTP again.' });
+    }
+    
     if (!password || password.length < 6) {
       return res.json({ success: false, message: 'Password must be at least 6 characters' });
     }
-
-    // Hash the password
+    
     const password_hash = await bcrypt.hash(password, 10);
-    console.log('Hashing password for:', email, 'Hash length:', password_hash.length);
-
-    // Update password in farmers table
-    const { error } = await supabase.from('farmers').update({ password_hash }).eq('email', email);
-
-    if (error) {
-      console.error('Password reset error:', error.message);
-      return res.json({ success: false, message: 'Failed to reset password' });
+    console.log('🔐 Updating password for:', email, 'New hash length:', password_hash.length);
+    
+    // Check if seller exists, create if needed (same as forgot password)
+    let { data: seller } = await supabase
+      .from('sellers')
+      .select('id, email')
+      .eq('email', email)
+      .single();
+    
+    if (!seller && email.endsWith('@cropsay.com')) {
+      console.log('📝 Creating seller during password reset for:', email);
+      const username = email.split('@')[0];
+      const { data: newSeller, error: createError } = await supabase
+        .from('sellers')
+        .insert({
+          email,
+          full_name: username.charAt(0).toUpperCase() + username.slice(1),
+          phone: '+977-' + Math.floor(Math.random() * 9000000000 + 1000000000),
+          business_name: username + ' Business',
+          status: 'approved'
+        })
+        .select('id, email')
+        .single();
+      
+      if (createError) {
+        console.error('❌ Failed to create seller during reset:', createError);
+        return res.json({ success: false, message: 'Failed to create account' });
+      }
+      seller = newSeller;
     }
-
-    // Clean up OTP
+    
+    if (!seller) {
+      console.error('❌ No user found with email:', email);
+      return res.json({ success: false, message: 'User not found' });
+    }
+    
+    // Update password
+    const { data: updateResult, error: updateError } = await supabase
+      .from('sellers')
+      .update({ password_hash, updated_at: new Date().toISOString() })
+      .eq('email', email)
+      .select('id, email');
+    
+    if (updateError) {
+      console.error('❌ Password update error:', updateError);
+      return res.json({ success: false, message: 'Failed to reset password: ' + updateError.message });
+    }
+    
     delete otpStore[email];
-
-    console.log('✓ Password reset successful for:', email);
+    console.log('✅ Password reset successful for:', email, 'User ID:', updateResult[0].id);
     res.json({ success: true, message: 'Password reset successful' });
   } catch(e){
-    console.error('Reset password error:', e);
+    console.error('💥 Reset password error:', e);
     res.json({ success: false, message: e.message });
   }
 });
+
+// Sellers login (redirect to farmers for backward compatibility)
+app.get('/sellers/login', (req,res) => res.redirect('/farmers/login'));
 
 app.get('/farmers/login', (req,res)=>{
   const token = req.cookies.farmer_session;
@@ -2445,14 +2594,14 @@ app.get('/farmers/login', (req,res)=>{
   res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: null });
 });
 
-// Development-only debug endpoint: inspect farmer record by email
+// Development-only debug endpoints: inspect farmer record and test password
 if (process.env.NODE_ENV !== 'production') {
   app.get('/admin/debug/farmer', async (req, res) => {
     try {
       const email = req.query.email;
       if (!email) return res.json({ success: false, message: 'email query param required' });
 
-      const { data, error } = await supabase.from('farmers').select('id,email,status,password_hash').eq('email', email).single();
+      const { data, error } = await supabase.from('sellers').select('id,email,status,password_hash,full_name,created_at').eq('email', email).single();
       if (error) return res.json({ success: false, message: error.message });
 
       return res.json({
@@ -2460,8 +2609,11 @@ if (process.env.NODE_ENV !== 'production') {
         farmer: {
           id: data.id,
           email: data.email,
+          full_name: data.full_name,
           status: data.status,
-          has_password_hash: !!data.password_hash
+          has_password_hash: !!data.password_hash,
+          password_hash_length: data.password_hash ? data.password_hash.length : 0,
+          created_at: data.created_at
         }
       });
     } catch (e) {
@@ -2469,48 +2621,97 @@ if (process.env.NODE_ENV !== 'production') {
       res.json({ success: false, message: e.message });
     }
   });
+  
+  app.post('/admin/debug/test-password', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      if (!email || !password) return res.json({ success: false, message: 'email and password required' });
+
+      const { data, error } = await supabase.from('sellers').select('password_hash').eq('email', email).single();
+      if (error) return res.json({ success: false, message: error.message });
+      if (!data.password_hash) return res.json({ success: false, message: 'No password hash found' });
+
+      const match = await bcrypt.compare(password, data.password_hash);
+      return res.json({
+        success: true,
+        password_match: match,
+        hash_info: {
+          length: data.password_hash.length,
+          starts_with: data.password_hash.substring(0, 10) + '...'
+        }
+      });
+    } catch (e) {
+      console.error('Debug password test error:', e);
+      res.json({ success: false, message: e.message });
+    }
+  });
 }
+
+// Sellers login POST (redirect to farmers for backward compatibility)
+app.post('/sellers/login', (req,res) => res.redirect(307, '/farmers/login'));
 
 app.post('/farmers/login', async (req,res)=>{
   const { email, password } = req.body;
+  
+  // Validate input
+  if (!email || !password) {
+    return res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'Email and password are required.' });
+  }
+  
   if(!supabase) return res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'Database not configured.' });
+  
   try {
-    // First try to find the farmer without status check
-    const { data: farmers, error: queryError } = await supabase.from('farmers').select('*').eq('email', email);
+    console.log('🔐 Login attempt for:', email);
+    
+    // Find the seller (bypass RLS with service role)
+    const { data: sellers, error: queryError } = await supabase
+      .from('sellers')
+      .select('*')
+      .eq('email', email);
     
     if(queryError) {
-      console.error('Query error:', queryError);
-      return res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'Login failed.' });
+      console.error('❌ Database query error:', queryError.message);
+      return res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'Login failed. Please try again.' });
     }
 
-    if(!farmers || farmers.length === 0) {
-      console.log('Farmer not found:', email);
-      return res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'Invalid credentials.' });
+    if(!sellers || sellers.length === 0) {
+      console.log('❌ Seller not found:', email);
+      return res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'Invalid email or password.' });
     }
 
-    const farmer = farmers[0];
-    console.log('Farmer found:', email, 'Status:', farmer.status, 'Has password_hash:', !!farmer.password_hash);
+    const farmer = sellers[0];
+    console.log('👤 Farmer found:', {
+      email: farmer.email,
+      status: farmer.status,
+      hasPassword: !!farmer.password_hash,
+      passwordLength: farmer.password_hash ? farmer.password_hash.length : 0
+    });
 
-    // Check status
+    // Check if password is set
+    if (!farmer.password_hash) {
+      console.log('❌ No password set for:', email);
+      return res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'No password is set for this account. Please use "Forgot Password" to set one.' });
+    }
+
+    // Check account status
     if(farmer.status !== 'approved') {
-      console.log('Farmer not approved:', email, 'Status:', farmer.status);
-      return res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'Your account is not approved yet.' });
+      console.log('❌ Account not approved:', email, 'Status:', farmer.status);
+      return res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'Your account is not approved yet. Please contact support.' });
     }
 
     // Verify password
-    if (!farmer.password_hash) {
-      console.log('No password_hash set for:', email);
-      return res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'No password is set for this account yet. Please use "Forgot Password" to set one.' });
+    console.log('🔍 Verifying password for:', email);
+    const passwordMatch = await bcrypt.compare(password, farmer.password_hash);
+    console.log('🔐 Password verification result:', passwordMatch);
+    
+    if(!passwordMatch) {
+      console.log('❌ Password mismatch for:', email);
+      return res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'Invalid email or password.' });
     }
 
-    const ok = await bcrypt.compare(password, farmer.password_hash);
-    if(!ok) {
-      console.log('Password mismatch for:', email);
-      return res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'Invalid credentials.' });
-    }
+    console.log('✅ Login successful for:', email);
 
-    console.log('✓ Login successful for:', email);
-
+    // Create session
     const sessionCookie = jwt.sign(
       {
         farmer_id: farmer.id,
@@ -2531,14 +2732,42 @@ app.post('/farmers/login', async (req,res)=>{
 
     res.redirect('/farmers/dashboard');
   } catch(e){
-    console.error('Login error:', e);
-    res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'Login failed.' });
+    console.error('💥 Login error:', e.message, e.stack);
+    res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'Login failed. Please try again.' });
   }
 });
 
 app.post('/farmers/logout', (req,res)=>{
   res.clearCookie('farmer_session');
   res.redirect('/farmers/login');
+});
+
+// Sellers dashboard (redirect to farmers for now)
+app.get('/sellers/dashboard', sellerGuard, async (req,res)=>{
+  try {
+    const token = req.cookies.farmer_session;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const farmerId = decoded.farmer_id;
+
+    if (!farmerId) {
+      return res.status(401).render('simple-message', { title:'Error', message:'Invalid session. Please login again.' });
+    }
+
+    const { data: farmer, error: farmerError } = await supabase.from('sellers').select('*').eq('id', farmerId).single();
+    
+    if (farmerError || !farmer) {
+      console.error('Seller not found:', farmerError);
+      return res.status(404).render('simple-message', { title:'Error', message:'Seller profile not found.' });
+    }
+
+    const { data: products } = await supabase.from('products').select('*').eq('seller_id', farmerId);
+    const { data: posts } = await supabase.from('seller_posts').select('*').eq('seller_id', farmerId).order('created_at', { ascending:false });
+    
+    res.render('farmer-dashboard', { farmer, products: products||[], posts: posts||[], siteSetting: res.locals.siteSetting });
+  } catch(e){
+    console.error('Dashboard error:', e);
+    res.status(500).render('simple-message', { title:'Error', message:'Failed to load dashboard.' });
+  }
 });
 
 app.get('/farmers/dashboard', sellerGuard, async (req,res)=>{
@@ -2552,15 +2781,15 @@ app.get('/farmers/dashboard', sellerGuard, async (req,res)=>{
       return res.status(401).render('simple-message', { title:'Error', message:'Invalid session. Please login again.' });
     }
 
-    const { data: farmer, error: farmerError } = await supabase.from('farmers').select('*').eq('id', farmerId).single();
+    const { data: farmer, error: farmerError } = await supabase.from('sellers').select('*').eq('id', farmerId).single();
     
     if (farmerError || !farmer) {
       console.error('Farmer not found:', farmerError);
       return res.status(404).render('simple-message', { title:'Error', message:'Farmer profile not found.' });
     }
 
-    const { data: products } = await supabase.from('products').select('*').eq('farmer_id', farmerId);
-    const { data: posts } = await supabase.from('farmer_posts').select('*').eq('farmer_id', farmerId).order('created_at', { ascending:false });
+    const { data: products } = await supabase.from('products').select('*').eq('seller_id', farmerId);
+    const { data: posts } = await supabase.from('seller_posts').select('*').eq('seller_id', farmerId).order('created_at', { ascending:false });
     
     res.render('farmer-dashboard', { farmer, products: products||[], posts: posts||[], siteSetting: res.locals.siteSetting });
   } catch(e){
@@ -2890,6 +3119,41 @@ app.get('/admin/sellers', adminGuard, async (req, res) => {
   }
 });
 
+// Export sellers to CSV (must be before :id route)
+app.get('/admin/sellers/export', adminGuard, async (req, res) => {
+  try {
+    const { data: sellers, error } = await supabase
+      .from('sellers')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    // Create CSV content
+    const headers = ['ID', 'Full Name', 'Email', 'Phone', 'Business Name', 'Location', 'Status', 'Created At'];
+    const csvContent = [
+      headers.join(','),
+      ...sellers.map(seller => [
+        seller.id,
+        `"${seller.full_name || ''}"`,
+        `"${seller.email || ''}"`,
+        `"${seller.phone || ''}"`,
+        `"${seller.business_name || ''}"`,
+        `"${seller.location || ''}"`,
+        seller.status,
+        new Date(seller.created_at).toISOString().split('T')[0]
+      ].join(','))
+    ].join('\n');
+    
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="sellers-${new Date().toISOString().split('T')[0]}.csv"`);
+    res.send(csvContent);
+  } catch (e) {
+    console.error('EXPORT_SELLERS_ERROR', e);
+    res.status(500).json({ error: 'Failed to export sellers' });
+  }
+});
+
 // Get single seller details
 app.get('/admin/sellers/:id', adminGuard, async (req, res) => {
   try {
@@ -3008,40 +3272,34 @@ app.post('/admin/sellers/:id/delete', adminGuard, async (req, res) => {
   }
 });
 
-// Export sellers to CSV
-app.get('/admin/sellers/export', adminGuard, async (req, res) => {
+// Edit seller form
+app.get('/admin/sellers/:id/edit', adminGuard, async (req, res) => {
   try {
-    const { data: sellers, error } = await supabase
-      .from('sellers')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    
-    // Create CSV content
-    const headers = ['ID', 'Full Name', 'Email', 'Phone', 'Business Name', 'Location', 'Status', 'Created At'];
-    const csvContent = [
-      headers.join(','),
-      ...sellers.map(seller => [
-        seller.id,
-        `"${seller.full_name || ''}"`,
-        `"${seller.email || ''}"`,
-        `"${seller.phone || ''}"`,
-        `"${seller.business_name || ''}"`,
-        `"${seller.location || ''}"`,
-        seller.status,
-        new Date(seller.created_at).toISOString().split('T')[0]
-      ].join(','))
-    ].join('\n');
-    
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename="sellers-${new Date().toISOString().split('T')[0]}.csv"`);
-    res.send(csvContent);
+    const { data: seller, error } = await supabase.from('sellers').select('*').eq('id', req.params.id).single();
+    if (error || !seller) return res.status(404).render('simple-message', { title: 'Not Found', message: 'Seller not found.' });
+    res.render('admin/seller-form', { seller, siteSetting: res.locals.siteSetting });
   } catch (e) {
-    console.error('EXPORT_SELLERS_ERROR', e);
-    res.status(500).json({ error: 'Failed to export sellers' });
+    console.error('SELLER_EDIT_ERROR', e);
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load seller.' });
   }
 });
+
+// Update seller
+app.post('/admin/sellers/:id/edit', adminGuard, async (req, res) => {
+  try {
+    const { full_name, email, phone, business_name, location, status } = req.body;
+    const { error } = await supabase.from('sellers').update({
+      full_name, email, phone, business_name, location, status
+    }).eq('id', req.params.id);
+    if (error) throw error;
+    res.redirect('/admin/sellers?msg=' + encodeURIComponent('Seller updated successfully'));
+  } catch (e) {
+    console.error('SELLER_UPDATE_ERROR', e);
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to update seller.' });
+  }
+});
+
+
 
 // Seller applications (using seller_applications view)
 app.post('/api/seller-applications', async (req, res) => {

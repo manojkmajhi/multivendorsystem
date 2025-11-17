@@ -44,7 +44,7 @@
                 <th style="width:40px;">#</th>
                 <th>Name & Short Description</th>
                 <th>Category</th>
-                <th>Type</th>
+                <th>Seller</th>
                 <th>Price</th>
                 <th>Status</th>
                 <th style="width:280px;">Actions</th>
@@ -63,7 +63,13 @@
                   <% } %>
                 </td>
                 <td><%= p.category %></td>
-                <td><span class="badge badge-primary"><%= p.type %></span></td>
+                <td>
+                  <% if (p.seller) { %>
+                    <small><%= p.seller.business_name || p.seller.full_name %></small>
+                  <% } else { %>
+                    <small class="text-muted">Admin</small>
+                  <% } %>
+                </td>
                 <td><strong>Rs. <%= p.price %></strong></td>
                 <td>
                   <% if(typeof p.active === 'boolean'){ %>

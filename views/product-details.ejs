@@ -178,9 +178,20 @@
           <% } %>
 
 
-          <ul class="list-unstyled small d-inline-block">
-            <li class="px-3 py-2 mb-1 bg-white text-muted"><strong class="text-uppercase text-dark">Category:</strong><a class="reset-anchor ml-2" href="/shop/<%= product.category %>/"><%= product.category %></a></li>
-          </ul>
+          <div class="d-flex flex-wrap align-items-center mb-3" style="font-size: 14px; gap: 2rem;">
+            <div class="d-flex align-items-center">
+              <span class="text-muted mr-2">Category:</span>
+              <a class="text-dark font-weight-medium" href="/shop/<%= product.category %>/" style="text-decoration: none;"><%= product.category %></a>
+            </div>
+            <% if (product.seller) { %>
+              <div class="d-flex align-items-center">
+                <span class="text-muted mr-2">Sold by:</span>
+                <a class="text-dark font-weight-medium" href="/sellers/<%= product.seller_id %>/" style="text-decoration: none;">
+                  <%= product.seller.business_name || product.seller.full_name %>
+                </a>
+              </div>
+            <% } %>
+          </div>
         </div>
       </div>
       <!-- RELATED PRODUCTS-->
