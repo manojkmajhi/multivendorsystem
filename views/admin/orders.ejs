@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Orders | <%= siteSetting.name %> Admin</title>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-  <link rel="stylesheet" href="/staticfiles/admin-style.css">
+  <link rel="stylesheet" href="/css/admin-style.css">
   <style>
     .status-badge {
       padding: 4px 12px;
@@ -585,7 +585,7 @@
 
         const itemsHtml = order.items.map(item => `
           <div class="order-item">
-            <img src="${item.image || '/staticfiles/placeholder.jpg'}" alt="${item.productName}" class="order-item-img">
+            <img src="${item.image || '/images/placeholder.jpg'}" alt="${item.productName}" class="order-item-img">
             <div class="order-item-details">
               <div class="order-item-name">${item.productName}</div>
               <div class="order-item-price">Rs ${item.price} × ${item.qty} = Rs ${item.subtotal}</div>

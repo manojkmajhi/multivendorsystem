@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title><%= product.name %> | All Strawhats</title>
+  <title><%= product.name %> | Cropsay</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" />
-  <link rel="stylesheet" href="/staticfiles/style.blue.css">
+  <link rel="stylesheet" href="/css/style.blue.css">
   <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>">
-  <link rel="stylesheet" href="/staticfiles/floating-button.css" />
-  <link rel="stylesheet" href="/staticfiles/product-quickview.css?v=1" />
-  <link rel="stylesheet" href="/staticfiles/image-loading.css" />
+  <link rel="stylesheet" href="/css/floating-button.css" />
+  <link rel="stylesheet" href="/css/product-quickview.css?v=1" />
+  <link rel="stylesheet" href="/css/image-loading.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <style>
@@ -269,10 +269,10 @@
         </div>
         <div class="col-lg-6 text-lg-right">
           <p class="small mb-0">FIND US &nbsp;
-            <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.facebook_url) ? socialLinks.facebook_url : 'https://facebook.com/allstrawhats/' %>" target="_blank"><i class="fab fa-facebook-square mr-1" style="color: #f5f5f5;"></i></a>
-            <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.instagram_url) ? socialLinks.instagram_url : 'https://instagram.com/allstrawhats/' %>" target="_blank"><i class="fab fa-instagram" style="color: #f5f5f5;"></i></a>
+            <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.facebook_url) ? socialLinks.facebook_url : 'https://facebook.com/cropsay/' %>" target="_blank"><i class="fab fa-facebook-square mr-1" style="color: #f5f5f5;"></i></a>
+            <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.instagram_url) ? socialLinks.instagram_url : 'https://instagram.com/cropsay/' %>" target="_blank"><i class="fab fa-instagram" style="color: #f5f5f5;"></i></a>
           </p>
-          <p class="text-sm text-gray mb-0"><a class="text-gray reset-anchor" href="mailto:<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@allstrawhats.com' %>" target="_blank"><i class="fas fa-envelope"></i> &nbsp;<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@allstrawhats.com' %></a></p>
+          <p class="text-sm text-gray mb-0"><a class="text-gray reset-anchor" href="mailto:<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@cropsay.com' %>" target="_blank"><i class="fas fa-envelope"></i> &nbsp;<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@cropsay.com' %></a></p>
           <p class="text-sm text-gray mb-0 mt-2"><a class="text-white reset-anchor" href="/track-order"><i class="fas fa-shipping-fast"></i> Track Order</a></p>
         </div>
       </div>
@@ -282,14 +282,14 @@
   <!-- Floating cart provided by partial earlier -->
 
   <!-- Image loading -->
-  <script src="/staticfiles/image-loading.js"></script>
+  <script src="/js/image-loading.js"></script>
   
   <!-- Core libraries -->
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
-  <script src="/staticfiles/owl.carousel2.thumbs.min.js"></script>
-  <script src="/staticfiles/front.js"></script>
+  <script src="/js/owl.carousel2.thumbs.min.js"></script>
+  <script src="/js/front.js"></script>
   <script src="https://kit.fontawesome.com/d6db3c2373.js" crossorigin="anonymous"></script>
   <script>
     // Unified quickview logic reused
@@ -467,6 +467,6 @@
     $("#search-form-in-navbar").submit(function(e){ e.preventDefault(); var search_term = $("#search").val(); if(search_term){ window.location = window.location.origin+"/search/all/?q="+search_term; } });
   </script>
   <!-- Optimized cart functionality -->
-  <script src="/staticfiles/cart-optimized.js?v=3" defer></script>
+  <script src="/js/cart-optimized.js?v=3" defer></script>
 </body>
 </html>

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Settings - Admin</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="/staticfiles/admin-style.css?v=3.0" />
+  <link rel="stylesheet" href="/css/admin-style.css?v=3.0" />
 </head>
 <body>
   <nav class="admin-navbar">
@@ -62,12 +62,12 @@
           <form method="POST" enctype="multipart/form-data">
             <div class="form-group">
               <label class="form-label">Site Name *</label>
-              <input name="name" class="form-control" value="<%= site.name %>" required placeholder="e.g., All Strawhats" />
+              <input name="name" class="form-control" value="<%= site.name %>" required placeholder="e.g., Cropsay" />
               <small class="form-text">Your store's name</small>
             </div>
             <div class="form-group">
               <label class="form-label">Logo URL *</label>
-              <input name="logo_url" class="form-control" value="<%= site.logo_url %>" required placeholder="/staticfiles/logo.png" />
+              <input name="logo_url" class="form-control" value="<%= site.logo_url %>" required placeholder="/images/logo.png" />
               <small class="form-text">URL to your store logo</small>
             </div>
             <% if(site.logo_url) { %>
@@ -347,6 +347,6 @@
   </div>
 
   <footer class="admin-footer">&copy; <%= new Date().getFullYear() %> <%= (siteSetting && siteSetting.name) || 'Admin' %>. All rights reserved.</footer>
-  <script src="/staticfiles/admin-enhancements.js?v=3.0"></script>
+  <script src="/js/admin-enhancements.js?v=3.0"></script>
 </body>
 </html>

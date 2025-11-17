@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title><%= item? 'Edit':'New' %> Product - Admin</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="/staticfiles/admin-style.css?v=3.0" />
+  <link rel="stylesheet" href="/css/admin-style.css?v=3.0" />
   <style>
     .attr-btn {
       padding: 0.5rem 1rem;
@@ -389,7 +389,7 @@
     &copy; <%= new Date().getFullYear() %> <%= (siteSetting && siteSetting.name) || 'Admin' %>. All rights reserved.
   </footer>
 
-  <script src="/staticfiles/admin-enhancements.js?v=3.0"></script>
+  <script src="/js/admin-enhancements.js?v=3.0"></script>
   <script>
     function previewImage(event) {
       const file = event.target.files[0];

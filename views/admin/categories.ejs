@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Categories - Admin</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="/staticfiles/admin-style.css?v=3.0" />
+  <link rel="stylesheet" href="/css/admin-style.css?v=3.0" />
 </head>
 <body>
   <!-- Navigation Bar -->
@@ -222,7 +222,7 @@
                 </div>
                 <div style="margin-top: 1rem;">
                   <label style="display: block; margin-bottom: 0.5rem; color: var(--gray-700);">Or enter image URL:</label>
-                  <input class="form-control" name="image_url" id="categoryImageUrl" placeholder="/staticfiles/Category.jpg or https://..." />
+                  <input class="form-control" name="image_url" id="categoryImageUrl" placeholder="/images/Category.jpg or https://..." />
                   <small class="form-text">If you upload a file, it will override the URL</small>
                 </div>
               </div>
@@ -250,7 +250,7 @@
     &copy; <%= new Date().getFullYear() %> <%= (siteSetting && siteSetting.name) || 'Admin' %>. All rights reserved.
   </footer>
 
-  <script src="/staticfiles/admin-enhancements.js?v=3.0"></script>
+  <script src="/js/admin-enhancements.js?v=3.0"></script>
   <script>
     function previewCategoryImage(event) {
       const file = event.target.files[0];
