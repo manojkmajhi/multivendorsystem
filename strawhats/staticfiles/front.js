@@ -61,7 +61,12 @@ document.addEventListener('DOMContentLoaded', function(){
         searchInput.addEventListener('input', function(){
             var q = this.value.trim();
             if(debounceTimer) clearTimeout(debounceTimer);
-            if(q.length < 2){ searchSuggestions.style.display = 'none'; searchSuggestions.innerHTML = ''; return; }
+            if(q.length < 2){
+                searchSuggestions.style.display = 'none';
+                searchSuggestions.classList.remove('show');
+                searchSuggestions.innerHTML = '';
+                return;
+            }
             debounceTimer = setTimeout(function(){
                 if(controller) { controller.abort(); }
                 controller = new AbortController();
@@ -80,9 +85,14 @@ document.addEventListener('DOMContentLoaded', function(){
                             var price = document.createElement('div'); price.className='suggestion-price'; price.textContent = 'Rs. ' + item.price; info.appendChild(price);
                             div.appendChild(img); div.appendChild(info); frag.appendChild(div);
                         });
-                        searchSuggestions.innerHTML = ''; searchSuggestions.appendChild(frag); searchSuggestions.style.display = 'block';
+                        searchSuggestions.innerHTML = '';
+                        searchSuggestions.appendChild(frag);
+                        searchSuggestions.style.display = 'block';
+                        searchSuggestions.classList.add('show');
                     } else {
-                        searchSuggestions.innerHTML = '<div class="no-suggestions">No products found</div>'; searchSuggestions.style.display='block';
+                        searchSuggestions.innerHTML = '<div class="no-suggestions">No products found</div>';
+                        searchSuggestions.style.display='block';
+                        searchSuggestions.classList.add('show');
                     }
                 }).catch(function(err){ if(err.name === 'AbortError') return; console.error('Failed to fetch search suggestions', err); });
             }, 250);
@@ -94,8 +104,18 @@ document.addEventListener('DOMContentLoaded', function(){
             if(item) window.location.href = '/details/' + item.dataset.id + '/';
         });
 
-        document.addEventListener('click', function(e){ if(!e.target.closest('#search, .search-suggestions')) searchSuggestions.style.display='none'; });
-        searchInput.addEventListener('focus', function(){ if(this.value.trim().length >=2 && searchSuggestions.children.length>0) searchSuggestions.style.display='block'; });
+        document.addEventListener('click', function(e){
+            if(!e.target.closest('#search, .search-suggestions')) {
+                searchSuggestions.style.display='none';
+                searchSuggestions.classList.remove('show');
+            }
+        });
+        searchInput.addEventListener('focus', function(){
+            if(this.value.trim().length >=2 && searchSuggestions.children.length>0) {
+                searchSuggestions.style.display='block';
+                searchSuggestions.classList.add('show');
+            }
+        });
     }
 
 });

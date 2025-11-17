@@ -149,9 +149,6 @@
 }
 
 .suggestion-item {
-  opacity: 0;
-  transform: translateX(-20px) translateZ(0);
-  animation: slideInRight 0.3s ease-out forwards;
 }
 
 .suggestion-item:nth-child(1) { animation-delay: 0.05s; }

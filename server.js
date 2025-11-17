@@ -286,6 +286,9 @@ app.use(async (req,res,next)=>{
   next();
 });
 
+// Favicon handler to prevent 404 errors
+app.get('/favicon.ico', (req, res) => res.status(204).send());
+
 // In-memory storage (per process). In production use a DB or persistent store.
 const carts = {}; // key: device id, value: array of cart line items
 const otpStore = {}; // OTP storage for farmer signup/reset
@@ -2164,6 +2167,26 @@ app.get('/farmers/signup', (req,res)=>{
 
 app.get('/farmers/forgot-password', (req,res)=>{
   res.render('farmer-forgot-password', { siteSetting: res.locals.siteSetting, error: null });
+});
+
+app.get('/farmers/reset-password-otp', (req,res)=>{
+  res.render('farmer-reset-password-otp', { 
+    siteSetting: res.locals.siteSetting,
+    process: { env: { 
+      SUPABASE_URL: process.env.SUPABASE_URL,
+      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
+    }}
+  });
+});
+
+app.get('/farmers/reset-password-otp', (req,res)=>{
+  res.render('farmer-reset-password-otp', { 
+    siteSetting: res.locals.siteSetting,
+    process: { env: { 
+      SUPABASE_URL: process.env.SUPABASE_URL,
+      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
+    }}
+  });
 });
 
 app.post('/api/farmers/send-otp', async (req,res)=>{
