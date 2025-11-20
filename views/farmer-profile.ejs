@@ -8,27 +8,57 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="stylesheet" href="/custom-theme.css">
   <style>
-    .cover-image { height: 250px; background-size: cover; background-position: center; }
-    .profile-avatar { width: 120px; height: 120px; border-radius: 50%; border: 4px solid #fff; margin-top: -60px; object-fit: cover; }
-    .post-card { cursor: pointer; }
-    .post-media { width: 100%; height: 200px; object-fit: cover; }
-    .product-card { transition: transform 0.2s; }
-    .product-card:hover { transform: translateY(-5px); }
+    * { box-sizing: border-box; }
+    html, body { overflow-x: hidden; width: 100%; margin: 0; padding: 0; }
+    body { padding-top: 56px; }
+    .cover-image { height: 160px; background-size: cover; background-position: center; width: 100%; }
+    .profile-avatar { width: 70px; height: 70px; border-radius: 50%; border: 3px solid #fff; margin-top: -35px; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .profile-header { padding: 0 15px 12px; max-width: 100%; }
+    .profile-header h2 { font-size: 1.3rem; margin-top: 8px; margin-bottom: 4px; font-weight: 700; }
+    .profile-header p { font-size: 0.85rem; margin-bottom: 2px; color: #666; }
+    .sticky-tabs { position: sticky; top: 56px; background: #fff; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin: 0 -15px; }
+    .nav-tabs { border-bottom: 2px solid #e0e0e0; margin: 0; justify-content: center; }
+    .nav-tabs .nav-link { padding: 14px 24px; font-weight: 600; font-size: 0.9rem; color: #666; border: none; transition: all 0.2s; }
+    .nav-tabs .nav-link.active { color: #000; border-bottom: 3px solid #000; background: transparent; }
+    .post-card { border-radius: 12px; overflow: hidden; transition: all 0.3s; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .post-card:hover { transform: translateY(-4px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+    .post-media { width: 100%; height: 280px; object-fit: cover; }
+    .post-card .card-body { padding: 14px; background: #fff; }
+    .post-card .card-body p { font-size: 0.88rem; margin: 0; line-height: 1.5; color: #333; }
+    .product-grid .product { background: #f8f8f8; border: 1px solid #f0f0f0; transition: all 0.25s; border-radius: 8px; overflow: hidden; }
+    .product-grid .product:hover { box-shadow: 0 6px 18px rgba(0,0,0,0.1); transform: translateY(-3px); }
+    .product-grid .product img { height: 150px; width: 100%; object-fit: contain; transition: transform 0.3s; display: block; padding: 8px; }
+    .product-grid .product:hover img { transform: scale(1.05); }
+    .product-grid .product h5 { font-size: 13px; line-height: 16px; font-weight: 600; margin: 8px 0 4px; min-height: 32px; padding: 0 8px; }
+    .product-grid .product h5 a { color: #000; text-decoration: none; }
+    .product-grid .btn-dark { background: #000; border-color: #000; font-size: 11px; padding: 6px 10px; border-radius: 4px; }
+    .btn-outline-light { color: #fff !important; border-color: #fff; }
+    .btn-outline-light:hover { background: #fff; color: #000 !important; }
+    .container { max-width: 100%; padding-left: 15px; padding-right: 15px; }
+    @media (max-width: 768px) {
+      body { padding-top: 56px; }
+      .cover-image { height: 120px; }
+      .profile-avatar { width: 60px; height: 60px; margin-top: -30px; }
+      .profile-header h2 { font-size: 1.1rem; }
+      .profile-header p { font-size: 0.8rem; }
+      .sticky-tabs { top: 56px; }
+      .nav-tabs .nav-link { padding: 12px 16px; font-size: 0.85rem; }
+      .post-media { height: 220px; }
+      .product-grid .product img { height: 130px; }
+    }
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-    <div class="container">
-      <a class="navbar-brand" href="/">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm fixed-top" style="padding: 8px 0;">
+    <div class="container" style="max-width: 100%;">
+      <a class="navbar-brand" href="/" style="margin: 0;">
         <% if(siteSetting && siteSetting.logo_url){ %>
-          <img src="<%= siteSetting.logo_url %>" alt="<%= siteSetting.name || 'Cropsay' %>" style="height: 50px; width: auto;">
+          <img src="<%= siteSetting.logo_url %>" alt="<%= siteSetting.name || 'Cropsay' %>" style="height: 36px; width: auto;">
         <% } else { %>
           <span><%= siteSetting.name || 'Cropsay' %></span>
         <% } %>
       </a>
-      <div class="ml-auto">
-        <a href="/farmers/" class="btn btn-sm btn-dark" style="color: white !important;">← Back to Farmers</a>
-      </div>
+      <a href="/farmers/" class="btn btn-sm btn-outline-light ml-auto" style="font-size: 0.85rem; padding: 6px 14px;">← Back</a>
     </div>
   </nav>
 
@@ -36,31 +66,38 @@
   <div class="cover-image" style="background-image: url('<%= farmer.cover_image || "/staticfiles/default-cover.jpg" %>');"></div>
   
   <div class="container">
-    <div class="text-center">
+    <div class="profile-header text-center">
       <img src="<%= farmer.profile_image || '/staticfiles/default-avatar.png' %>" alt="<%= farmer.full_name %>" class="profile-avatar">
-      <h2 class="mt-3"><%= farmer.full_name %></h2>
+      <h2><%= farmer.full_name %></h2>
       <% if (farmer.business_name) { %>
-        <p class="text-muted"><%= farmer.business_name %></p>
+        <p class="mb-1" style="font-weight: 500;"><%= farmer.business_name %></p>
       <% } %>
       <% if (farmer.location) { %>
-        <p><i class="fas fa-map-marker-alt"></i> <%= farmer.location %></p>
+        <p class="mb-1"><i class="fas fa-map-marker-alt"></i> <%= farmer.location %></p>
       <% } %>
       <% if (farmer.bio) { %>
-        <p class="mt-3"><%= farmer.bio %></p>
+        <p class="mt-2 mb-0" style="font-size: 0.85rem; max-width: 600px; margin-left: auto; margin-right: auto;"><%= farmer.bio %></p>
       <% } %>
     </div>
+  </div>
 
-    <!-- Tabs -->
-    <ul class="nav nav-tabs mt-4" role="tablist">
-      <li class="nav-item">
-        <a class="nav-link active" data-toggle="tab" href="#posts">Posts</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" data-toggle="tab" href="#products">Products</a>
-      </li>
-    </ul>
+  <!-- Sticky Tabs -->
+  <div class="sticky-tabs">
+    <div class="container">
+      <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item">
+          <a class="nav-link active" data-toggle="tab" href="#posts">Posts</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" data-toggle="tab" href="#products">Products</a>
+        </li>
+      </ul>
+    </div>
+  </div>
 
-    <div class="tab-content mt-4">
+  <div class="container">
+
+    <div class="tab-content" style="margin-top: 20px;">
       <!-- Posts Tab -->
       <div id="posts" class="tab-pane fade show active">
         <div class="row">
@@ -70,8 +107,8 @@
             </div>
           <% } else { %>
             <% posts.forEach(post => { %>
-              <div class="col-md-4 mb-4">
-                <div class="card post-card">
+              <div class="col-md-4 col-sm-6 mb-3">
+                <div class="card post-card shadow-sm">
                   <% if (post.media_type === 'image') { %>
                     <img src="<%= post.media_url %>" class="post-media" alt="Post">
                   <% } else if (post.media_type === 'video') { %>
@@ -81,7 +118,7 @@
                   <% } %>
                   <% if (post.content) { %>
                     <div class="card-body">
-                      <p class="small"><%= post.content %></p>
+                      <p><%= post.content %></p>
                     </div>
                   <% } %>
                 </div>
@@ -93,19 +130,22 @@
 
       <!-- Products Tab -->
       <div id="products" class="tab-pane fade">
-        <div class="row">
+        <div class="row product-grid">
           <% if (products.length === 0) { %>
             <div class="col-12 text-center py-5">
               <p class="text-muted">No products yet</p>
             </div>
           <% } else { %>
             <% products.forEach(product => { %>
-              <div class="col-md-3 mb-4">
-                <div class="card product-card" onclick="window.location='/details/<%= product.id %>/'">
-                  <img src="<%= product.image %>" class="card-img-top" alt="<%= product.name %>">
-                  <div class="card-body">
-                    <h6 class="card-title"><%= product.name %></h6>
-                    <p class="text-success font-weight-bold">Rs. <%= product.price %></p>
+              <div class="col-xl-3 col-lg-4 col-6 mb-3">
+                <div class="product text-center" style="height: 100%;">
+                  <a class="d-block" href="/details/<%= product.id %>/">
+                    <img src="<%= product.image %>" alt="<%= product.name %>" loading="lazy">
+                  </a>
+                  <h5><a href="/details/<%= product.id %>/"><%= product.name %></a></h5>
+                  <p class="small text-muted mb-2" style="padding: 0 8px;">Rs. <%= product.price %></p>
+                  <div style="padding: 0 8px 12px;">
+                    <a href="/details/<%= product.id %>/" class="btn btn-sm btn-dark" style="min-width: 100px;">View Details</a>
                   </div>
                 </div>
               </div>

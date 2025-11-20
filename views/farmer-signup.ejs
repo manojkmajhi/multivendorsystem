@@ -306,7 +306,7 @@
                   <label>Email (@cropsay.com)</label>
                   <input type="email" id="email" class="form-control" placeholder="yourname@cropsay.com" required pattern=".*@cropsay\.com$">
                 </div>
-                <button type="submit" class="btn btn-dark btn-block">Send OTP</button>
+                <button type="submit" class="btn btn-dark btn-block" id="sendOtpBtn">Send OTP</button>
               </form>
               <div class="info-text">We'll send a 6-digit code to your email</div>
             </div>
@@ -465,7 +465,7 @@
       currentEmail = $('#email').val();
       const btn = $(this).find('button');
       
-      btn.prop('disabled', true).text('Sending...');
+      btn.prop('disabled', true).text('Sending OTP...');
       
       $.post('/api/farmers/send-otp', { email: currentEmail }, function(res) {
         if (res.success) {
@@ -486,7 +486,7 @@
     // STEP 2: Resend OTP
     $('#resendOtpBtn').on('click', function() {
       const btn = $(this);
-      btn.prop('disabled', true).text('Sending...');
+      btn.prop('disabled', true).text('Sending OTP...');
       
       $.post('/api/farmers/send-otp', { email: currentEmail }, function(res) {
         if (res.success) {

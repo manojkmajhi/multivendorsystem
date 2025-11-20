@@ -13,7 +13,10 @@
   <div class="admin-container">
     <div class="page-header">
       <h1 class="page-title">Products</h1>
-      <a class="btn btn-primary" href="/admin/products/new">+ New Product</a>
+      <div style="display: flex; gap: 0.75rem;">
+        <a class="btn btn-outline-primary" href="/admin/popular-items">⭐ Manage Popular Items</a>
+        <a class="btn btn-primary" href="/admin/products/new">+ New Product</a>
+      </div>
     </div>
 
     <% if(msg){ %>

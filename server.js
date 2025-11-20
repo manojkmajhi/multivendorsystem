@@ -18,9 +18,7 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 // Optimize Express settings
 app.set('x-powered-by', false);
 app.set('etag', 'strong');
-if (NODE_ENV === 'production') {
-  app.set('view cache', true);
-}
+app.set('view cache', false);
 
 // Enable aggressive gzip compression
 app.use(compression({ level: 6, threshold: 1024 }));
@@ -440,12 +438,7 @@ const staticRoot = STATIC_ROOT_CANDIDATES.find(dir => {
 }) || 'public';
 console.log('✓ Static root resolved:', staticRoot);
 
-// Log debug endpoints in development
-if (process.env.NODE_ENV !== 'production') {
-  console.log('🔧 Debug endpoints available:');
-  console.log('  - GET /admin/debug/farmer?email=EMAIL');
-  console.log('  - POST /admin/debug/test-password (body: {email, password})');
-}
+
 // Serve static files with aggressive caching
 app.use('/media', express.static(path.join(__dirname, staticRoot, 'media'), {
   maxAge: '365d',
@@ -1106,6 +1099,32 @@ app.post('/admin/settings/reset-theme', adminGuard, async (req,res)=>{
   } catch(e){
     console.error('THEME_RESET_ERROR', e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to reset colors.' });
+  }
+});
+
+// ---------- Popular Items ----------
+app.get('/admin/popular-items', adminGuard, async (req,res)=>{
+  try {
+    const { data: products } = await supabase.from('products').select('id, name, price, image, is_popular').eq('active', true).order('name');
+    res.render('admin/popular-items', { active: 'popular-items', products: products||[], msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
+  } catch(e){
+    console.error(e);
+    res.status(500).render('simple-message', { title:'Error', message:'Failed to load products.' });
+  }
+});
+
+app.post('/admin/products/:id/toggle-popular', adminGuard, async (req,res)=>{
+  try {
+    const { data } = await supabase.from('products').select('is_popular').eq('id', req.params.id).single();
+    await supabase.from('products').update({ is_popular: !data.is_popular }).eq('id', req.params.id);
+    productCache.flushAll();
+    categoryCache.flushAll();
+    heroCache.flushAll();
+    clearResponseCache();
+    res.redirect('/admin/popular-items?msg=' + encodeURIComponent('Updated'));
+  } catch(e){
+    console.error(e);
+    res.redirect('/admin/popular-items');
   }
 });
 
@@ -1835,71 +1854,26 @@ app.get('/__cache_stats', adminGuard, (req, res) => {
   });
 });
 
-// Debug endpoints (disabled in production)
-if (NODE_ENV !== 'production') {
-app.get('/__debug_products', async (req,res)=>{
-  const list = [...products];
-  if(supabase){
-    try { const { data, error } = await supabase.from('products').select('id,name,price,active').limit(200);
-      if(!error && data){ data.forEach(d=>{ if(!list.find(p=>p.id===d.id)) list.push(d); }); }
-    } catch(e){}
-  }
-  res.json({ count: list.length, ids: list.map(p=>p.id) });
-});
 
-app.get('/__debug_lookup', async (req,res)=>{
-  const id = (req.query.productid||'').trim();
-  let product = null, errInfo = null;
-  try { product = await getAnyProductById(id); } catch(e){ errInfo = String(e); }
-  res.json({ input:id, supabaseConfigured: !!supabase, found: !!product, product, errInfo });
-});
 
-app.get('/__debug_env', (req,res)=>{
-  res.json({ supabaseConfigured: !!supabase, hasUrl: !!process.env.SUPABASE_URL, hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY, hasAnon: !!process.env.SUPABASE_ANON_KEY });
-});
-
-app.get('/__test_add_to_cart', async (req,res)=>{
+// Dynamic homepage
+app.get('/', async (req,res)=>{
   try {
-    const device = req.cookies.device || 'test-device';
-    // Use first available product
-    let testProductId = '455'; // fallback
-    if(supabase){
-      const { data } = await supabase.from('products').select('id').limit(1).single();
-      if(data) testProductId = data.id;
-    }
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     
-    const product = await getAnyProductById(testProductId);
-    if(!product) return res.json({ error: 'No products available to test' });
-    
-    const cart = getCart(device);
-    cart.push({ productId: testProductId, qty: 1 });
-    carts[device] = cart;
-    
-    res.json({ 
-      ok: true, 
-      message: 'Test product added to cart', 
-      device, 
-      productId: testProductId, 
-      productName: product.name,
-      cartSize: cart.length,
-      instructions: 'Now visit /get_cart/ or /cart/ to see if data renders correctly'
-    });
-  } catch(e){
-    res.json({ error: e.message });
-  }
-});
-}
-
-// Dynamic homepage with caching
-app.get('/', cacheMiddleware(30), async (req,res)=>{
-  try {
-    // Parallel fetch with caching
     let heroImages = heroCache.get('active');
+    const categories = await dbFetchCategories();
     
-    const [categories, productsList] = await Promise.all([
-      dbFetchCategories(),
-      dbFetchProducts({ orderLatest:true, limit: 12 })
-    ]);
+    // Fetch popular products or fallback to latest
+    let productsList = [];
+    if(supabase){
+      const { data } = await supabase.from('products').select('*').eq('active', true).eq('is_popular', true).limit(12);
+      productsList = data || [];
+    }
+    // REMOVED FALLBACK - if no popular products, show empty
+    // if(!productsList.length) productsList = await dbFetchProducts({ orderLatest:true, limit: 12 });
     
     if(!heroImages && supabase){
       const { data } = await supabase.from('hero_images').select('*').eq('active', true).order('position');
@@ -2218,12 +2192,25 @@ app.post('/api/sellers/signup-send-otp', async (req,res)=>{
     const { email } = req.body;
     if(!email.endsWith('@cropsay.com')) return res.json({ success:false, message:'Only @cropsay.com emails allowed' });
     
-    const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
-    if(error) return res.json({ success:false, message:'Failed to send OTP' });
+    console.log('📧 Sending Supabase OTP to:', email);
     
-    console.log('✅ Signup OTP sent to', email);
+    const { data, error } = await supabase.auth.signInWithOtp({
+      email: email,
+      options: {
+        shouldCreateUser: true,
+        data: { email_confirm: true }
+      }
+    });
+
+    if(error) {
+      console.error('❌ Supabase OTP Error:', error);
+      return res.json({ success:false, message:'Failed to send OTP: ' + error.message });
+    }
+
+    console.log('✅ Supabase OTP sent to:', email);
     res.json({ success:true });
   } catch(e){
+    console.error('💥 Send OTP Error:', e);
     res.json({ success:false, message:e.message });
   }
 });
@@ -2232,11 +2219,36 @@ app.post('/api/sellers/signup-verify', async (req,res)=>{
   try {
     const { email, otp, password } = req.body;
     
-    const { data, error } = await supabase.auth.verifyOtp({ email, token: otp, type: 'email' });
-    if(error || !data.user) return res.json({ success:false, message:'Invalid OTP' });
+    console.log('🔍 Verifying Supabase OTP for:', email);
     
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: email,
+      token: otp,
+      type: 'email'
+    });
+
+    if(error) {
+      console.error('❌ Supabase OTP verification error:', error);
+      return res.json({ success:false, message:'Invalid or expired OTP' });
+    }
+
+    if(!data.user) {
+      return res.json({ success:false, message:'Invalid or expired OTP' });
+    }
+
     const password_hash = await bcrypt.hash(password, 10);
     const username = email.split('@')[0];
+    
+    // Check if seller already exists
+    const { data: existingSeller } = await supabase
+      .from('sellers')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (existingSeller) {
+      return res.json({ success: false, message: 'Account already exists with this email' });
+    }
     
     const { data: seller, error: createError } = await supabase.from('sellers').insert({
       email,
@@ -2247,14 +2259,28 @@ app.post('/api/sellers/signup-verify', async (req,res)=>{
       status: 'approved'
     }).select().single();
     
-    if(createError) return res.json({ success:false, message:'Failed to create account' });
+    if(createError) {
+      console.error('❌ Seller creation error:', createError);
+      return res.json({ success:false, message:'Failed to create account: ' + createError.message });
+    }
     
-    const sessionCookie = jwt.sign({ farmer_id: seller.id, email, name: seller.full_name, type: 'farmer' }, process.env.JWT_SECRET || 'your-secret-key', { expiresIn: '7d' });
-    res.cookie('farmer_session', sessionCookie, { httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge: 7*24*60*60*1000, sameSite: 'lax' });
+    const sessionCookie = jwt.sign(
+      { farmer_id: seller.id, email, name: seller.full_name, type: 'farmer' },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '7d' }
+    );
+    
+    res.cookie('farmer_session', sessionCookie, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7*24*60*60*1000,
+      sameSite: 'lax'
+    });
     
     console.log('✅ Seller created and logged in:', seller.id);
     res.json({ success:true });
   } catch(e){
+    console.error('💥 Seller signup error:', e);
     res.json({ success:false, message:e.message });
   }
 });
@@ -2291,23 +2317,28 @@ app.post('/api/farmers/send-otp', async (req,res)=>{
     const { email } = req.body;
     if(!email.endsWith('@cropsay.com')) return res.json({ success:false, message:'Only @cropsay.com emails allowed' });
     
-    // Use Supabase OTP
-    const { error } = await supabase.auth.signInWithOtp({
+    console.log('📧 Sending Supabase OTP to:', email);
+    
+    // Use Supabase OTP with proper configuration
+    const { data, error } = await supabase.auth.signInWithOtp({
       email: email,
       options: {
-        emailRedirectTo: `${process.env.APP_URL || 'http://localhost:3000'}/farmers/signup`
+        shouldCreateUser: true,
+        data: {
+          email_confirm: true
+        }
       }
     });
 
     if(error) {
-      console.error('Supabase OTP Error:', error);
-      return res.json({ success:false, message:'Failed to send OTP' });
+      console.error('❌ Supabase OTP Error:', error);
+      return res.json({ success:false, message:'Failed to send OTP: ' + error.message });
     }
 
-    console.log('OTP sent to', email);
+    console.log('✅ Supabase OTP sent to:', email);
     res.json({ success:true, message:'OTP sent to your email' });
   } catch(e){
-    console.error('Send OTP Error:', e);
+    console.error('💥 Send OTP Error:', e);
     res.json({ success:false, message:e.message });
   }
 });
@@ -2316,6 +2347,8 @@ app.post('/api/farmers/verify-otp', async (req,res)=>{
   try {
     const { email, otp } = req.body;
     
+    console.log('🔍 Verifying Supabase OTP for:', email);
+    
     // Verify OTP with Supabase
     const { data, error } = await supabase.auth.verifyOtp({
       email: email,
@@ -2323,13 +2356,21 @@ app.post('/api/farmers/verify-otp', async (req,res)=>{
       type: 'email'
     });
 
-    if(!error && data.user) {
+    if(error) {
+      console.error('❌ Supabase OTP verification error:', error);
+      return res.json({ success:false, message:'Invalid or expired OTP' });
+    }
+
+    if(data.user) {
+      console.log('✅ Supabase OTP verified for:', email);
+      // Store verification in session for signup completion
+      otpStore[email] = { verified: true, supabaseUser: data.user };
       res.json({ success:true });
     } else {
       return res.json({ success:false, message:'Invalid or expired OTP' });
     }
   } catch(e){
-    console.error('Verify OTP Error:', e);
+    console.error('💥 Verify OTP Error:', e);
     res.json({ success:false, message:e.message });
   }
 });
@@ -2338,57 +2379,54 @@ app.post('/api/farmers/complete-signup', async (req,res)=>{
   try {
     const { email, name, phone, password, businessName } = req.body;
 
+    // Check if OTP was verified
+    const stored = otpStore[email];
+    if (!stored || !stored.verified) {
+      return res.json({ success: false, message: 'Please verify OTP first' });
+    }
+
     // Validate required fields
     if (!email || !name || !phone || !password || !businessName) {
       return res.json({ success: false, message: 'All fields are required' });
     }
 
-    // Hash password so farmer can log in later
     const password_hash = await bcrypt.hash(password, 10);
 
-    // Check if farmer already exists
-    const { data: existingFarmer, error: checkError } = await supabase
-      .from('farmers')
+    // Check if seller already exists
+    const { data: existingSeller } = await supabase
+      .from('sellers')
       .select('id')
       .eq('email', email)
       .single();
 
-    if (existingFarmer) {
-      return res.json({ success: false, message: 'Farmer already exists with this email' });
+    if (existingSeller) {
+      return res.json({ success: false, message: 'Account already exists with this email' });
     }
 
-    // Create farmer record using service role (bypass RLS)
-    const { data: newFarmer, error: insertError } = await supabase
-      .from('farmers')
+    // Create seller record
+    const { data: newSeller, error: insertError } = await supabase
+      .from('sellers')
       .insert({
         email,
         full_name: name,
         phone,
         business_name: businessName,
-        status: 'approved', // Auto-approve for now
+        status: 'approved',
         password_hash
       })
       .select()
       .single();
 
     if (insertError) {
-      console.error('Farmer insert error:', insertError);
-      return res.json({ success: false, message: 'Failed to create farmer account: ' + insertError.message });
+      return res.json({ success: false, message: 'Failed to create account: ' + insertError.message });
     }
 
-    if (!newFarmer) {
-      console.error('No farmer returned after insert');
-      return res.json({ success: false, message: 'Failed to create farmer account: No data returned' });
-    }
+    // Clean up OTP
+    delete otpStore[email];
 
-    // Create session cookie for automatic login
+    // Create session
     const sessionCookie = jwt.sign(
-      {
-        farmer_id: newFarmer.id,
-        email: email,
-        name: name,
-        type: 'farmer'
-      },
+      { farmer_id: newSeller.id, email, name, type: 'farmer' },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '7d' }
     );
@@ -2396,20 +2434,15 @@ app.post('/api/farmers/complete-signup', async (req,res)=>{
     res.cookie('farmer_session', sessionCookie, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       sameSite: 'lax'
     });
 
-    console.log('Farmer created successfully:', newFarmer.id, email);
-
-    res.json({
-      success: true,
-      message: 'Signup successful',
-      redirectUrl: '/farmers/dashboard'
-    });
+    console.log('✅ Account created:', email);
+    res.json({ success: true, redirectUrl: '/farmers/dashboard' });
 
   } catch(e){
-    console.error('Complete signup error:', e);
+    console.error('💥 Signup error:', e);
     res.json({ success: false, message: 'Error completing signup: ' + e.message });
   }
 });
@@ -2594,58 +2627,7 @@ app.get('/farmers/login', (req,res)=>{
   res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: null });
 });
 
-// Development-only debug endpoints: inspect farmer record and test password
-if (process.env.NODE_ENV !== 'production') {
-  app.get('/admin/debug/farmer', async (req, res) => {
-    try {
-      const email = req.query.email;
-      if (!email) return res.json({ success: false, message: 'email query param required' });
 
-      const { data, error } = await supabase.from('sellers').select('id,email,status,password_hash,full_name,created_at').eq('email', email).single();
-      if (error) return res.json({ success: false, message: error.message });
-
-      return res.json({
-        success: true,
-        farmer: {
-          id: data.id,
-          email: data.email,
-          full_name: data.full_name,
-          status: data.status,
-          has_password_hash: !!data.password_hash,
-          password_hash_length: data.password_hash ? data.password_hash.length : 0,
-          created_at: data.created_at
-        }
-      });
-    } catch (e) {
-      console.error('Debug farmer error:', e);
-      res.json({ success: false, message: e.message });
-    }
-  });
-  
-  app.post('/admin/debug/test-password', async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      if (!email || !password) return res.json({ success: false, message: 'email and password required' });
-
-      const { data, error } = await supabase.from('sellers').select('password_hash').eq('email', email).single();
-      if (error) return res.json({ success: false, message: error.message });
-      if (!data.password_hash) return res.json({ success: false, message: 'No password hash found' });
-
-      const match = await bcrypt.compare(password, data.password_hash);
-      return res.json({
-        success: true,
-        password_match: match,
-        hash_info: {
-          length: data.password_hash.length,
-          starts_with: data.password_hash.substring(0, 10) + '...'
-        }
-      });
-    } catch (e) {
-      console.error('Debug password test error:', e);
-      res.json({ success: false, message: e.message });
-    }
-  });
-}
 
 // Sellers login POST (redirect to farmers for backward compatibility)
 app.post('/sellers/login', (req,res) => res.redirect(307, '/farmers/login'));

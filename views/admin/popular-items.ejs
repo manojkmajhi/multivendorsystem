@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Popular Items - <%= siteSetting.name %></title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="/css/admin-style.css?v=3.0" />
+  <style>
+    .popular-toolbar {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .popular-toolbar .search-box {
+      flex: 1;
+      min-width: 300px;
+    }
+    .bulk-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .product-img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 2px solid var(--border-color);
+    }
+    .checkbox-cell {
+      width: 40px;
+      text-align: center;
+    }
+    .checkbox-cell input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+    .selected-count {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+  </style>
+</head>
+<body>
+  <%- include('../partials/admin-nav', { active: 'popular-items' }) %>
+
+  <div class="admin-container">
+    <div class="page-header">
+      <h1 class="page-title">Popular Items Management</h1>
+      <a class="btn btn-outline-primary" href="/admin/products">← Back to Products</a>
+    </div>
+
+    <% if(msg){ %>
+      <div class="alert alert-success"><%= msg %></div>
+    <% } %>
+
+    <% if(products && products.length > 0) { %>
+      <!-- Toolbar -->
+      <div class="popular-toolbar">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input 
+            type="search" 
+            id="productSearch" 
+            class="search-input" 
+            placeholder="Search products by name..."
+            autocomplete="off"
+          />
+          <span class="search-count" id="searchCount"></span>
+        </div>
+        <div class="bulk-actions">
+          <span class="selected-count" id="selectedCount">0 selected</span>
+          <button class="btn btn-sm btn-success" id="markPopularBtn" disabled>⭐ Mark as Popular</button>
+          <button class="btn btn-sm btn-outline-warning" id="unmarkPopularBtn" disabled>❌ Remove Popular</button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <div class="table-responsive">
+          <table id="popularTable">
+            <thead>
+              <tr>
+                <th class="checkbox-cell">
+                  <input type="checkbox" id="selectAll" title="Select All">
+                </th>
+                <th>Image</th>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Popular</th>
+              </tr>
+            </thead>
+            <tbody>
+            <% products.forEach(p => { %>
+              <tr class="product-row" data-search="<%= p.name.toLowerCase() %>" data-id="<%= p.id %>" data-popular="<%= p.is_popular ? 'true' : 'false' %>">
+                <td class="checkbox-cell">
+                  <input type="checkbox" class="product-checkbox" value="<%= p.id %>">
+                </td>
+                <td>
+                  <% if(p.image) { %>
+                    <img src="<%= p.image %>" alt="<%= p.name %>" class="product-img">
+                  <% } else { %>
+                    <div class="product-img" style="background: var(--gray-200); display: flex; align-items: center; justify-content: center; color: var(--gray-400); font-size: 20px;">📷</div>
+                  <% } %>
+                </td>
+                <td><strong><%= p.name %></strong></td>
+                <td><strong>Rs. <%= p.price %></strong></td>
+                <td>
+                  <form method="POST" action="/admin/products/<%= p.id %>/toggle-popular" style="display:inline;">
+                    <button type="submit" class="btn btn-sm <%= p.is_popular ? 'btn-success' : 'btn-outline-secondary' %>">
+                      <%= p.is_popular ? '⭐ Popular' : 'Mark Popular' %>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+            </tbody>
+          </table>
+        </div>
+        
+        <div id="noResults" class="empty-state" style="display: none; padding: 3rem;">
+          <div class="empty-state-icon">🔍</div>
+          <h3 class="empty-state-title">No products found</h3>
+          <p class="empty-state-text">Try adjusting your search terms.</p>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="card">
+        <div class="card-body">
+          <div class="empty-state">
+            <div class="empty-state-icon">📦</div>
+            <h3 class="empty-state-title">No Products Yet</h3>
+            <p class="empty-state-text">Add products first to manage popular items.</p>
+            <a href="/admin/products/new" class="btn btn-primary mt-3">+ Add Your First Product</a>
+          </div>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <footer class="admin-footer">
+    &copy; <%= new Date().getFullYear() %> <%= (siteSetting && siteSetting.name) || 'Admin' %>. All rights reserved.
+  </footer>
+
+  <script>
+    // Search functionality
+    const searchInput = document.getElementById('productSearch');
+    const searchCount = document.getElementById('searchCount');
+    const productRows = document.querySelectorAll('.product-row');
+    const noResults = document.getElementById('noResults');
+    const tableBody = document.querySelector('#popularTable tbody');
+
+    function updateSearch() {
+      const query = searchInput.value.toLowerCase().trim();
+      let visibleCount = 0;
+
+      productRows.forEach(row => {
+        const searchText = row.dataset.search;
+        if (searchText.includes(query)) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      if (visibleCount === 0) {
+        tableBody.style.display = 'none';
+        noResults.style.display = 'block';
+      } else {
+        tableBody.style.display = '';
+        noResults.style.display = 'none';
+      }
+
+      searchCount.textContent = query ? `${visibleCount} result${visibleCount !== 1 ? 's' : ''}` : '';
+    }
+
+    searchInput.addEventListener('input', updateSearch);
+
+    // Multiple selection functionality
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const productCheckboxes = document.querySelectorAll('.product-checkbox');
+    const selectedCount = document.getElementById('selectedCount');
+    const markPopularBtn = document.getElementById('markPopularBtn');
+    const unmarkPopularBtn = document.getElementById('unmarkPopularBtn');
+
+    function updateSelectedCount() {
+      const checked = document.querySelectorAll('.product-checkbox:checked');
+      const count = checked.length;
+      selectedCount.textContent = `${count} selected`;
+      markPopularBtn.disabled = count === 0;
+      unmarkPopularBtn.disabled = count === 0;
+    }
+
+    selectAllCheckbox.addEventListener('change', function() {
+      const visibleCheckboxes = Array.from(productCheckboxes).filter(cb => {
+        return cb.closest('.product-row').style.display !== 'none';
+      });
+      visibleCheckboxes.forEach(cb => cb.checked = this.checked);
+      updateSelectedCount();
+    });
+
+    productCheckboxes.forEach(cb => {
+      cb.addEventListener('change', updateSelectedCount);
+    });
+
+    // Bulk mark as popular
+    markPopularBtn.addEventListener('click', async function() {
+      const checked = Array.from(document.querySelectorAll('.product-checkbox:checked'));
+      const ids = checked.map(cb => cb.value);
+      
+      if (ids.length === 0) return;
+      
+      if (!confirm(`Mark ${ids.length} product(s) as popular?`)) return;
+      
+      this.disabled = true;
+      this.textContent = 'Processing...';
+      
+      for (const id of ids) {
+        const row = document.querySelector(`tr[data-id="${id}"]`);
+        if (row && row.dataset.popular !== 'true') {
+          const form = row.querySelector('form');
+          if (form) {
+            await fetch(form.action, { method: 'POST' });
+          }
+        }
+      }
+      
+      window.location.reload();
+    });
+
+    // Bulk remove popular
+    unmarkPopularBtn.addEventListener('click', async function() {
+      const checked = Array.from(document.querySelectorAll('.product-checkbox:checked'));
+      const ids = checked.map(cb => cb.value);
+      
+      if (ids.length === 0) return;
+      
+      if (!confirm(`Remove popular status from ${ids.length} product(s)?`)) return;
+      
+      this.disabled = true;
+      this.textContent = 'Processing...';
+      
+      for (const id of ids) {
+        const row = document.querySelector(`tr[data-id="${id}"]`);
+        if (row && row.dataset.popular === 'true') {
+          const form = row.querySelector('form');
+          if (form) {
+            await fetch(form.action, { method: 'POST' });
+          }
+        }
+      }
+      
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>
