@@ -2797,8 +2797,8 @@ app.get('/farmers/products', sellerGuard, async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
     const farmerId = decoded.farmer_id;
 
-    const { data: farmer } = await supabase.from('farmers').select('full_name').eq('id', farmerId).single();
-    const { data: products } = await supabase.from('products').select('*').eq('farmer_id', farmerId).order('created_at', { ascending: false });
+    const { data: farmer } = await supabase.from('sellers').select('full_name').eq('id', farmerId).single();
+    const { data: products } = await supabase.from('products').select('*').eq('seller_id', farmerId).order('created_at', { ascending: false });
 
     res.render('farmer-products', {
       farmer,
@@ -2817,7 +2817,7 @@ app.get('/farmers/products/new', sellerGuard, async (req, res) => {
   try {
     const token = req.cookies.farmer_session;
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    const { data: farmer } = await supabase.from('farmers').select('full_name').eq('id', decoded.farmer_id).single();
+    const { data: farmer } = await supabase.from('sellers').select('full_name').eq('id', decoded.farmer_id).single();
 
     const categories = await dbFetchCategories();
 
@@ -2851,7 +2851,7 @@ app.post('/farmers/products/new', sellerGuard, upload.single('image'), async (re
       short_description,
       long_description,
       image,
-      farmer_id: farmerId,
+      seller_id: farmerId,
       active: true, // Auto-approve products for now
       type: 'Product'
     });
@@ -2873,11 +2873,11 @@ app.get('/farmers/products/:id/edit', sellerGuard, async (req, res) => {
     const farmerId = decoded.farmer_id;
     const { id } = req.params;
 
-    const { data: farmer } = await supabase.from('farmers').select('full_name').eq('id', farmerId).single();
+    const { data: farmer } = await supabase.from('sellers').select('full_name').eq('id', farmerId).single();
     const { data: item, error } = await supabase.from('products').select('*').eq('id', id).single();
 
     if (error || !item) return res.status(404).render('simple-message', { title: 'Not Found', message: 'Product not found.' });
-    if (item.farmer_id !== farmerId) return res.status(403).render('simple-message', { title: 'Forbidden', message: 'You do not own this product.' });
+    if (item.seller_id !== farmerId) return res.status(403).render('simple-message', { title: 'Forbidden', message: 'You do not own this product.' });
 
     const categories = await dbFetchCategories();
 
@@ -2901,8 +2901,8 @@ app.post('/farmers/products/:id/edit', sellerGuard, upload.single('image'), asyn
     const farmerId = decoded.farmer_id;
     const { id } = req.params;
 
-    const { data: existingProduct } = await supabase.from('products').select('id, farmer_id, image').eq('id', id).single();
-    if (!existingProduct || existingProduct.farmer_id !== farmerId) {
+    const { data: existingProduct } = await supabase.from('products').select('id, seller_id, image').eq('id', id).single();
+    if (!existingProduct || existingProduct.seller_id !== farmerId) {
       return res.status(403).render('simple-message', { title: 'Forbidden', message: 'You do not own this product.' });
     }
 
@@ -2940,8 +2940,8 @@ app.post('/farmers/products/:id/delete', sellerGuard, async (req, res) => {
     const farmerId = decoded.farmer_id;
     const { id } = req.params;
 
-    const { data: product } = await supabase.from('products').select('id, farmer_id').eq('id', id).single();
-    if (!product || product.farmer_id !== farmerId) {
+    const { data: product } = await supabase.from('products').select('id, seller_id').eq('id', id).single();
+    if (!product || product.seller_id !== farmerId) {
       return res.status(403).render('simple-message', { title: 'Forbidden', message: 'You do not own this product.' });
     }
 
@@ -2968,7 +2968,7 @@ app.post('/farmers/profile/update', sellerGuard, upload.fields([{ name: 'profile
     if (req.files?.profile_image) updateData.profile_image = '/media/uploads/' + req.files.profile_image[0].filename;
     if (req.files?.cover_image) updateData.cover_image = '/media/uploads/' + req.files.cover_image[0].filename;
 
-    await supabase.from('farmers').update(updateData).eq('id', farmerId);
+    await supabase.from('sellers').update(updateData).eq('id', farmerId);
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -3031,7 +3031,7 @@ app.post('/admin/farmer-applications/approve', adminGuard, async (req, res) => {
     const { data: app } = await supabase.from('farmer_applications').select('*').eq('id', application_id).single();
     const email = email_prefix + '@cropsay.com';
     const password_hash = await bcrypt.hash(password, 10);
-    await supabase.from('farmers').insert({ email, full_name: app.full_name, phone: app.phone, business_name: app.business_name, location: app.location, password_hash, status: 'approved' });
+    await supabase.from('sellers').insert({ email, full_name: app.full_name, phone: app.phone, business_name: app.business_name, location: app.location, password_hash, status: 'approved' });
     await supabase.from('farmer_applications').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', application_id);
     res.json({ success: true, email, password });
   } catch (e) {
@@ -3201,7 +3201,7 @@ app.post('/admin/sellers/add', adminGuard, upload.single('profile_image'), async
 app.post('/admin/sellers/:id/approve', adminGuard, async (req, res) => {
   try {
     const { error } = await supabase
-      .from('farmers')
+      .from('sellers')
       .update({ status: 'approved', updated_at: new Date().toISOString() })
       .eq('id', req.params.id);
 
@@ -3217,7 +3217,7 @@ app.post('/admin/sellers/:id/approve', adminGuard, async (req, res) => {
 app.post('/admin/sellers/:id/suspend', adminGuard, async (req, res) => {
   try {
     const { error } = await supabase
-      .from('farmers')
+      .from('sellers')
       .update({ status: 'suspended', updated_at: new Date().toISOString() })
       .eq('id', req.params.id);
 
@@ -3233,7 +3233,7 @@ app.post('/admin/sellers/:id/suspend', adminGuard, async (req, res) => {
 app.post('/admin/sellers/:id/reactivate', adminGuard, async (req, res) => {
   try {
     const { error } = await supabase
-      .from('farmers')
+      .from('sellers')
       .update({ status: 'approved', updated_at: new Date().toISOString() })
       .eq('id', req.params.id);
 
@@ -3249,10 +3249,10 @@ app.post('/admin/sellers/:id/reactivate', adminGuard, async (req, res) => {
 app.post('/admin/sellers/:id/delete', adminGuard, async (req, res) => {
   try {
     // First, update all products to remove seller reference
-    await supabase.from('products').update({ farmer_id: null }).eq('farmer_id', req.params.id);
+    await supabase.from('products').update({ seller_id: null }).eq('seller_id', req.params.id);
 
     // Then delete the seller
-    const { error } = await supabase.from('farmers').delete().eq('id', req.params.id);
+    const { error } = await supabase.from('sellers').delete().eq('id', req.params.id);
 
     if (error) throw error;
     res.json({ success: true });
