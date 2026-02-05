@@ -37,9 +37,9 @@ if (process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || proces
     db: { schema: 'public' },
     global: { headers: { 'x-connection-pool': 'enabled' } }
   });
-  console.log('✓ Supabase client initialized with pooling', { 
-    url: process.env.SUPABASE_URL, 
-    keyType: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'service_role' : 'anon' 
+  console.log('✓ Supabase client initialized with pooling', {
+    url: process.env.SUPABASE_URL,
+    keyType: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'service_role' : 'anon'
   });
 } else {
   console.warn('Supabase environment variables not set. Admin features disabled until configured.');
@@ -107,33 +107,33 @@ async function sendOTPEmail(email, otp) {
         </p>
       `
     };
-    
+
     await emailTransporter.sendMail(mailOptions);
     console.log('✓ OTP email sent to:', email);
     return true;
-  } catch(err) {
+  } catch (err) {
     console.error('Email send error:', err.message);
     return false;
   }
 }
 
 // Settings helpers with aggressive caching
-async function getSetting(key, fallback = null){
-  if(!supabase) return fallback;
-  
+async function getSetting(key, fallback = null) {
+  if (!supabase) return fallback;
+
   const cached = settingsCache.get(key);
-  if(cached !== undefined) return cached;
-  
+  if (cached !== undefined) return cached;
+
   const { data, error } = await supabase.from('settings').select('value').eq('key', key).single();
-  if(error) return fallback;
-  
+  if (error) return fallback;
+
   settingsCache.set(key, data.value);
   return data.value;
 }
-async function setSetting(key, value){
-  if(!supabase) return false;
+async function setSetting(key, value) {
+  if (!supabase) return false;
   const { error } = await supabase.from('settings').upsert({ key, value });
-  if(error){ console.error('Failed to set setting', key, error); return false; }
+  if (error) { console.error('Failed to set setting', key, error); return false; }
   settingsCache.set(key, value);
   clearResponseCache();
   return true;
@@ -144,61 +144,61 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Performance and security headers
-app.use((req,res,next)=>{
+app.use((req, res, next) => {
   res.locals.title = 'All Strawhats';
   // Security headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
+
   // Performance headers
   res.setHeader('X-DNS-Prefetch-Control', 'on');
   res.setHeader('Accept-CH', 'DPR, Viewport-Width, Width, Save-Data');
-  
+
   // Enable compression for all responses
   if (req.headers['accept-encoding'] && req.headers['accept-encoding'].includes('gzip')) {
     res.setHeader('Vary', 'Accept-Encoding');
   }
-  
+
   next();
 });
 
 // -------- Site Setting Injection (for dynamic logo/name in admin UI) --------
 let siteCache = { value: null, fetchedAt: 0 };
-async function loadSiteSetting(force=false){
-  if(!supabase) return { name: 'Cropsay', logo_url: '/staticfiles/brand.svg' };
-  if(!force && siteCache.value && Date.now() - siteCache.fetchedAt < 60_000){
+async function loadSiteSetting(force = false) {
+  if (!supabase) return { name: 'Cropsay', logo_url: '/staticfiles/brand.svg' };
+  if (!force && siteCache.value && Date.now() - siteCache.fetchedAt < 60_000) {
     return siteCache.value;
   }
   try {
     const site = await getSetting('site', { name: 'Cropsay', logo_url: '/staticfiles/brand.svg' });
     siteCache = { value: site, fetchedAt: Date.now() };
     return site;
-  } catch(e){
+  } catch (e) {
     return { name: 'Cropsay', logo_url: '/staticfiles/brand.svg' };
   }
 }
 
 // -------- Theme Management --------
 let themeCache = { value: null, fetchedAt: 0 };
-async function loadTheme(force=false){
-  if(!supabase) return 'blue';
-  if(!force && themeCache.value && Date.now() - themeCache.fetchedAt < 60_000){
+async function loadTheme(force = false) {
+  if (!supabase) return 'blue';
+  if (!force && themeCache.value && Date.now() - themeCache.fetchedAt < 60_000) {
     return themeCache.value;
   }
   try {
     const theme = await getSetting('theme', 'blue');
     themeCache = { value: theme, fetchedAt: Date.now() };
     return theme;
-  } catch(e){
+  } catch (e) {
     return 'blue';
   }
 }
 
 // Dynamic CSS endpoint - MUST be before middleware
-app.get('/custom-theme.css', async (req,res)=>{
-  const colors = await getSetting('theme_colors', { 
+app.get('/custom-theme.css', async (req, res) => {
+  const colors = await getSetting('theme_colors', {
     btn_bg: '#000000', btn_text: '#ffffff', btn_hover: '#333333',
     link_color: '#007bff', link_hover: '#0056b3',
     navbar_bg: '#ffffff', navbar_text: '#000000',
@@ -207,7 +207,7 @@ app.get('/custom-theme.css', async (req,res)=>{
     success_color: '#28a745', danger_color: '#dc3545'
   });
   console.log('🎨 Serving custom theme CSS:', colors);
-  
+
   const css = `
 /* Advanced Custom Theme */
 .btn, .btn-dark, .btn-primary, button.btn-dark, button.btn-primary {
@@ -246,7 +246,7 @@ footer *, .footer * { color: ${colors.footer_text} !important; }
 .alert-danger, .badge-danger, .bg-danger { background-color: ${colors.danger_color} !important; }
 .text-danger { color: ${colors.danger_color} !important; }
   `;
-  
+
   res.setHeader('Content-Type', 'text/css');
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
@@ -255,8 +255,8 @@ footer *, .footer * { color: ${colors.footer_text} !important; }
 });
 
 // Theme customizer routes
-app.get('/admin/theme-customizer', adminGuard, async (req,res)=>{
-  const colors = await getSetting('theme_colors', { 
+app.get('/admin/theme-customizer', adminGuard, async (req, res) => {
+  const colors = await getSetting('theme_colors', {
     btn_bg: '#000000', btn_text: '#ffffff', btn_hover: '#333333',
     link_color: '#007bff', link_hover: '#0056b3',
     success_color: '#28a745', danger_color: '#dc3545'
@@ -264,18 +264,18 @@ app.get('/admin/theme-customizer', adminGuard, async (req,res)=>{
   res.render('admin/theme-customizer', { active: 'theme', colors, siteSetting: res.locals.siteSetting });
 });
 
-app.post('/admin/theme-customizer/save', adminGuard, async (req,res)=>{
+app.post('/admin/theme-customizer/save', adminGuard, async (req, res) => {
   try {
     const { colors } = req.body;
     await setSetting('theme_colors', colors);
     res.json({ success: true });
-  } catch(e){
+  } catch (e) {
     console.error('THEME_SAVE_ERROR', e);
     res.status(500).json({ success: false, error: e.message });
   }
 });
 
-app.use(async (req,res,next)=>{
+app.use(async (req, res, next) => {
   res.locals.siteSetting = await loadSiteSetting();
   const customColors = await getSetting('custom_colors', { primary: '#2b90d9', secondary: '#6c757d', success: '#28a745', danger: '#dc3545' });
   res.locals.customColors = customColors;
@@ -297,8 +297,8 @@ const OTP_EXPIRY = 10 * 60 * 1000; // 10 minutes for OTP validity
 // Cached product lookup with automatic refresh
 async function getCachedProduct(id) {
   const cached = productCache.get(id);
-  if(cached) return cached;
-  
+  if (cached) return cached;
+
   const product = await getAnyProductById(id);
   if (product) productCache.set(id, product);
   return product;
@@ -321,77 +321,77 @@ const products = [
   { id: '12', name: 'Levi Fuck You', price: 45, image: '/media/12_Levi%20Fuck%20You%26angry%2C.jpg', type: 'Product', category: 'Anime', active: true }
 ];
 
-function normalizeType(t){
-  if(!t) return 'Product';
-  if(t === 'Sticker') return 'Product';
-  if(t === 'Sticker Pack') return 'Pack';
+function normalizeType(t) {
+  if (!t) return 'Product';
+  if (t === 'Sticker') return 'Product';
+  if (t === 'Sticker Pack') return 'Pack';
   return t;
 }
 
 // Unified product lookup (DB first if configured, then fallback array)
-async function getAnyProductById(id){
-  if(!id) return null;
+async function getAnyProductById(id) {
+  if (!id) return null;
   id = String(id).trim();
-  if(NODE_ENV !== 'production') console.log('→ getAnyProductById called', { id, hasSupabase: !!supabase });
-  
-  if(supabase){
+  if (NODE_ENV !== 'production') console.log('→ getAnyProductById called', { id, hasSupabase: !!supabase });
+
+  if (supabase) {
     try {
       // Direct query by id (UUID primary key) - service role bypasses RLS
       const { data, error } = await supabase.from('products').select('*').eq('id', id).maybeSingle();
-      
-      if(error){
-        if(NODE_ENV !== 'production') console.error('❌ SUPABASE_PRODUCT_LOOKUP_ERROR', { id, error: error.message });
-      } else if(data) {
-        if(NODE_ENV !== 'production') console.log('✓ SUPABASE_PRODUCT_LOOKUP_SUCCESS', { id, name: data.name });
+
+      if (error) {
+        if (NODE_ENV !== 'production') console.error('❌ SUPABASE_PRODUCT_LOOKUP_ERROR', { id, error: error.message });
+      } else if (data) {
+        if (NODE_ENV !== 'production') console.log('✓ SUPABASE_PRODUCT_LOOKUP_SUCCESS', { id, name: data.name });
         return data;
       }
 
-    } catch(e){ 
-      if(NODE_ENV !== 'production') console.error('💥 SUPABASE_PRODUCT_LOOKUP_EXCEPTION', { id, error: e.message }); 
+    } catch (e) {
+      if (NODE_ENV !== 'production') console.error('💥 SUPABASE_PRODUCT_LOOKUP_EXCEPTION', { id, error: e.message });
     }
   }
-  
+
   // Fallback to in-memory products
-  const memMatch = products.find(p=>p.id === id);
-  if(memMatch) return memMatch;
-  
-  if(NODE_ENV !== 'production') console.warn('❌ Product not found', { id });
+  const memMatch = products.find(p => p.id === id);
+  if (memMatch) return memMatch;
+
+  if (NODE_ENV !== 'production') console.warn('❌ Product not found', { id });
   return null;
 }
 
 // --- Data access helpers with caching ---
 async function dbFetchProducts(filter = {}) {
-  if(!supabase) {
-    let list = products.filter(p=>p.active!==false);
-    if(filter.category) list = list.filter(p=> (p.category||'').toLowerCase() === filter.category.toLowerCase());
-    if(filter.id) list = list.filter(p=> p.id === filter.id);
+  if (!supabase) {
+    let list = products.filter(p => p.active !== false);
+    if (filter.category) list = list.filter(p => (p.category || '').toLowerCase() === filter.category.toLowerCase());
+    if (filter.id) list = list.filter(p => p.id === filter.id);
     return list;
   }
-  
+
   // Cache key based on filter
   const cacheKey = JSON.stringify(filter);
   const cached = productCache.get(cacheKey);
-  if(cached) return cached;
-  
+  if (cached) return cached;
+
   let query = supabase.from('products').select('*').eq('active', true);
-  if(filter.category && filter.category.toLowerCase() !== 'all') {
+  if (filter.category && filter.category.toLowerCase() !== 'all') {
     query = query.eq('category', filter.category);
   }
-  if(filter.id) {
+  if (filter.id) {
     query = query.eq('id', filter.id);
   }
-  if(filter.orderLatest) query = query.order('created_at', { ascending:false });
-  if(filter.limit) query = query.limit(filter.limit);
-  
+  if (filter.orderLatest) query = query.order('created_at', { ascending: false });
+  if (filter.limit) query = query.limit(filter.limit);
+
   const { data, error } = await query;
-  if(error) { console.error('DB_PRODUCTS_ERROR', error); return []; }
-  
+  if (error) { console.error('DB_PRODUCTS_ERROR', error); return []; }
+
   const result = data || [];
   productCache.set(cacheKey, result);
   return result;
 }
 
-async function dbFetchProductById(id){
+async function dbFetchProductById(id) {
   const list = await dbFetchProducts({ id });
   return list[0] || null;
 }
@@ -409,18 +409,18 @@ const fallbackCategories = [
   { name: 'Marvel-Studios', image: '/staticfiles/Marvel-Studios.jpg' }
 ];
 
-async function dbFetchCategories(force=false){
-  if(!supabase) return fallbackCategories;
-  
-  if(!force) {
+async function dbFetchCategories(force = false) {
+  if (!supabase) return fallbackCategories;
+
+  if (!force) {
     const cached = categoryCache.get('all');
-    if(cached) return cached;
+    if (cached) return cached;
   }
-  
+
   const { data, error } = await supabase.from('categories').select('*').order('created_at');
-  if(error){ console.error('DB_CATEGORIES_ERROR', error); return fallbackCategories; }
-  
-  const normalized = (data||[]).map(c=> ({ ...c, image: c.image_url || c.image || '' }));
+  if (error) { console.error('DB_CATEGORIES_ERROR', error); return fallbackCategories; }
+
+  const normalized = (data || []).map(c => ({ ...c, image: c.image_url || c.image || '' }));
   categoryCache.set('all', normalized);
   return normalized;
 }
@@ -434,7 +434,7 @@ app.set('view engine', 'ejs');
 // Add any newly renamed static bundles here; order = priority.
 const STATIC_ROOT_CANDIDATES = ['strawhats', 'mugiwara', 'allstrawhats'];
 const staticRoot = STATIC_ROOT_CANDIDATES.find(dir => {
-  try { return fs.existsSync(path.join(__dirname, dir)); } catch(e){ return false; }
+  try { return fs.existsSync(path.join(__dirname, dir)); } catch (e) { return false; }
 }) || 'public';
 console.log('✓ Static root resolved:', staticRoot);
 
@@ -512,20 +512,20 @@ function handleMulterError(err, req, res, next) {
   if (err instanceof multer.MulterError) {
     console.error('Multer error:', err);
     if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).render('simple-message', { 
-        title: 'Error', 
-        message: 'File too large. Maximum size is 5MB.' 
+      return res.status(400).render('simple-message', {
+        title: 'Error',
+        message: 'File too large. Maximum size is 5MB.'
       });
     }
-    return res.status(400).render('simple-message', { 
-      title: 'Error', 
-      message: 'File upload error: ' + err.message 
+    return res.status(400).render('simple-message', {
+      title: 'Error',
+      message: 'File upload error: ' + err.message
     });
   } else if (err) {
     console.error('Upload error:', err);
-    return res.status(500).render('simple-message', { 
-      title: 'Error', 
-      message: err.message 
+    return res.status(500).render('simple-message', {
+      title: 'Error',
+      message: err.message
     });
   }
   next();
@@ -534,44 +534,44 @@ function handleMulterError(err, req, res, next) {
 // -------- Admin Auth (very light placeholder) --------
 // For now use a simple header token or query param; later integrate Supabase auth.
 let cachedAdminHash = null;
-async function getAdminHash(){
-  if(!supabase) return null;
-  if(cachedAdminHash) return cachedAdminHash;
-  const { data, error } = await supabase.from('settings').select('value').eq('key','admin_auth').single();
-  if(!error && data && data.value && data.value.password_hash){
+async function getAdminHash() {
+  if (!supabase) return null;
+  if (cachedAdminHash) return cachedAdminHash;
+  const { data, error } = await supabase.from('settings').select('value').eq('key', 'admin_auth').single();
+  if (!error && data && data.value && data.value.password_hash) {
     cachedAdminHash = data.value.password_hash;
     return cachedAdminHash;
   }
   return null;
 }
-async function adminGuard(req,res,next){
+async function adminGuard(req, res, next) {
   const sessionToken = req.cookies.admin_session;
   const hash = await getAdminHash();
   // If no password has been set yet, allow fallback dev token
-  if(!hash){
+  if (!hash) {
     const token = req.headers['x-admin-token'] || req.query.admin_token || req.cookies.admin_token;
     const expected = process.env.ADMIN_TOKEN || 'dev-admin';
-    if(token === expected) return next();
+    if (token === expected) return next();
   }
   // We store the exact hash value in the cookie after login; just compare directly
-  if(sessionToken && hash && sessionToken === hash){
+  if (sessionToken && hash && sessionToken === hash) {
     return next();
   }
   return res.redirect('/admin/login?next=' + encodeURIComponent(req.originalUrl));
 }
 
 // -------- Admin Routes (CRUD skeleton) --------
-app.get('/admin/', adminGuard, async (req,res)=>{
+app.get('/admin/', adminGuard, async (req, res) => {
   try {
-    let stats = { 
-      products: products.length, 
+    let stats = {
+      products: products.length,
       categories: fallbackCategories.length,
       heroImages: 0,
       orders: { total: 0, pending: 0, delivered: 0, revenue: 0 },
       recentOrders: [],
       lowStock: []
     };
-    
+
     if (supabase) {
       const [productsRes, categoriesRes, heroRes, ordersRes] = await Promise.all([
         supabase.from('products').select('*', { count: 'exact' }),
@@ -579,9 +579,9 @@ app.get('/admin/', adminGuard, async (req,res)=>{
         supabase.from('hero_images').select('*', { count: 'exact', head: true }),
         supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(5)
       ]);
-      
+
       const allOrders = ordersRes.data || [];
-      stats = { 
+      stats = {
         products: productsRes.count || 0,
         activeProducts: (productsRes.data || []).filter(p => p.active).length,
         categories: categoriesRes.count || 0,
@@ -596,7 +596,7 @@ app.get('/admin/', adminGuard, async (req,res)=>{
         lowStock: (productsRes.data || []).filter(p => !p.has_variants && p.stock < 10).slice(0, 5)
       };
     }
-    
+
     res.render('admin/dashboard', { active: 'dashboard', stats, siteSetting: res.locals.siteSetting });
   } catch (e) {
     console.error(e);
@@ -605,68 +605,68 @@ app.get('/admin/', adminGuard, async (req,res)=>{
 });
 
 // ---- Admin Auth UI ----
-app.get('/admin/login', async (req,res)=>{
+app.get('/admin/login', async (req, res) => {
   const hash = await getAdminHash();
-  if(req.cookies.admin_session && hash && req.cookies.admin_session === hash){
+  if (req.cookies.admin_session && hash && req.cookies.admin_session === hash) {
     return res.redirect(req.query.next || '/admin/');
   }
   res.render('admin/login', { next: req.query.next || '/admin/', siteSetting: res.locals.siteSetting });
 });
 
-app.post('/admin/login', async (req,res)=>{
+app.post('/admin/login', async (req, res) => {
   const { password, next } = req.body;
   const hash = await getAdminHash();
-  if(hash){
+  if (hash) {
     const ok = await bcrypt.compare(password, hash);
-    if(!ok) return res.status(401).render('simple-message', { title: 'Unauthorized', message: 'Invalid password.' });
+    if (!ok) return res.status(401).render('simple-message', { title: 'Unauthorized', message: 'Invalid password.' });
     // Store the hash itself as session token (since we already treat possession as auth). Do NOT store plain password.
-    res.cookie('admin_session', hash, { httpOnly: true, sameSite: 'lax', maxAge: 7*24*3600*1000 });
+    res.cookie('admin_session', hash, { httpOnly: true, sameSite: 'lax', maxAge: 7 * 24 * 3600 * 1000 });
     return res.redirect(next || '/admin/');
   }
   const expected = process.env.ADMIN_TOKEN || 'dev-admin';
-  if(password === expected){
-    res.cookie('admin_token', expected, { httpOnly: true, sameSite: 'lax', maxAge: 7*24*3600*1000 });
+  if (password === expected) {
+    res.cookie('admin_token', expected, { httpOnly: true, sameSite: 'lax', maxAge: 7 * 24 * 3600 * 1000 });
     return res.redirect(next || '/admin/');
   }
   res.status(401).render('simple-message', { title: 'Unauthorized', message: 'Invalid password.' });
 });
 
-app.post('/admin/logout', (req,res)=>{
+app.post('/admin/logout', (req, res) => {
   res.clearCookie('admin_session');
   res.clearCookie('admin_token');
   res.redirect('/admin/login');
 });
 
-app.get('/admin/products', adminGuard, async (req,res)=>{
+app.get('/admin/products', adminGuard, async (req, res) => {
   try {
     let list = products; // fallback in-memory
     if (supabase) {
       const { data, error } = await supabase.from('products')
         .select('*, seller:seller_id(full_name, business_name)')
-        .order('created_at', { ascending:false }).limit(200);
+        .order('created_at', { ascending: false }).limit(200);
       if (!error && data) list = data;
     }
-  res.render('admin/products', { active: 'products', items: list, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
-  } catch(e){
+    res.render('admin/products', { active: 'products', items: list, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
+  } catch (e) {
     console.error(e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load products.' });
   }
 });
 
-app.get('/admin/products/new', adminGuard, async (req,res)=>{
+app.get('/admin/products/new', adminGuard, async (req, res) => {
   const categories = await dbFetchCategories();
   res.render('admin/product-form', { item: null, categories, siteSetting: res.locals.siteSetting });
 });
 
-app.post('/admin/products/new', adminGuard, upload.single('imageFile'), handleMulterError, async (req,res)=>{
+app.post('/admin/products/new', adminGuard, upload.single('imageFile'), handleMulterError, async (req, res) => {
   productCache.flushAll();
   clearResponseCache();
   console.log('📝 Creating new product...');
   console.log('Body keys:', Object.keys(req.body));
   console.log('has_variants:', req.body.has_variants);
   console.log('variants:', req.body.variants);
-  
-  const { name, price, category, type, image, has_variants, base_sku, stock, variants } = req.body;
+
+  const { name, price, category, type, image, has_variants, base_sku, stock, variants, is_popular } = req.body;
   const short_description = (req.body.short_description || '').trim();
   const long_description = (req.body.long_description || '').trim();
 
@@ -685,7 +685,8 @@ app.post('/admin/products/new', adminGuard, upload.single('imageFile'), handleMu
         long_description: long_description || null,
         has_variants: has_variants === 'on',
         base_sku: base_sku || null,
-        stock: has_variants === 'on' ? 0 : parseInt(stock || 0)
+        stock: has_variants === 'on' ? 0 : parseInt(stock || 0),
+        is_popular: is_popular === 'on'
       };
       console.log('Inserting product:', insertPayload);
       const { data: product, error } = await supabase.from('products').insert(insertPayload).select().single();
@@ -697,7 +698,7 @@ app.post('/admin/products/new', adminGuard, upload.single('imageFile'), handleMu
         console.log('Processing variants...');
         console.log('Raw variants data:', variants);
         console.log('Is array?', Array.isArray(variants));
-        
+
         // Convert object with numeric keys to array
         let variantArray;
         if (Array.isArray(variants)) {
@@ -708,7 +709,7 @@ app.post('/admin/products/new', adminGuard, upload.single('imageFile'), handleMu
           variantArray = [variants];
         }
         console.log('Variant array length:', variantArray.length);
-        
+
         const variantsToInsert = [];
         for (const v of variantArray) {
           console.log('Variant data:', v);
@@ -727,7 +728,7 @@ app.post('/admin/products/new', adminGuard, upload.single('imageFile'), handleMu
             console.log('Skipping variant - missing sku or combination');
           }
         }
-        
+
         if (variantsToInsert.length > 0) {
           console.log('Inserting', variantsToInsert.length, 'variants');
           const { data: insertedVariants, error: vError } = await supabase.from('variants').insert(variantsToInsert).select();
@@ -760,31 +761,31 @@ app.post('/admin/products/new', adminGuard, upload.single('imageFile'), handleMu
 });
 
 // Edit product
-app.get('/admin/products/:id/edit', adminGuard, async (req,res)=>{
+app.get('/admin/products/:id/edit', adminGuard, async (req, res) => {
   const id = req.params.id;
   try {
     let item = await dbFetchProductById(id);
     const categories = await dbFetchCategories();
-    if(!item) return res.status(404).render('simple-message', { title: 'Not Found', message: 'Product not found.' });
-    
+    if (!item) return res.status(404).render('simple-message', { title: 'Not Found', message: 'Product not found.' });
+
     // Fetch variants if product has them
     if (item.has_variants && supabase) {
       const { data: variants } = await supabase.from('variants').select('*').eq('product_id', id);
       item.variants = variants || [];
     }
-    
+
     res.render('admin/product-form', { item, categories, siteSetting: res.locals.siteSetting });
-  } catch(e){
+  } catch (e) {
     console.error(e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load product.' });
   }
 });
 
-app.post('/admin/products/:id/edit', adminGuard, upload.single('imageFile'), handleMulterError, async (req,res)=>{
+app.post('/admin/products/:id/edit', adminGuard, upload.single('imageFile'), handleMulterError, async (req, res) => {
   productCache.flushAll();
   clearResponseCache();
   const id = req.params.id;
-  const { name, price, category, type, image, has_variants, base_sku, stock, variants } = req.body;
+  const { name, price, category, type, image, has_variants, base_sku, stock, variants, is_popular } = req.body;
   const short_description = (req.body.short_description || '').trim();
   const long_description = (req.body.long_description || '').trim();
   let finalImage = image || '';
@@ -802,7 +803,8 @@ app.post('/admin/products/:id/edit', adminGuard, upload.single('imageFile'), han
         long_description: long_description || null,
         has_variants: has_variants === 'on',
         base_sku: base_sku || null,
-        stock: has_variants === 'on' ? 0 : parseInt(stock || 0)
+        stock: has_variants === 'on' ? 0 : parseInt(stock || 0),
+        is_popular: is_popular === 'on'
       };
       Object.keys(updateData).forEach(k => updateData[k] === undefined && delete updateData[k]);
       const { error } = await supabase.from('products').update(updateData).eq('id', id);
@@ -813,7 +815,7 @@ app.post('/admin/products/:id/edit', adminGuard, upload.single('imageFile'), han
         console.log('Updating variants for product:', id);
         console.log('Raw variants data:', variants);
         console.log('Is array?', Array.isArray(variants));
-        
+
         // Delete existing variants first
         const { error: deleteError } = await supabase.from('variants').delete().eq('product_id', id);
         if (deleteError) {
@@ -821,7 +823,7 @@ app.post('/admin/products/:id/edit', adminGuard, upload.single('imageFile'), han
           throw new Error('Failed to delete old variants: ' + deleteError.message);
         }
         console.log('✓ Old variants deleted');
-        
+
         // Convert object with numeric keys to array
         let variantArray;
         if (Array.isArray(variants)) {
@@ -832,7 +834,7 @@ app.post('/admin/products/:id/edit', adminGuard, upload.single('imageFile'), han
           variantArray = [variants];
         }
         console.log('Variant array length:', variantArray.length);
-        
+
         const variantsToInsert = [];
         for (const v of variantArray) {
           console.log('Variant data:', v);
@@ -849,7 +851,7 @@ app.post('/admin/products/:id/edit', adminGuard, upload.single('imageFile'), han
             variantsToInsert.push(variantPayload);
           }
         }
-        
+
         if (variantsToInsert.length > 0) {
           console.log('Inserting', variantsToInsert.length, 'variants');
           const { data: insertedVariants, error: vError } = await supabase.from('variants').insert(variantsToInsert).select();
@@ -886,147 +888,147 @@ app.post('/admin/products/:id/edit', adminGuard, upload.single('imageFile'), han
 });
 
 // Delete product
-app.post('/admin/products/:id/delete', adminGuard, async (req,res)=>{
+app.post('/admin/products/:id/delete', adminGuard, async (req, res) => {
   productCache.flushAll();
   clearResponseCache();
   const id = req.params.id;
   try {
     if (supabase) {
       const { error } = await supabase.from('products').delete().eq('id', id);
-      if(error) throw error;
+      if (error) throw error;
     } else {
-      const idx = products.findIndex(p=>p.id === id);
-      if(idx !== -1) products.splice(idx,1);
+      const idx = products.findIndex(p => p.id === id);
+      if (idx !== -1) products.splice(idx, 1);
     }
     res.redirect('/admin/products?msg=' + encodeURIComponent('Product deleted'));
-  } catch(e){
+  } catch (e) {
     console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to delete product.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to delete product.' });
   }
 });
 
 // Toggle active
-app.post('/admin/products/:id/toggle-active', adminGuard, async (req,res)=>{
+app.post('/admin/products/:id/toggle-active', adminGuard, async (req, res) => {
   const id = req.params.id;
   try {
     if (supabase) {
       const { data, error } = await supabase.from('products').select('active').eq('id', id).single();
-      if(error) throw error;
+      if (error) throw error;
       const { error: upErr } = await supabase.from('products').update({ active: !data.active }).eq('id', id);
-      if(upErr) throw upErr;
+      if (upErr) throw upErr;
     } else {
-      const item = products.find(p=>p.id===id);
-      if(item) item.active = !item.active;
+      const item = products.find(p => p.id === id);
+      if (item) item.active = !item.active;
     }
     res.redirect('/admin/products?msg=' + encodeURIComponent('Status updated'));
-  } catch(e){
+  } catch (e) {
     console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to toggle active.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to toggle active.' });
   }
 });
 
-app.get('/admin/categories', adminGuard, async (req,res)=>{
+app.get('/admin/categories', adminGuard, async (req, res) => {
   try {
     const list = await dbFetchCategories();
     res.render('admin/categories', { active: 'categories', items: list, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
-  } catch(e){
+  } catch (e) {
     console.error(e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load categories.' });
   }
 });
 
-app.post('/admin/categories/new', adminGuard, upload.single('imageFile'), async (req,res)=>{
+app.post('/admin/categories/new', adminGuard, upload.single('imageFile'), async (req, res) => {
   categoryCache.flushAll();
   clearResponseCache();
   const { name, image_url } = req.body;
   let finalImage = image_url;
-  
+
   // If a file was uploaded, use it instead of the URL
   if (req.file) {
     finalImage = '/media/uploads/' + req.file.filename;
   }
-  
+
   try {
     if (supabase) {
       const { error } = await supabase.from('categories').insert({ name, image_url: finalImage });
-      if(error) throw error;
+      if (error) throw error;
       await dbFetchCategories(true);
     } else {
       fallbackCategories.push({ name, image: finalImage });
     }
     res.redirect('/admin/categories?msg=' + encodeURIComponent('Category added'));
-  } catch(e){
+  } catch (e) {
     console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to add category.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to add category.' });
   }
 });
 
-app.post('/admin/categories/:id/edit', adminGuard, upload.single('imageFile'), async (req,res)=>{
+app.post('/admin/categories/:id/edit', adminGuard, upload.single('imageFile'), async (req, res) => {
   categoryCache.flushAll();
   clearResponseCache();
   const id = req.params.id;
   const { name, image_url } = req.body;
   let finalImage = image_url;
-  
+
   // If a file was uploaded, use it instead of the URL
   if (req.file) {
     finalImage = '/media/uploads/' + req.file.filename;
   }
-  
+
   try {
     if (supabase) {
       const { error } = await supabase.from('categories').update({ name, image_url: finalImage }).eq('id', id);
-      if(error) throw error;
+      if (error) throw error;
       await dbFetchCategories(true);
     } else {
-      const idx = fallbackCategories.findIndex(c=>c.name===id);
-      if(idx!==-1) {
+      const idx = fallbackCategories.findIndex(c => c.name === id);
+      if (idx !== -1) {
         fallbackCategories[idx] = { name, image: finalImage };
       }
     }
     res.redirect('/admin/categories?msg=' + encodeURIComponent('Category updated'));
-  } catch(e){
+  } catch (e) {
     console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to update category.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to update category.' });
   }
 });
 
-app.post('/admin/categories/:id/delete', adminGuard, async (req,res)=>{
+app.post('/admin/categories/:id/delete', adminGuard, async (req, res) => {
   categoryCache.flushAll();
   clearResponseCache();
   const id = req.params.id; // id or name fallback
   try {
     if (supabase) {
       const { error } = await supabase.from('categories').delete().eq('id', id);
-      if(error) throw error;
+      if (error) throw error;
       await dbFetchCategories(true);
     } else {
-      const idx = fallbackCategories.findIndex(c=>c.name===id);
-      if(idx!==-1) fallbackCategories.splice(idx,1);
+      const idx = fallbackCategories.findIndex(c => c.name === id);
+      if (idx !== -1) fallbackCategories.splice(idx, 1);
     }
     res.redirect('/admin/categories?msg=' + encodeURIComponent('Category deleted'));
-  } catch(e){
+  } catch (e) {
     console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to delete category.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to delete category.' });
   }
 });
 
 // Settings (logo, site name, etc.)
-app.get('/admin/settings', adminGuard, async (req,res)=>{
+app.get('/admin/settings', adminGuard, async (req, res) => {
   try {
     const site = await getSetting('site', { name: 'All Strawhats', logo_url: '/staticfiles/brand.svg' });
     const customColors = await getSetting('custom_colors', { primary: '#2b90d9', secondary: '#6c757d', success: '#28a745', danger: '#dc3545' });
     const seo = await getSetting('seo', {});
     const social = await getSetting('social', {});
     const payment = await getSetting('payment', { esewa_qr: 'https://i.postimg.cc/mDPmcWp9/Whats-App-Image-2025-10-14-at-16-17-59-1cdf0cb6.jpg' });
-  res.render('admin/settings', { active: 'settings', site, customColors, seo, social, payment, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
-  } catch(e){
+    res.render('admin/settings', { active: 'settings', site, customColors, seo, social, payment, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
+  } catch (e) {
     console.error(e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load settings.' });
   }
 });
 
-app.post('/admin/settings', adminGuard, upload.single('qr_file'), async (req,res)=>{
+app.post('/admin/settings', adminGuard, upload.single('qr_file'), async (req, res) => {
   const { name, logo_url, new_password, primary_color, secondary_color, success_color, danger_color,
     meta_description, meta_keywords, site_tagline, og_title, og_description, og_image,
     twitter_card, twitter_handle, google_analytics, google_verification, facebook_pixel,
@@ -1034,10 +1036,10 @@ app.post('/admin/settings', adminGuard, upload.single('qr_file'), async (req,res
   try {
     let siteOk = true;
     const siteResult = await setSetting('site', { name, logo_url });
-    if(!siteResult) siteOk = false;
-    
+    if (!siteResult) siteOk = false;
+
     // Save custom colors
-    if(primary_color){
+    if (primary_color) {
       const colors = {
         primary: primary_color || '#2b90d9',
         secondary: secondary_color || '#6c757d',
@@ -1046,74 +1048,76 @@ app.post('/admin/settings', adminGuard, upload.single('qr_file'), async (req,res
       };
       await setSetting('custom_colors', colors);
     }
-    
+
     // Save SEO settings
-    const seoData = { meta_description, meta_keywords, site_tagline, og_title, og_description, og_image,
-      twitter_card, twitter_handle, google_analytics, google_verification, facebook_pixel };
+    const seoData = {
+      meta_description, meta_keywords, site_tagline, og_title, og_description, og_image,
+      twitter_card, twitter_handle, google_analytics, google_verification, facebook_pixel
+    };
     await setSetting('seo', seoData);
-    
+
     // Save social media links
     const socialData = { facebook_url, instagram_url, twitter_url, youtube_url, tiktok_url, contact_email, phone_number };
     await setSetting('social', socialData);
-    
+
     // Save payment settings (eSewa QR)
     let finalQr = esewa_qr;
-    if(req.file) finalQr = '/media/uploads/' + req.file.filename;
+    if (req.file) finalQr = '/media/uploads/' + req.file.filename;
     const paymentData = { esewa_qr: finalQr };
     await setSetting('payment', paymentData);
-    
+
     let pwChanged = false;
-    if(new_password && new_password.trim().length){
-      if(!supabase){
-        return res.status(500).render('simple-message', { title:'Error', message:'Supabase not configured; cannot set password.' });
+    if (new_password && new_password.trim().length) {
+      if (!supabase) {
+        return res.status(500).render('simple-message', { title: 'Error', message: 'Supabase not configured; cannot set password.' });
       }
-      if(new_password.trim().length < 6){
-        return res.status(400).render('simple-message', { title:'Weak Password', message:'Password must be at least 6 characters.' });
+      if (new_password.trim().length < 6) {
+        return res.status(400).render('simple-message', { title: 'Weak Password', message: 'Password must be at least 6 characters.' });
       }
       const password_hash = await bcrypt.hash(new_password.trim(), 10);
       const { error } = await supabase.from('settings').upsert({ key: 'admin_auth', value: { password_hash, updated_at: new Date().toISOString() } });
-      if(error) throw error;
+      if (error) throw error;
       cachedAdminHash = password_hash;
-      res.cookie('admin_session', password_hash, { httpOnly:true, sameSite:'lax', maxAge:7*24*3600*1000 });
+      res.cookie('admin_session', password_hash, { httpOnly: true, sameSite: 'lax', maxAge: 7 * 24 * 3600 * 1000 });
       pwChanged = true;
     }
-    if(!siteOk){
-      return res.status(500).render('simple-message', { title:'Partial Error', message:'Password updated but failed to save site settings (RLS or missing service key).' });
+    if (!siteOk) {
+      return res.status(500).render('simple-message', { title: 'Partial Error', message: 'Password updated but failed to save site settings (RLS or missing service key).' });
     }
     await loadSiteSetting(true); // refresh cache
-    const msg = encodeURIComponent('Settings saved' + (pwChanged? ' (password updated)':'') );
+    const msg = encodeURIComponent('Settings saved' + (pwChanged ? ' (password updated)' : ''));
     res.redirect('/admin/settings?msg=' + msg);
-  } catch(e){
+  } catch (e) {
     console.error('SETTINGS_SAVE_ERROR', e);
     let hint = 'Failed to save settings.';
-    if(e && e.code === '42501') hint = 'RLS blocked write. Use SUPABASE_SERVICE_ROLE_KEY in .env or adjust policies.';
+    if (e && e.code === '42501') hint = 'RLS blocked write. Use SUPABASE_SERVICE_ROLE_KEY in .env or adjust policies.';
     res.status(500).render('simple-message', { title: 'Error', message: hint });
   }
 });
 
 // Reset theme to default
-app.post('/admin/settings/reset-theme', adminGuard, async (req,res)=>{
+app.post('/admin/settings/reset-theme', adminGuard, async (req, res) => {
   try {
     await setSetting('custom_colors', { primary: '#2b90d9', secondary: '#6c757d', success: '#28a745', danger: '#dc3545' });
     res.redirect('/admin/settings?msg=' + encodeURIComponent('Colors reset to default'));
-  } catch(e){
+  } catch (e) {
     console.error('THEME_RESET_ERROR', e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to reset colors.' });
   }
 });
 
 // ---------- Popular Items ----------
-app.get('/admin/popular-items', adminGuard, async (req,res)=>{
+app.get('/admin/popular-items', adminGuard, async (req, res) => {
   try {
     const { data: products } = await supabase.from('products').select('id, name, price, image, is_popular').eq('active', true).order('name');
-    res.render('admin/popular-items', { active: 'popular-items', products: products||[], msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
-  } catch(e){
+    res.render('admin/popular-items', { active: 'popular-items', products: products || [], msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
+  } catch (e) {
     console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to load products.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load products.' });
   }
 });
 
-app.post('/admin/products/:id/toggle-popular', adminGuard, async (req,res)=>{
+app.post('/admin/products/:id/toggle-popular', adminGuard, async (req, res) => {
   try {
     const { data } = await supabase.from('products').select('is_popular').eq('id', req.params.id).single();
     await supabase.from('products').update({ is_popular: !data.is_popular }).eq('id', req.params.id);
@@ -1122,137 +1126,137 @@ app.post('/admin/products/:id/toggle-popular', adminGuard, async (req,res)=>{
     heroCache.flushAll();
     clearResponseCache();
     res.redirect('/admin/popular-items?msg=' + encodeURIComponent('Updated'));
-  } catch(e){
+  } catch (e) {
     console.error(e);
     res.redirect('/admin/popular-items');
   }
 });
 
 // ---------- Hero Images CRUD ----------
-app.get('/admin/hero-images', adminGuard, async (req,res)=>{
+app.get('/admin/hero-images', adminGuard, async (req, res) => {
   try {
     let list = [];
-    if(supabase){
+    if (supabase) {
       const { data, error } = await supabase.from('hero_images').select('*').order('position');
-      if(!error && data) list = data;
+      if (!error && data) list = data;
     }
-  res.render('admin/hero-images', { active: 'hero', items: list, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
-  } catch(e){
+    res.render('admin/hero-images', { active: 'hero', items: list, msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
+  } catch (e) {
     console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to load hero images.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load hero images.' });
   }
 });
 
-app.post('/admin/hero-images/new', adminGuard, upload.single('imageFile'), async (req,res)=>{
+app.post('/admin/hero-images/new', adminGuard, upload.single('imageFile'), async (req, res) => {
   heroCache.flushAll();
   clearResponseCache();
   const { title, image_url, description, link_url, cta_label, position } = req.body;
   let finalImage = image_url;
-  
+
   // If a file was uploaded, use it instead of the URL
   if (req.file) {
     finalImage = '/media/uploads/' + req.file.filename;
   }
-  
+
   try {
-    if(supabase){
-      const { error } = await supabase.from('hero_images').insert({ 
-        title, 
-        image_url: finalImage, 
+    if (supabase) {
+      const { error } = await supabase.from('hero_images').insert({
+        title,
+        image_url: finalImage,
         description,
-        link_url, 
+        link_url,
         cta_label,
-        position: parseInt(position||0,10) 
+        position: parseInt(position || 0, 10)
       });
-      if(error) throw error;
+      if (error) throw error;
     }
     res.redirect('/admin/hero-images?msg=' + encodeURIComponent('Hero image added'));
-  } catch(e){
+  } catch (e) {
     console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to add hero image.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to add hero image.' });
   }
 });
 
-app.post('/admin/hero-images/:id/edit', adminGuard, upload.single('imageFile'), async (req,res)=>{
+app.post('/admin/hero-images/:id/edit', adminGuard, upload.single('imageFile'), async (req, res) => {
   heroCache.flushAll();
   clearResponseCache();
   const id = req.params.id;
   const { title, image_url, description, link_url, cta_label, position } = req.body;
   let finalImage = image_url;
-  
+
   // If a file was uploaded, use it instead of the URL
   if (req.file) {
     finalImage = '/media/uploads/' + req.file.filename;
   }
-  
+
   try {
-    if(supabase){
-      const { error } = await supabase.from('hero_images').update({ 
-        title, 
-        image_url: finalImage, 
+    if (supabase) {
+      const { error } = await supabase.from('hero_images').update({
+        title,
+        image_url: finalImage,
         description,
-        link_url, 
+        link_url,
         cta_label,
-        position: parseInt(position||0,10) 
+        position: parseInt(position || 0, 10)
       }).eq('id', id);
-      if(error) throw error;
+      if (error) throw error;
     }
     res.redirect('/admin/hero-images?msg=' + encodeURIComponent('Hero image updated'));
-  } catch(e){
+  } catch (e) {
     console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to update hero image.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to update hero image.' });
   }
 });
 
-app.post('/admin/hero-images/:id/delete', adminGuard, async (req,res)=>{
+app.post('/admin/hero-images/:id/delete', adminGuard, async (req, res) => {
   heroCache.flushAll();
   clearResponseCache();
   const id = req.params.id;
   try {
-    if(supabase){
+    if (supabase) {
       const { error } = await supabase.from('hero_images').delete().eq('id', id);
-      if(error) throw error;
+      if (error) throw error;
     }
     res.redirect('/admin/hero-images?msg=' + encodeURIComponent('Deleted'));
-  } catch(e){
+  } catch (e) {
     console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to delete hero image.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to delete hero image.' });
   }
 });
 
-app.post('/admin/hero-images/:id/toggle-active', adminGuard, async (req,res)=>{
+app.post('/admin/hero-images/:id/toggle-active', adminGuard, async (req, res) => {
   const id = req.params.id;
   try {
-    if(supabase){
+    if (supabase) {
       const { data, error } = await supabase.from('hero_images').select('active').eq('id', id).single();
-      if(error) throw error;
+      if (error) throw error;
       const { error: upErr } = await supabase.from('hero_images').update({ active: !data.active }).eq('id', id);
-      if(upErr) throw upErr;
+      if (upErr) throw upErr;
     }
     res.redirect('/admin/hero-images?msg=' + encodeURIComponent('Status updated'));
-  } catch(e){
+  } catch (e) {
     console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to update status.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to update status.' });
   }
 });
 
 // ---------- Orders Management ----------
-app.get('/admin/orders', adminGuard, async (req,res)=>{
+app.get('/admin/orders', adminGuard, async (req, res) => {
   try {
     const filter = req.query.filter || 'all';
     let orders = [];
-    
-    if(supabase){
+
+    if (supabase) {
       let query = supabase.from('orders').select('*').order('created_at', { ascending: false });
-      
-      if(filter !== 'all') {
+
+      if (filter !== 'all') {
         query = query.eq('status', filter);
       }
-      
+
       const { data, error } = await query;
-      if(!error && data) orders = data;
+      if (!error && data) orders = data;
     }
-    
+
     // Calculate stats
     const allOrders = supabase ? (await supabase.from('orders').select('*')).data || [] : [];
     const stats = {
@@ -1265,124 +1269,124 @@ app.get('/admin/orders', adminGuard, async (req,res)=>{
       cancelled: allOrders.filter(o => o.status === 'cancelled').length,
       revenue: allOrders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + parseFloat(o.total || 0), 0)
     };
-    
-    res.render('admin/orders', { 
+
+    res.render('admin/orders', {
       active: 'orders',
-      orders, 
+      orders,
       stats,
       filter,
-      msg: req.query.msg || '', 
-      siteSetting: res.locals.siteSetting 
+      msg: req.query.msg || '',
+      siteSetting: res.locals.siteSetting
     });
-  } catch(e){
+  } catch (e) {
     console.error('ORDERS_LIST_ERROR', e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to load orders.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load orders.' });
   }
 });
 
 // Get single order (JSON for modal)
-app.get('/admin/orders/:id', adminGuard, async (req,res)=>{
+app.get('/admin/orders/:id', adminGuard, async (req, res) => {
   const id = req.params.id;
   try {
-    if(supabase){
+    if (supabase) {
       const { data, error } = await supabase.from('orders').select('*').eq('id', id).single();
-      if(error) throw error;
+      if (error) throw error;
       res.json(data);
     } else {
       res.status(404).json({ error: 'Order not found' });
     }
-  } catch(e){
+  } catch (e) {
     console.error('ORDER_FETCH_ERROR', e);
     res.status(500).json({ error: 'Failed to fetch order' });
   }
 });
 
 // Update order tracking info
-app.post('/admin/orders/:id/tracking', adminGuard, async (req,res)=>{
+app.post('/admin/orders/:id/tracking', adminGuard, async (req, res) => {
   const id = req.params.id;
   const { status, estimated_date, note } = req.body;
-  
+
   try {
-    if(supabase){
+    if (supabase) {
       const { data: order, error: fetchError } = await supabase.from('orders').select('tracking_info').eq('id', id).single();
-      if(fetchError) throw fetchError;
-      
+      if (fetchError) throw fetchError;
+
       const trackingInfo = order.tracking_info || {};
       trackingInfo[status] = { estimated_date, note, updated_at: new Date().toISOString() };
-      
+
       const { error } = await supabase.from('orders').update({ tracking_info: trackingInfo }).eq('id', id);
-      if(error) throw error;
+      if (error) throw error;
       res.json({ success: true });
     } else {
       res.status(500).json({ error: 'Database not configured' });
     }
-  } catch(e){
+  } catch (e) {
     console.error('TRACKING_UPDATE_ERROR', e);
     res.status(500).json({ error: 'Failed to update tracking info' });
   }
 });
 
 // Update order status
-app.post('/admin/orders/:id/status', adminGuard, async (req,res)=>{
+app.post('/admin/orders/:id/status', adminGuard, async (req, res) => {
   const id = req.params.id;
   const { status } = req.body;
-  
+
   const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
-  if(!validStatuses.includes(status)) {
+  if (!validStatuses.includes(status)) {
     return res.status(400).json({ error: 'Invalid status' });
   }
-  
+
   try {
-    if(supabase){
+    if (supabase) {
       const { error } = await supabase.from('orders').update({ status }).eq('id', id);
-      if(error) throw error;
+      if (error) throw error;
       res.json({ success: true });
     } else {
       res.status(500).json({ error: 'Database not configured' });
     }
-  } catch(e){
+  } catch (e) {
     console.error('ORDER_UPDATE_ERROR', e);
     res.status(500).json({ error: 'Failed to update order' });
   }
 });
 
 // Delete order
-app.post('/admin/orders/:id/delete', adminGuard, async (req,res)=>{
+app.post('/admin/orders/:id/delete', adminGuard, async (req, res) => {
   const id = req.params.id;
   try {
-    if(supabase){
+    if (supabase) {
       const { error } = await supabase.from('orders').delete().eq('id', id);
-      if(error) throw error;
+      if (error) throw error;
       res.json({ success: true });
     } else {
       res.status(500).json({ error: 'Database not configured' });
     }
-  } catch(e){
+  } catch (e) {
     console.error('ORDER_DELETE_ERROR', e);
     res.status(500).json({ error: 'Failed to delete order' });
   }
 });
 
 // Public order tracking page
-app.get('/track-order', async (req,res)=>{
+app.get('/track-order', async (req, res) => {
   res.render('track-order', { siteSetting: res.locals.siteSetting, socialLinks: res.locals.socialLinks });
 });
 
 // API endpoint for order tracking
-app.get('/api/track-order', async (req,res)=>{
+app.get('/api/track-order', async (req, res) => {
   try {
     const phone = req.query.phone;
-    if(!phone) return res.json({ success: false, message: 'Phone number required' });
-    
-    if(supabase){
+    if (!phone) return res.json({ success: false, message: 'Phone number required' });
+
+    if (supabase) {
       const { data, error } = await supabase.from('orders').select('*').eq('customer_mobile', phone).order('created_at', { ascending: false });
-      if(error) return res.json({ success: false, message: 'Failed to fetch orders' });
-      if(!data || data.length === 0) return res.json({ success: false, message: 'No orders found for this phone number' });
+      if (error) return res.json({ success: false, message: 'Failed to fetch orders' });
+      if (!data || data.length === 0) return res.json({ success: false, message: 'No orders found for this phone number' });
       res.json({ success: true, orders: data });
     } else {
       res.json({ success: false, message: 'Tracking system not available' });
     }
-  } catch(e){
+  } catch (e) {
     console.error('TRACK_ORDER_ERROR', e);
     res.status(500).json({ success: false, message: 'Failed to track orders' });
   }
@@ -1423,18 +1427,18 @@ app.get('/shop/:category/', cacheMiddleware(30), async (req, res) => {
       totalPages,
       siteSetting: res.locals.siteSetting
     });
-  } catch(e){
+  } catch (e) {
     console.error('CATEGORY_PAGE_ERROR', e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to load category.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load category.' });
   }
 });
 
 // Product details page with caching
-app.get('/details/:id/', cacheMiddleware(60), async (req,res)=>{
+app.get('/details/:id/', cacheMiddleware(60), async (req, res) => {
   try {
     const id = req.params.id;
     let product = null;
-    
+
     if (supabase) {
       const { data } = await supabase.from('products')
         .select('*, seller:seller_id(full_name, business_name, profile_image)')
@@ -1443,22 +1447,22 @@ app.get('/details/:id/', cacheMiddleware(60), async (req,res)=>{
     } else {
       product = await dbFetchProductById(id);
     }
-    
-    if(!product) return res.status(404).render('simple-message', { title:'Not Found', message:'Product not found.' });
-    
+
+    if (!product) return res.status(404).render('simple-message', { title: 'Not Found', message: 'Product not found.' });
+
     // Fetch variants if product has them
     if (product.has_variants && supabase) {
       const { data: variants } = await supabase.from('variants').select('*').eq('product_id', id).eq('active', true);
       product.variants = variants || [];
     }
-    
+
     // Related products: same category (exclude current) limit 6
     let related = await dbFetchProducts({ category: product.category, limit: 12, orderLatest: true });
-    related = related.filter(p=>p.id !== product.id).slice(0,6);
+    related = related.filter(p => p.id !== product.id).slice(0, 6);
     res.render('product-details', { product, related, siteSetting: res.locals.siteSetting });
-  } catch(e){
+  } catch (e) {
     console.error('DETAILS_PAGE_ERROR', e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to load product.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load product.' });
   }
 });
 
@@ -1467,13 +1471,13 @@ app.get('/search/:category/', async (req, res) => {
   try {
     const searchQuery = (req.query.q || '').trim().toLowerCase();
     const catParam = req.params.category;
-    
+
     if (!searchQuery) {
       return res.redirect('/');
     }
 
     const allCategories = await dbFetchCategories();
-    
+
     // Fetch all products (or from specific category if not 'all')
     let allProducts = [];
     if (catParam.toLowerCase() === 'all') {
@@ -1481,9 +1485,9 @@ app.get('/search/:category/', async (req, res) => {
     } else {
       allProducts = await dbFetchProducts({ category: catParam });
     }
-    
-    console.log('🔍 SEARCH DEBUG:', { 
-      query: searchQuery, 
+
+    console.log('🔍 SEARCH DEBUG:', {
+      query: searchQuery,
       totalProducts: allProducts.length,
       sampleProduct: allProducts[0] ? {
         name: allProducts[0].name,
@@ -1493,7 +1497,7 @@ app.get('/search/:category/', async (req, res) => {
         longDescPreview: (allProducts[0].long_description || '').substring(0, 50)
       } : null
     });
-    
+
     // Filter products based on search query (name, category, type, and descriptions)
     const searchResults = allProducts.filter(p => {
       // Normalize text: lowercase, decode HTML entities, remove extra spaces
@@ -1508,19 +1512,19 @@ app.get('/search/:category/', async (req, res) => {
           .replace(/\s+/g, ' ')
           .trim();
       };
-      
+
       const name = normalize(p.name);
       const category = normalize(p.category);
       const type = normalize(p.type);
       const shortDesc = normalize(p.short_description);
       const longDesc = normalize(p.long_description);
-      
+
       // Combine all searchable text
       const searchableText = `${name} ${category} ${type} ${shortDesc} ${longDesc}`;
-      
+
       return searchableText.includes(searchQuery);
     });
-    
+
     console.log('🔍 SEARCH RESULTS:', { matchCount: searchResults.length });
 
     // Pagination
@@ -1545,9 +1549,9 @@ app.get('/search/:category/', async (req, res) => {
       searchQuery,
       siteSetting: res.locals.siteSetting
     });
-  } catch(e){
+  } catch (e) {
     console.error('SEARCH_PAGE_ERROR', e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to perform search.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to perform search.' });
   }
 });
 
@@ -1556,16 +1560,16 @@ app.get('/api/product-variants/:id', async (req, res) => {
   try {
     const id = req.params.id;
     console.log('🔍 Fetching variants for product:', id);
-    
+
     if (!supabase) {
       console.log('⚠️ No supabase connection');
       return res.json({ variants: [], attributes: [] });
     }
-    
+
     const { data: variants, error: vError } = await supabase.from('variants').select('*').eq('product_id', id).eq('active', true);
     console.log('📦 Variants found:', variants?.length || 0);
     if (vError) console.error('Variant fetch error:', vError);
-    
+
     // Extract unique attribute keys and values from variants (same as product details page)
     const attrs = {};
     if (variants && variants.length) {
@@ -1577,14 +1581,14 @@ app.get('/api/product-variants/:id', async (req, res) => {
         });
       });
     }
-    
+
     // Convert to array format
     const attributes = Object.keys(attrs).map(key => ({
       name: key.charAt(0).toUpperCase() + key.slice(1),
       slug: key,
       values: Array.from(attrs[key]).map(v => ({ value: v }))
     }));
-    
+
     console.log('📤 Sending response:', { variantCount: variants?.length || 0, attributeCount: attributes.length });
     res.json({ variants: variants || [], attributes });
   } catch (e) {
@@ -1597,14 +1601,14 @@ app.get('/api/product-variants/:id', async (req, res) => {
 app.get('/api/search-suggestions', async (req, res) => {
   try {
     const query = (req.query.q || '').trim().toLowerCase();
-    
+
     if (!query || query.length < 2) {
       return res.json({ suggestions: [] });
     }
 
     // Fetch all products
     const allProducts = await dbFetchProducts({});
-    
+
     // Normalize text helper
     const normalize = (text) => {
       return (text || '')
@@ -1617,7 +1621,7 @@ app.get('/api/search-suggestions', async (req, res) => {
         .replace(/\s+/g, ' ')
         .trim();
     };
-    
+
     // Filter and get top 10 matches (search in name, descriptions, category, type)
     const matches = allProducts
       .filter(p => {
@@ -1639,7 +1643,7 @@ app.get('/api/search-suggestions', async (req, res) => {
       }));
 
     res.json({ suggestions: matches });
-  } catch(e){
+  } catch (e) {
     console.error('SEARCH_SUGGESTIONS_ERROR', e);
     res.status(500).json({ error: 'Failed to fetch suggestions' });
   }
@@ -1678,7 +1682,7 @@ app.post('/api/send-otp', async (req, res) => {
     const data = await response.json();
     console.log('OTPless send response:', data);
     res.json(data);
-  } catch(e) {
+  } catch (e) {
     console.error('Send OTP error:', e);
     res.status(500).json({ success: false, error: e.message });
   }
@@ -1703,7 +1707,7 @@ app.post('/api/verify-otp', async (req, res) => {
     const data = await response.json();
     console.log('OTPless verify response:', data);
     res.json(data);
-  } catch(e) {
+  } catch (e) {
     console.error('Verify OTP error:', e);
     res.status(500).json({ success: false, error: e.message });
   }
@@ -1717,7 +1721,7 @@ app.get('/api/payment-settings', async (req, res) => {
   try {
     const payment = await getSetting('payment', { esewa_qr: 'https://i.postimg.cc/mDPmcWp9/Whats-App-Image-2025-10-14-at-16-17-59-1cdf0cb6.jpg' });
     res.json(payment);
-  } catch(e) {
+  } catch (e) {
     res.json({ esewa_qr: 'https://i.postimg.cc/mDPmcWp9/Whats-App-Image-2025-10-14-at-16-17-59-1cdf0cb6.jpg' });
   }
 });
@@ -1726,16 +1730,16 @@ app.get('/api/payment-settings', async (req, res) => {
 app.get('/add_to_cart/', async (req, res) => {
   try {
     const { productid, qty, variantid } = req.query;
-    
+
     if (!productid || !qty) return res.status(400).json({ error: 'productid and qty required' });
-    
+
     const trimmed = String(productid).trim();
     const product = await getCachedProduct(trimmed);
-    
+
     if (!product) return res.status(404).json({ error: 'Product not found' });
-    
+
     const device = req.cookies.device || 'anonymous';
-    
+
     const cart = getCart(device);
     const cartKey = variantid ? `${trimmed}_${variantid}` : trimmed;
     const existing = cart.find(i => i.productId === trimmed && i.variantId === (variantid || null));
@@ -1744,62 +1748,62 @@ app.get('/add_to_cart/', async (req, res) => {
     } else {
       cart.push({ productId: trimmed, variantId: variantid || null, qty: parseInt(qty, 10) });
     }
-    
-    const totalCount = cart.reduce((a,c)=>a+c.qty,0);
+
+    const totalCount = cart.reduce((a, c) => a + c.qty, 0);
     return res.json({ ok: true, count: totalCount });
-  } catch(e){
-    if(NODE_ENV !== 'production') console.error('ADD_TO_CART_ERROR', e);
+  } catch (e) {
+    if (NODE_ENV !== 'production') console.error('ADD_TO_CART_ERROR', e);
     return res.status(500).json({ error: 'Failed to add to cart' });
   }
 });
 
 // Get cart endpoint with batch loading
-app.get('/get_cart/', async (req,res)=>{
+app.get('/get_cart/', async (req, res) => {
   try {
     const device = req.cookies.device || 'anonymous';
     const cart = getCart(device);
-    
+
     // Batch load all products and variants
     const productIds = [...new Set(cart.map(it => it.productId))];
     const variantIds = cart.filter(it => it.variantId).map(it => it.variantId);
-    
+
     // Load products in parallel
     const productPromises = productIds.map(id => getCachedProduct(id));
     const productsData = await Promise.all(productPromises);
     const productsMap = new Map(productsData.filter(p => p).map(p => [p.id, p]));
-    
+
     // Batch load variants if needed
     let variantsMap = new Map();
-    if(variantIds.length && supabase){
+    if (variantIds.length && supabase) {
       const { data: variants } = await supabase.from('variants').select('*').in('id', variantIds);
-      if(variants) variantsMap = new Map(variants.map(v => [v.id, v]));
+      if (variants) variantsMap = new Map(variants.map(v => [v.id, v]));
     }
-    
+
     // Build cart response
     const mapped = cart.map(it => {
       const p = productsMap.get(it.productId);
-      if(!p) return [it.productId, 'Unknown', it.qty, 0, '', 'Product', it.qty, null];
-      
+      if (!p) return [it.productId, 'Unknown', it.qty, 0, '', 'Product', it.qty, null];
+
       let finalPrice = parseFloat(p.price) || 0;
       let finalImage = p.image || '';
       let finalName = p.name || p.title || 'Item';
-      
-      if(it.variantId){
+
+      if (it.variantId) {
         const variant = variantsMap.get(it.variantId);
-        if(variant){
+        if (variant) {
           finalPrice += parseFloat(variant.price_adjustment || 0);
-          if(variant.image && variant.image.trim()) finalImage = variant.image;
+          if (variant.image && variant.image.trim()) finalImage = variant.image;
           const combo = variant.attribute_combination || {};
           const variantLabel = Object.values(combo).filter(v => v).join(' / ');
-          if(variantLabel) finalName += ` (${variantLabel})`;
+          if (variantLabel) finalName += ` (${variantLabel})`;
         }
       }
-      
+
       return [p.id, finalName, it.qty, finalPrice, finalImage, normalizeType(p.type), it.qty, it.variantId || null];
     });
-    
+
     res.json({ cart: mapped });
-  } catch(e){
+  } catch (e) {
     console.error('GET_CART_ERROR', e);
     res.status(500).json({ error: 'Failed to load cart' });
   }
@@ -1811,14 +1815,14 @@ app.get('/remove_from_cart/', async (req, res) => {
     const device = req.cookies.device || 'anonymous';
     const productId = req.query.productid;
     const variantId = req.query.variantid || null;
-    
+
     if (!productId) {
       return res.status(400).json({ error: 'Product ID required' });
     }
-    
+
     const cart = getCart(device);
     const index = cart.findIndex(item => item.productId === productId && item.variantId === variantId);
-    
+
     if (index !== -1) {
       cart.splice(index, 1);
       // Cart is modified in place since getCart returns the reference
@@ -1828,7 +1832,7 @@ app.get('/remove_from_cart/', async (req, res) => {
       console.log('⚠️ Item not found in cart', { device, productId, variantId });
       res.json({ success: false, message: 'Item not found in cart' });
     }
-  } catch(e) {
+  } catch (e) {
     console.error('REMOVE_FROM_CART_ERROR', e);
     res.status(500).json({ error: 'Failed to remove item from cart' });
   }
@@ -1857,93 +1861,93 @@ app.get('/__cache_stats', adminGuard, (req, res) => {
 
 
 // Dynamic homepage
-app.get('/', async (req,res)=>{
+app.get('/', async (req, res) => {
   try {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
-    
+
     let heroImages = heroCache.get('active');
     const categories = await dbFetchCategories();
-    
+
     // Fetch popular products or fallback to latest
     let productsList = [];
-    if(supabase){
+    if (supabase) {
       const { data } = await supabase.from('products').select('*').eq('active', true).eq('is_popular', true).limit(12);
       productsList = data || [];
     }
-    // REMOVED FALLBACK - if no popular products, show empty
-    // if(!productsList.length) productsList = await dbFetchProducts({ orderLatest:true, limit: 12 });
-    
-    if(!heroImages && supabase){
+    // Fallback: if no popular products, show latest active products
+    if (!productsList.length) productsList = await dbFetchProducts({ orderLatest: true, limit: 12 });
+
+    if (!heroImages && supabase) {
       const { data } = await supabase.from('hero_images').select('*').eq('active', true).order('position');
       heroImages = data || [];
-      if(heroImages.length) heroCache.set('active', heroImages);
+      if (heroImages.length) heroCache.set('active', heroImages);
     }
-    if(!heroImages.length){
-      heroImages = [{ image_url:'/staticfiles/hero-banner.jpg', title: res.locals.siteSetting.name, link_url:'/shop/All/', position:0 }];
+    if (!heroImages.length) {
+      heroImages = [{ image_url: '/staticfiles/hero-banner.jpg', title: res.locals.siteSetting.name, link_url: '/shop/All/', position: 0 }];
     }
     res.render('home', { categories, products: productsList, heroImages, siteSetting: res.locals.siteSetting });
-  } catch(e){
+  } catch (e) {
     console.error('HOME_RENDER_ERROR', e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to load homepage.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load homepage.' });
   }
 });
 
 // Cart page with batch loading
-app.get('/cart/', async (req,res)=>{
+app.get('/cart/', async (req, res) => {
   try {
     const device = req.cookies.device || 'anonymous';
     const cart = getCart(device);
-    
+
     // Batch load products and variants
     const productIds = [...new Set(cart.map(it => it.productId))];
     const variantIds = cart.filter(it => it.variantId).map(it => it.variantId);
-    
+
     const productPromises = productIds.map(id => getAnyProductById(id));
     const productsData = await Promise.all(productPromises);
     const productsMap = new Map(productsData.filter(p => p).map(p => [p.id, p]));
-    
+
     let variantsMap = new Map();
-    if(variantIds.length && supabase){
+    if (variantIds.length && supabase) {
       const { data: variants } = await supabase.from('variants').select('*').in('id', variantIds);
-      if(variants) variantsMap = new Map(variants.map(v => [v.id, v]));
+      if (variants) variantsMap = new Map(variants.map(v => [v.id, v]));
     }
-    
+
     const items = cart.map(item => {
       const p = productsMap.get(item.productId);
-      if(!p) return { id: item.productId, variantId: null, name: 'Unknown', price: 0, image: '', qty: item.qty, subtotal: 0 };
-      
+      if (!p) return { id: item.productId, variantId: null, name: 'Unknown', price: 0, image: '', qty: item.qty, subtotal: 0 };
+
       let finalPrice = parseFloat(p.price) || 0;
       let finalImage = p.image || '';
       let finalName = p.name || p.title || 'Item';
-      
-      if(item.variantId){
+
+      if (item.variantId) {
         const variant = variantsMap.get(item.variantId);
-        if(variant){
+        if (variant) {
           finalPrice += parseFloat(variant.price_adjustment || 0);
-          if(variant.image && variant.image.trim()) finalImage = variant.image;
+          if (variant.image && variant.image.trim()) finalImage = variant.image;
           const combo = variant.attribute_combination || {};
           const variantLabel = Object.values(combo).filter(v => v).join(' / ');
-          if(variantLabel) finalName += ` (${variantLabel})`;
+          if (variantLabel) finalName += ` (${variantLabel})`;
         }
       }
-      
-      return { 
-        id: p.id, 
+
+      return {
+        id: p.id,
         variantId: item.variantId || null,
-        name: finalName, 
-        price: finalPrice, 
-        image: finalImage, 
-        qty: item.qty, 
-        subtotal: finalPrice * item.qty 
+        name: finalName,
+        price: finalPrice,
+        image: finalImage,
+        qty: item.qty,
+        subtotal: finalPrice * item.qty
       };
     });
-    
-    const total = items.reduce((s,i)=>s+i.subtotal,0);
-    const itemCount = items.reduce((s,i)=>s+i.qty,0);
+
+    const total = items.reduce((s, i) => s + i.subtotal, 0);
+    const itemCount = items.reduce((s, i) => s + i.qty, 0);
     res.render('cart', { items, total, itemCount, siteSetting: res.locals.siteSetting });
-  } catch(e){
+  } catch (e) {
     console.error('CART_PAGE_ERROR', e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load cart.' });
   }
@@ -1954,55 +1958,55 @@ app.get('/checkout/', async (req, res) => {
   try {
     const device = req.cookies.device || 'anonymous';
     const cart = getCart(device);
-    
+
     // Batch load products and variants
     const productIds = [...new Set(cart.map(it => it.productId))];
     const variantIds = cart.filter(it => it.variantId).map(it => it.variantId);
-    
+
     const productPromises = productIds.map(id => getCachedProduct(id));
     const productsData = await Promise.all(productPromises);
     const productsMap = new Map(productsData.filter(p => p).map(p => [p.id, p]));
-    
+
     let variantsMap = new Map();
-    if(variantIds.length && supabase){
+    if (variantIds.length && supabase) {
       const { data: variants } = await supabase.from('variants').select('*').in('id', variantIds);
-      if(variants) variantsMap = new Map(variants.map(v => [v.id, v]));
+      if (variants) variantsMap = new Map(variants.map(v => [v.id, v]));
     }
-    
+
     const items = cart.map(item => {
       const p = productsMap.get(item.productId);
-      if(!p) return null;
-      
+      if (!p) return null;
+
       let finalPrice = parseFloat(p.price) || 0;
       let finalImage = p.image || '';
       let finalName = p.name || p.title || 'Item';
-      
-      if(item.variantId){
+
+      if (item.variantId) {
         const variant = variantsMap.get(item.variantId);
-        if(variant){
+        if (variant) {
           finalPrice += parseFloat(variant.price_adjustment || 0);
-          if(variant.image && variant.image.trim()) finalImage = variant.image;
+          if (variant.image && variant.image.trim()) finalImage = variant.image;
           const combo = variant.attribute_combination || {};
           const variantLabel = Object.values(combo).filter(v => v).join(' / ');
-          if(variantLabel) finalName += ` (${variantLabel})`;
+          if (variantLabel) finalName += ` (${variantLabel})`;
         }
       }
-      
-      return { 
+
+      return {
         id: p.id,
         variantId: item.variantId || null,
-        name: finalName, 
-        price: finalPrice, 
-        image: finalImage, 
-        qty: item.qty, 
-        subtotal: finalPrice * item.qty 
+        name: finalName,
+        price: finalPrice,
+        image: finalImage,
+        qty: item.qty,
+        subtotal: finalPrice * item.qty
       };
     }).filter(Boolean);
-    
-    const total = items.reduce((s,i)=>s+i.subtotal,0);
-    if(!items.length) return res.redirect('/cart/');
+
+    const total = items.reduce((s, i) => s + i.subtotal, 0);
+    if (!items.length) return res.redirect('/cart/');
     res.render('checkout', { items, total, siteSetting: res.locals.siteSetting, googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || '' });
-  } catch(e){
+  } catch (e) {
     console.error('CHECKOUT_PAGE_ERROR', e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load checkout.' });
   }
@@ -2012,41 +2016,41 @@ app.get('/checkout/', async (req, res) => {
 app.post('/checkout/', async (req, res) => {
   try {
     const { name, mobile, email, region, area, address, notes, subtotal, deliveryFee, total, paymentMethod, paymentScreenshot } = req.body;
-    
+
     // Validate required fields
-    if(!name || !mobile || !region || !area || !address) {
+    if (!name || !mobile || !region || !area || !address) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-    
+
     const device = req.cookies.device || 'anonymous';
     const cart = getCart(device);
-    
-    if(!cart.length) {
+
+    if (!cart.length) {
       return res.status(400).json({ error: 'Cart is empty' });
     }
-    
+
     // Build order items from cart (including variant info)
     const orderItems = [];
-    for(const item of cart){
+    for (const item of cart) {
       const p = await getAnyProductById(item.productId);
-      if(p){
+      if (p) {
         let finalPrice = parseFloat(p.price) || 0;
         let finalImage = p.image || '';
         let finalName = p.name || 'Item';
         let variantInfo = null;
-        
+
         // If variant specified, fetch variant details
-        if(item.variantId && supabase){
+        if (item.variantId && supabase) {
           const { data: variant } = await supabase.from('variants').select('*').eq('id', item.variantId).single();
-          if(variant){
+          if (variant) {
             finalPrice += parseFloat(variant.price_adjustment || 0);
-            if(variant.image && variant.image.trim()) finalImage = variant.image;
+            if (variant.image && variant.image.trim()) finalImage = variant.image;
             variantInfo = variant.attribute_combination || {};
             const variantLabel = Object.values(variantInfo).filter(v => v).join(' / ');
-            if(variantLabel) finalName += ` (${variantLabel})`;
+            if (variantLabel) finalName += ` (${variantLabel})`;
           }
         }
-        
+
         orderItems.push({
           productId: p.id,
           variantId: item.variantId || null,
@@ -2059,18 +2063,18 @@ app.post('/checkout/', async (req, res) => {
         });
       }
     }
-    
-    if(!orderItems.length) {
+
+    if (!orderItems.length) {
       return res.status(400).json({ error: 'No valid items in cart' });
     }
-    
+
     // Validate payment method
-    if(paymentMethod === 'esewa' && !paymentScreenshot){
+    if (paymentMethod === 'esewa' && !paymentScreenshot) {
       return res.status(400).json({ error: 'Payment screenshot required for eSewa payment' });
     }
-    
+
     // Create order in database
-    if(supabase){
+    if (supabase) {
       const orderData = {
         customer_name: name,
         customer_mobile: mobile,
@@ -2088,41 +2092,41 @@ app.post('/checkout/', async (req, res) => {
         items: orderItems
         // order_number will be auto-generated by database trigger
       };
-      
-      console.log('Creating order with payment info:', { 
-        paymentMethod, 
+
+      console.log('Creating order with payment info:', {
+        paymentMethod,
         hasScreenshot: !!paymentScreenshot,
         screenshotLength: paymentScreenshot ? paymentScreenshot.length : 0
       });
-      
+
       const { data, error } = await supabase.from('orders').insert(orderData).select().single();
-      
-      if(error) {
+
+      if (error) {
         console.error('ORDER_CREATE_ERROR', error);
         throw error;
       }
-      
+
       // Clear cart after successful order
       carts[device] = [];
-      
-      res.json({ 
-        success: true, 
+
+      res.json({
+        success: true,
         orderId: data.id,
         orderNumber: data.order_number,
-        message: 'Order placed successfully!' 
+        message: 'Order placed successfully!'
       });
     } else {
       // Fallback if no database
       console.warn('Order received but no database configured:', { name, mobile, total });
       carts[device] = [];
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         orderId: 'TEMP-' + Date.now(),
         orderNumber: 'TEMP-' + Date.now(),
-        message: 'Order received (test mode)' 
+        message: 'Order received (test mode)'
       });
     }
-  } catch(e){
+  } catch (e) {
     console.error('CHECKOUT_SUBMIT_ERROR', e);
     res.status(500).json({ error: 'Failed to place order. Please try again.' });
   }
@@ -2131,69 +2135,69 @@ app.post('/checkout/', async (req, res) => {
 // Set cart quantity (allows decreasing / removing)
 app.get('/set_cart_qty/', (req, res) => {
   const { productid, qty, variantid } = req.query;
-  if(!productid || typeof qty === 'undefined') return res.status(400).json({ error:'productid and qty required'});
-  const q = parseInt(qty,10);
+  if (!productid || typeof qty === 'undefined') return res.status(400).json({ error: 'productid and qty required' });
+  const q = parseInt(qty, 10);
   const device = req.cookies.device || 'anonymous';
   const cart = getCart(device);
-  const entry = cart.find(i=>i.productId===productid && i.variantId === (variantid || null));
-  if(!entry) return res.status(404).json({ error:'Item not in cart'});
-  if(q <= 0){
+  const entry = cart.find(i => i.productId === productid && i.variantId === (variantid || null));
+  if (!entry) return res.status(404).json({ error: 'Item not in cart' });
+  if (q <= 0) {
     const idx = cart.indexOf(entry);
-    cart.splice(idx,1);
+    cart.splice(idx, 1);
   } else {
     entry.qty = q;
   }
-  return res.json({ ok:true });
+  return res.json({ ok: true });
 });
 
 // -------- SELLER ROUTES --------
-function sellerGuard(req,res,next){
+function sellerGuard(req, res, next) {
   const token = req.cookies.farmer_session;
-  if(!token) return res.redirect('/farmers/login');
-  
+  if (!token) return res.redirect('/farmers/login');
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    if(!decoded || decoded.type !== 'farmer') {
+    if (!decoded || decoded.type !== 'farmer') {
       res.clearCookie('farmer_session');
       return res.redirect('/farmers/login');
     }
     req.farmer = decoded;
     next();
-  } catch(e) {
+  } catch (e) {
     res.clearCookie('farmer_session');
     return res.redirect('/farmers/login');
   }
 }
 
-app.get('/sellers/', async (req,res)=>{
+app.get('/sellers/', async (req, res) => {
   try {
     let sellers = [];
-    if(supabase){
+    if (supabase) {
       const { data } = await supabase.from('sellers').select('*').eq('status', 'approved');
       sellers = data || [];
     }
     const categories = await dbFetchCategories();
     res.render('sellers', { sellers, categories, siteSetting: res.locals.siteSetting });
-  } catch(e){
+  } catch (e) {
     console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to load sellers.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load sellers.' });
   }
 });
 
 // Keep backward compatibility
-app.get('/farmers/', (req,res) => res.redirect('/sellers/'));
+app.get('/farmers/', (req, res) => res.redirect('/sellers/'));
 
-app.get('/sellers/signup', (req,res)=>{
+app.get('/sellers/signup', (req, res) => {
   res.render('seller-signup-new', { siteSetting: res.locals.siteSetting });
 });
 
-app.post('/api/sellers/signup-send-otp', async (req,res)=>{
+app.post('/api/sellers/signup-send-otp', async (req, res) => {
   try {
     const { email } = req.body;
-    if(!email.endsWith('@cropsay.com')) return res.json({ success:false, message:'Only @cropsay.com emails allowed' });
-    
+    if (!email.endsWith('@cropsay.com')) return res.json({ success: false, message: 'Only @cropsay.com emails allowed' });
+
     console.log('📧 Sending Supabase OTP to:', email);
-    
+
     const { data, error } = await supabase.auth.signInWithOtp({
       email: email,
       options: {
@@ -2202,43 +2206,43 @@ app.post('/api/sellers/signup-send-otp', async (req,res)=>{
       }
     });
 
-    if(error) {
+    if (error) {
       console.error('❌ Supabase OTP Error:', error);
-      return res.json({ success:false, message:'Failed to send OTP: ' + error.message });
+      return res.json({ success: false, message: 'Failed to send OTP: ' + error.message });
     }
 
     console.log('✅ Supabase OTP sent to:', email);
-    res.json({ success:true });
-  } catch(e){
+    res.json({ success: true });
+  } catch (e) {
     console.error('💥 Send OTP Error:', e);
-    res.json({ success:false, message:e.message });
+    res.json({ success: false, message: e.message });
   }
 });
 
-app.post('/api/sellers/signup-verify', async (req,res)=>{
+app.post('/api/sellers/signup-verify', async (req, res) => {
   try {
     const { email, otp, password } = req.body;
-    
+
     console.log('🔍 Verifying Supabase OTP for:', email);
-    
+
     const { data, error } = await supabase.auth.verifyOtp({
       email: email,
       token: otp,
       type: 'email'
     });
 
-    if(error) {
+    if (error) {
       console.error('❌ Supabase OTP verification error:', error);
-      return res.json({ success:false, message:'Invalid or expired OTP' });
+      return res.json({ success: false, message: 'Invalid or expired OTP' });
     }
 
-    if(!data.user) {
-      return res.json({ success:false, message:'Invalid or expired OTP' });
+    if (!data.user) {
+      return res.json({ success: false, message: 'Invalid or expired OTP' });
     }
 
     const password_hash = await bcrypt.hash(password, 10);
     const username = email.split('@')[0];
-    
+
     // Check if seller already exists
     const { data: existingSeller } = await supabase
       .from('sellers')
@@ -2249,7 +2253,7 @@ app.post('/api/sellers/signup-verify', async (req,res)=>{
     if (existingSeller) {
       return res.json({ success: false, message: 'Account already exists with this email' });
     }
-    
+
     const { data: seller, error: createError } = await supabase.from('sellers').insert({
       email,
       full_name: username.charAt(0).toUpperCase() + username.slice(1),
@@ -2258,67 +2262,71 @@ app.post('/api/sellers/signup-verify', async (req,res)=>{
       password_hash,
       status: 'approved'
     }).select().single();
-    
-    if(createError) {
+
+    if (createError) {
       console.error('❌ Seller creation error:', createError);
-      return res.json({ success:false, message:'Failed to create account: ' + createError.message });
+      return res.json({ success: false, message: 'Failed to create account: ' + createError.message });
     }
-    
+
     const sessionCookie = jwt.sign(
       { farmer_id: seller.id, email, name: seller.full_name, type: 'farmer' },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '7d' }
     );
-    
+
     res.cookie('farmer_session', sessionCookie, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 7*24*60*60*1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       sameSite: 'lax'
     });
-    
+
     console.log('✅ Seller created and logged in:', seller.id);
-    res.json({ success:true });
-  } catch(e){
+    res.json({ success: true });
+  } catch (e) {
     console.error('💥 Seller signup error:', e);
-    res.json({ success:false, message:e.message });
+    res.json({ success: false, message: e.message });
   }
 });
 
 // Keep backward compatibility
-app.get('/farmers/signup', (req,res) => res.redirect('/sellers/signup'));
+app.get('/farmers/signup', (req, res) => res.redirect('/sellers/signup'));
 
-app.get('/farmers/forgot-password', (req,res)=>{
+app.get('/farmers/forgot-password', (req, res) => {
   res.render('farmer-forgot-password', { siteSetting: res.locals.siteSetting, error: null });
 });
 
-app.get('/farmers/reset-password-otp', (req,res)=>{
-  res.render('farmer-reset-password-otp', { 
+app.get('/farmers/reset-password-otp', (req, res) => {
+  res.render('farmer-reset-password-otp', {
     siteSetting: res.locals.siteSetting,
-    process: { env: { 
-      SUPABASE_URL: process.env.SUPABASE_URL,
-      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
-    }}
+    process: {
+      env: {
+        SUPABASE_URL: process.env.SUPABASE_URL,
+        SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
+      }
+    }
   });
 });
 
-app.get('/farmers/reset-password-otp', (req,res)=>{
-  res.render('farmer-reset-password-otp', { 
+app.get('/farmers/reset-password-otp', (req, res) => {
+  res.render('farmer-reset-password-otp', {
     siteSetting: res.locals.siteSetting,
-    process: { env: { 
-      SUPABASE_URL: process.env.SUPABASE_URL,
-      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
-    }}
+    process: {
+      env: {
+        SUPABASE_URL: process.env.SUPABASE_URL,
+        SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
+      }
+    }
   });
 });
 
-app.post('/api/farmers/send-otp', async (req,res)=>{
+app.post('/api/farmers/send-otp', async (req, res) => {
   try {
     const { email } = req.body;
-    if(!email.endsWith('@cropsay.com')) return res.json({ success:false, message:'Only @cropsay.com emails allowed' });
-    
+    if (!email.endsWith('@cropsay.com')) return res.json({ success: false, message: 'Only @cropsay.com emails allowed' });
+
     console.log('📧 Sending Supabase OTP to:', email);
-    
+
     // Use Supabase OTP with proper configuration
     const { data, error } = await supabase.auth.signInWithOtp({
       email: email,
@@ -2330,25 +2338,25 @@ app.post('/api/farmers/send-otp', async (req,res)=>{
       }
     });
 
-    if(error) {
+    if (error) {
       console.error('❌ Supabase OTP Error:', error);
-      return res.json({ success:false, message:'Failed to send OTP: ' + error.message });
+      return res.json({ success: false, message: 'Failed to send OTP: ' + error.message });
     }
 
     console.log('✅ Supabase OTP sent to:', email);
-    res.json({ success:true, message:'OTP sent to your email' });
-  } catch(e){
+    res.json({ success: true, message: 'OTP sent to your email' });
+  } catch (e) {
     console.error('💥 Send OTP Error:', e);
-    res.json({ success:false, message:e.message });
+    res.json({ success: false, message: e.message });
   }
 });
 
-app.post('/api/farmers/verify-otp', async (req,res)=>{
+app.post('/api/farmers/verify-otp', async (req, res) => {
   try {
     const { email, otp } = req.body;
-    
+
     console.log('🔍 Verifying Supabase OTP for:', email);
-    
+
     // Verify OTP with Supabase
     const { data, error } = await supabase.auth.verifyOtp({
       email: email,
@@ -2356,26 +2364,26 @@ app.post('/api/farmers/verify-otp', async (req,res)=>{
       type: 'email'
     });
 
-    if(error) {
+    if (error) {
       console.error('❌ Supabase OTP verification error:', error);
-      return res.json({ success:false, message:'Invalid or expired OTP' });
+      return res.json({ success: false, message: 'Invalid or expired OTP' });
     }
 
-    if(data.user) {
+    if (data.user) {
       console.log('✅ Supabase OTP verified for:', email);
       // Store verification in session for signup completion
       otpStore[email] = { verified: true, supabaseUser: data.user };
-      res.json({ success:true });
+      res.json({ success: true });
     } else {
-      return res.json({ success:false, message:'Invalid or expired OTP' });
+      return res.json({ success: false, message: 'Invalid or expired OTP' });
     }
-  } catch(e){
+  } catch (e) {
     console.error('💥 Verify OTP Error:', e);
-    res.json({ success:false, message:e.message });
+    res.json({ success: false, message: e.message });
   }
 });
 
-app.post('/api/farmers/complete-signup', async (req,res)=>{
+app.post('/api/farmers/complete-signup', async (req, res) => {
   try {
     const { email, name, phone, password, businessName } = req.body;
 
@@ -2441,29 +2449,29 @@ app.post('/api/farmers/complete-signup', async (req,res)=>{
     console.log('✅ Account created:', email);
     res.json({ success: true, redirectUrl: '/farmers/dashboard' });
 
-  } catch(e){
+  } catch (e) {
     console.error('💥 Signup error:', e);
     res.json({ success: false, message: 'Error completing signup: ' + e.message });
   }
 });
 
-app.post('/api/farmers/forgot-password', async (req,res)=>{
+app.post('/api/farmers/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
-    
-    if(!email.endsWith('@cropsay.com')) {
-      return res.json({ success:false, message:'Only @cropsay.com emails are allowed' });
+
+    if (!email.endsWith('@cropsay.com')) {
+      return res.json({ success: false, message: 'Only @cropsay.com emails are allowed' });
     }
-    
+
     // Check sellers table for the email
     let { data: seller, error: queryError } = await supabase
       .from('sellers')
       .select('id, email, status')
       .eq('email', email)
       .single();
-    
+
     // If seller doesn't exist, create one automatically
-    if(queryError || !seller) {
+    if (queryError || !seller) {
       console.log('📝 Creating new seller for:', email);
       const username = email.split('@')[0];
       const { data: newSeller, error: createError } = await supabase
@@ -2477,21 +2485,21 @@ app.post('/api/farmers/forgot-password', async (req,res)=>{
         })
         .select('id, email, status')
         .single();
-      
-      if(createError) {
+
+      if (createError) {
         console.error('❌ Failed to create seller:', createError);
-        return res.json({ success:false, message:'Failed to create account' });
+        return res.json({ success: false, message: 'Failed to create account' });
       }
-      
+
       seller = newSeller;
       console.log('✅ New seller created:', seller.id);
     }
-    
-    if(seller.status !== 'approved') {
+
+    if (seller.status !== 'approved') {
       console.log('❌ Account not approved:', email, 'Status:', seller.status);
-      return res.json({ success:false, message:'Account not approved' });
+      return res.json({ success: false, message: 'Account not approved' });
     }
-    
+
     // Use Supabase OTP for email
     const { error } = await supabase.auth.signInWithOtp({
       email: email,
@@ -2500,23 +2508,23 @@ app.post('/api/farmers/forgot-password', async (req,res)=>{
       }
     });
 
-    if(error) {
+    if (error) {
       console.error('❌ Supabase OTP Error:', error);
-      return res.json({ success:false, message:'Failed to send OTP' });
+      return res.json({ success: false, message: 'Failed to send OTP' });
     }
 
     console.log('✅ OTP sent to', email);
-    res.json({ success:true, message:'OTP sent to your email' });
-  } catch(e){
+    res.json({ success: true, message: 'OTP sent to your email' });
+  } catch (e) {
     console.error('💥 Forgot Password Error:', e);
-    res.json({ success:false, message:e.message });
+    res.json({ success: false, message: e.message });
   }
 });
 
-app.post('/api/farmers/verify-reset-otp', async (req,res)=>{
+app.post('/api/farmers/verify-reset-otp', async (req, res) => {
   try {
     const { email, otp } = req.body;
-    
+
     // Verify OTP with Supabase
     const { data, error } = await supabase.auth.verifyOtp({
       email: email,
@@ -2524,42 +2532,42 @@ app.post('/api/farmers/verify-reset-otp', async (req,res)=>{
       type: 'email'
     });
 
-    if(error || !data.user) {
+    if (error || !data.user) {
       return res.json({ success: false, message: 'Invalid or expired OTP' });
     }
 
     // Store verified email for password reset
     otpStore[email] = { verified: true, expiry: Date.now() + (10 * 60 * 1000) };
-    
+
     res.json({ success: true, message: 'OTP verified' });
-  } catch(e) {
+  } catch (e) {
     res.json({ success: false, message: e.message });
   }
 });
 
-app.post('/api/farmers/reset-password', async (req,res)=>{
+app.post('/api/farmers/reset-password', async (req, res) => {
   try {
     const { email, password } = req.body;
-    
+
     // Check if OTP was verified
     if (!otpStore[email] || !otpStore[email].verified || Date.now() > otpStore[email].expiry) {
       return res.json({ success: false, message: 'OTP verification expired. Please verify OTP again.' });
     }
-    
+
     if (!password || password.length < 6) {
       return res.json({ success: false, message: 'Password must be at least 6 characters' });
     }
-    
+
     const password_hash = await bcrypt.hash(password, 10);
     console.log('🔐 Updating password for:', email, 'New hash length:', password_hash.length);
-    
+
     // Check if seller exists, create if needed (same as forgot password)
     let { data: seller } = await supabase
       .from('sellers')
       .select('id, email')
       .eq('email', email)
       .single();
-    
+
     if (!seller && email.endsWith('@cropsay.com')) {
       console.log('📝 Creating seller during password reset for:', email);
       const username = email.split('@')[0];
@@ -2574,44 +2582,44 @@ app.post('/api/farmers/reset-password', async (req,res)=>{
         })
         .select('id, email')
         .single();
-      
+
       if (createError) {
         console.error('❌ Failed to create seller during reset:', createError);
         return res.json({ success: false, message: 'Failed to create account' });
       }
       seller = newSeller;
     }
-    
+
     if (!seller) {
       console.error('❌ No user found with email:', email);
       return res.json({ success: false, message: 'User not found' });
     }
-    
+
     // Update password
     const { data: updateResult, error: updateError } = await supabase
       .from('sellers')
       .update({ password_hash, updated_at: new Date().toISOString() })
       .eq('email', email)
       .select('id, email');
-    
+
     if (updateError) {
       console.error('❌ Password update error:', updateError);
       return res.json({ success: false, message: 'Failed to reset password: ' + updateError.message });
     }
-    
+
     delete otpStore[email];
     console.log('✅ Password reset successful for:', email, 'User ID:', updateResult[0].id);
     res.json({ success: true, message: 'Password reset successful' });
-  } catch(e){
+  } catch (e) {
     console.error('💥 Reset password error:', e);
     res.json({ success: false, message: e.message });
   }
 });
 
 // Sellers login (redirect to farmers for backward compatibility)
-app.get('/sellers/login', (req,res) => res.redirect('/farmers/login'));
+app.get('/sellers/login', (req, res) => res.redirect('/farmers/login'));
 
-app.get('/farmers/login', (req,res)=>{
+app.get('/farmers/login', (req, res) => {
   const token = req.cookies.farmer_session;
   if (token) {
     try {
@@ -2630,33 +2638,33 @@ app.get('/farmers/login', (req,res)=>{
 
 
 // Sellers login POST (redirect to farmers for backward compatibility)
-app.post('/sellers/login', (req,res) => res.redirect(307, '/farmers/login'));
+app.post('/sellers/login', (req, res) => res.redirect(307, '/farmers/login'));
 
-app.post('/farmers/login', async (req,res)=>{
+app.post('/farmers/login', async (req, res) => {
   const { email, password } = req.body;
-  
+
   // Validate input
   if (!email || !password) {
     return res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'Email and password are required.' });
   }
-  
-  if(!supabase) return res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'Database not configured.' });
-  
+
+  if (!supabase) return res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'Database not configured.' });
+
   try {
     console.log('🔐 Login attempt for:', email);
-    
+
     // Find the seller (bypass RLS with service role)
     const { data: sellers, error: queryError } = await supabase
       .from('sellers')
       .select('*')
       .eq('email', email);
-    
-    if(queryError) {
+
+    if (queryError) {
       console.error('❌ Database query error:', queryError.message);
       return res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'Login failed. Please try again.' });
     }
 
-    if(!sellers || sellers.length === 0) {
+    if (!sellers || sellers.length === 0) {
       console.log('❌ Seller not found:', email);
       return res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'Invalid email or password.' });
     }
@@ -2676,7 +2684,7 @@ app.post('/farmers/login', async (req,res)=>{
     }
 
     // Check account status
-    if(farmer.status !== 'approved') {
+    if (farmer.status !== 'approved') {
       console.log('❌ Account not approved:', email, 'Status:', farmer.status);
       return res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'Your account is not approved yet. Please contact support.' });
     }
@@ -2685,8 +2693,8 @@ app.post('/farmers/login', async (req,res)=>{
     console.log('🔍 Verifying password for:', email);
     const passwordMatch = await bcrypt.compare(password, farmer.password_hash);
     console.log('🔐 Password verification result:', passwordMatch);
-    
-    if(!passwordMatch) {
+
+    if (!passwordMatch) {
       console.log('❌ Password mismatch for:', email);
       return res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'Invalid email or password.' });
     }
@@ -2713,46 +2721,46 @@ app.post('/farmers/login', async (req,res)=>{
     });
 
     res.redirect('/farmers/dashboard');
-  } catch(e){
+  } catch (e) {
     console.error('💥 Login error:', e.message, e.stack);
     res.render('farmer-login', { siteSetting: res.locals.siteSetting, error: 'Login failed. Please try again.' });
   }
 });
 
-app.post('/farmers/logout', (req,res)=>{
+app.post('/farmers/logout', (req, res) => {
   res.clearCookie('farmer_session');
   res.redirect('/farmers/login');
 });
 
 // Sellers dashboard (redirect to farmers for now)
-app.get('/sellers/dashboard', sellerGuard, async (req,res)=>{
+app.get('/sellers/dashboard', sellerGuard, async (req, res) => {
   try {
     const token = req.cookies.farmer_session;
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
     const farmerId = decoded.farmer_id;
 
     if (!farmerId) {
-      return res.status(401).render('simple-message', { title:'Error', message:'Invalid session. Please login again.' });
+      return res.status(401).render('simple-message', { title: 'Error', message: 'Invalid session. Please login again.' });
     }
 
     const { data: farmer, error: farmerError } = await supabase.from('sellers').select('*').eq('id', farmerId).single();
-    
+
     if (farmerError || !farmer) {
       console.error('Seller not found:', farmerError);
-      return res.status(404).render('simple-message', { title:'Error', message:'Seller profile not found.' });
+      return res.status(404).render('simple-message', { title: 'Error', message: 'Seller profile not found.' });
     }
 
     const { data: products } = await supabase.from('products').select('*').eq('seller_id', farmerId);
-    const { data: posts } = await supabase.from('seller_posts').select('*').eq('seller_id', farmerId).order('created_at', { ascending:false });
-    
-    res.render('farmer-dashboard', { farmer, products: products||[], posts: posts||[], siteSetting: res.locals.siteSetting });
-  } catch(e){
+    const { data: posts } = await supabase.from('seller_posts').select('*').eq('seller_id', farmerId).order('created_at', { ascending: false });
+
+    res.render('farmer-dashboard', { farmer, products: products || [], posts: posts || [], siteSetting: res.locals.siteSetting });
+  } catch (e) {
     console.error('Dashboard error:', e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to load dashboard.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load dashboard.' });
   }
 });
 
-app.get('/farmers/dashboard', sellerGuard, async (req,res)=>{
+app.get('/farmers/dashboard', sellerGuard, async (req, res) => {
   try {
     // Decode JWT token to get farmer_id
     const token = req.cookies.farmer_session;
@@ -2760,23 +2768,23 @@ app.get('/farmers/dashboard', sellerGuard, async (req,res)=>{
     const farmerId = decoded.farmer_id;
 
     if (!farmerId) {
-      return res.status(401).render('simple-message', { title:'Error', message:'Invalid session. Please login again.' });
+      return res.status(401).render('simple-message', { title: 'Error', message: 'Invalid session. Please login again.' });
     }
 
     const { data: farmer, error: farmerError } = await supabase.from('sellers').select('*').eq('id', farmerId).single();
-    
+
     if (farmerError || !farmer) {
       console.error('Farmer not found:', farmerError);
-      return res.status(404).render('simple-message', { title:'Error', message:'Farmer profile not found.' });
+      return res.status(404).render('simple-message', { title: 'Error', message: 'Farmer profile not found.' });
     }
 
     const { data: products } = await supabase.from('products').select('*').eq('seller_id', farmerId);
-    const { data: posts } = await supabase.from('seller_posts').select('*').eq('seller_id', farmerId).order('created_at', { ascending:false });
-    
-    res.render('farmer-dashboard', { farmer, products: products||[], posts: posts||[], siteSetting: res.locals.siteSetting });
-  } catch(e){
+    const { data: posts } = await supabase.from('seller_posts').select('*').eq('seller_id', farmerId).order('created_at', { ascending: false });
+
+    res.render('farmer-dashboard', { farmer, products: products || [], posts: posts || [], siteSetting: res.locals.siteSetting });
+  } catch (e) {
     console.error('Dashboard error:', e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to load dashboard.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load dashboard.' });
   }
 });
 
@@ -2810,9 +2818,9 @@ app.get('/farmers/products/new', sellerGuard, async (req, res) => {
     const token = req.cookies.farmer_session;
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
     const { data: farmer } = await supabase.from('farmers').select('full_name').eq('id', decoded.farmer_id).single();
-    
+
     const categories = await dbFetchCategories();
-    
+
     res.render('farmer-product-form', {
       item: null,
       farmer,
@@ -2899,7 +2907,7 @@ app.post('/farmers/products/:id/edit', sellerGuard, upload.single('image'), asyn
     }
 
     const { name, price, stock, category, short_description, long_description } = req.body;
-    
+
     const updateData = {
       name,
       price: parseFloat(price),
@@ -2948,7 +2956,7 @@ app.post('/farmers/products/:id/delete', sellerGuard, async (req, res) => {
   }
 });
 
-app.post('/farmers/profile/update', sellerGuard, upload.fields([{name:'profile_image'},{name:'cover_image'}]), async (req,res)=>{
+app.post('/farmers/profile/update', sellerGuard, upload.fields([{ name: 'profile_image' }, { name: 'cover_image' }]), async (req, res) => {
   try {
     // Decode JWT to get farmer_id
     const token = req.cookies.farmer_session;
@@ -2957,17 +2965,17 @@ app.post('/farmers/profile/update', sellerGuard, upload.fields([{name:'profile_i
 
     const { full_name, phone, business_name, location, bio } = req.body;
     const updateData = { full_name, phone, business_name, location, bio };
-    if(req.files?.profile_image) updateData.profile_image = '/media/uploads/' + req.files.profile_image[0].filename;
-    if(req.files?.cover_image) updateData.cover_image = '/media/uploads/' + req.files.cover_image[0].filename;
-    
+    if (req.files?.profile_image) updateData.profile_image = '/media/uploads/' + req.files.profile_image[0].filename;
+    if (req.files?.cover_image) updateData.cover_image = '/media/uploads/' + req.files.cover_image[0].filename;
+
     await supabase.from('farmers').update(updateData).eq('id', farmerId);
-    res.json({ success:true });
-  } catch(e){
-    res.status(500).json({ error:e.message });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
-app.post('/farmers/posts/add', sellerGuard, upload.single('media_file'), async (req,res)=>{
+app.post('/farmers/posts/add', sellerGuard, upload.single('media_file'), async (req, res) => {
   try {
     // Decode JWT to get farmer_id
     const token = req.cookies.farmer_session;
@@ -2976,67 +2984,67 @@ app.post('/farmers/posts/add', sellerGuard, upload.single('media_file'), async (
 
     const { content, media_type, media_url } = req.body;
     let finalUrl = media_url;
-    if(req.file) finalUrl = '/media/uploads/' + req.file.filename;
-    await supabase.from('farmer_posts').insert({ farmer_id:farmerId, content, media_type, media_url:finalUrl });
-    res.json({ success:true });
-  } catch(e){
-    res.status(500).json({ error:e.message });
+    if (req.file) finalUrl = '/media/uploads/' + req.file.filename;
+    await supabase.from('farmer_posts').insert({ farmer_id: farmerId, content, media_type, media_url: finalUrl });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
-app.get('/sellers/:id', async (req,res)=>{
+app.get('/sellers/:id', async (req, res) => {
   try {
     const { data: seller } = await supabase.from('sellers').select('*').eq('id', req.params.id).eq('status', 'approved').single();
-    if(!seller) return res.status(404).render('simple-message', { title:'Not Found', message:'Seller not found.' });
-    const { data: posts } = await supabase.from('seller_posts').select('*').eq('seller_id', req.params.id).order('created_at', { ascending:false });
+    if (!seller) return res.status(404).render('simple-message', { title: 'Not Found', message: 'Seller not found.' });
+    const { data: posts } = await supabase.from('seller_posts').select('*').eq('seller_id', req.params.id).order('created_at', { ascending: false });
     const { data: products } = await supabase.from('products').select('*').eq('seller_id', req.params.id).eq('active', true);
-    res.render('farmer-profile', { farmer: seller, posts: posts||[], products: products||[], siteSetting: res.locals.siteSetting });
-  } catch(e){
+    res.render('farmer-profile', { farmer: seller, posts: posts || [], products: products || [], siteSetting: res.locals.siteSetting });
+  } catch (e) {
     console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to load seller profile.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load seller profile.' });
   }
 });
 
-app.post('/api/farmer-applications', async (req,res)=>{
+app.post('/api/farmer-applications', async (req, res) => {
   try {
     const { full_name, phone, email, business_name, location, message } = req.body;
     await supabase.from('farmer_applications').insert({ full_name, phone, email, business_name, location, message });
-    res.json({ success:true });
-  } catch(e){
-    res.status(500).json({ error:e.message });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
-app.get('/admin/farmer-applications', adminGuard, async (req,res)=>{
+app.get('/admin/farmer-applications', adminGuard, async (req, res) => {
   try {
-    const { data: applications } = await supabase.from('farmer_applications').select('*').order('created_at', { ascending:false });
-    res.render('admin/farmer-applications', { active: 'farmer-applications', applications: applications||[], msg: req.query.msg||'', siteSetting: res.locals.siteSetting });
-  } catch(e){
+    const { data: applications } = await supabase.from('farmer_applications').select('*').order('created_at', { ascending: false });
+    res.render('admin/farmer-applications', { active: 'farmer-applications', applications: applications || [], msg: req.query.msg || '', siteSetting: res.locals.siteSetting });
+  } catch (e) {
     console.error(e);
-    res.status(500).render('simple-message', { title:'Error', message:'Failed to load applications.' });
+    res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load applications.' });
   }
 });
 
-app.post('/admin/farmer-applications/approve', adminGuard, async (req,res)=>{
+app.post('/admin/farmer-applications/approve', adminGuard, async (req, res) => {
   try {
     const { application_id, email_prefix, password } = req.body;
     const { data: app } = await supabase.from('farmer_applications').select('*').eq('id', application_id).single();
     const email = email_prefix + '@cropsay.com';
     const password_hash = await bcrypt.hash(password, 10);
-    await supabase.from('farmers').insert({ email, full_name:app.full_name, phone:app.phone, business_name:app.business_name, location:app.location, password_hash, status:'approved' });
-    await supabase.from('farmer_applications').update({ status:'approved', reviewed_at:new Date().toISOString() }).eq('id', application_id);
-    res.json({ success:true, email, password });
-  } catch(e){
-    res.status(500).json({ error:e.message });
+    await supabase.from('farmers').insert({ email, full_name: app.full_name, phone: app.phone, business_name: app.business_name, location: app.location, password_hash, status: 'approved' });
+    await supabase.from('farmer_applications').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', application_id);
+    res.json({ success: true, email, password });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
-app.post('/admin/farmer-applications/reject', adminGuard, async (req,res)=>{
+app.post('/admin/farmer-applications/reject', adminGuard, async (req, res) => {
   try {
-    await supabase.from('farmer_applications').update({ status:'rejected', reviewed_at:new Date().toISOString() }).eq('id', req.body.application_id);
-    res.json({ success:true });
-  } catch(e){
-    res.status(500).json({ error:e.message });
+    await supabase.from('farmer_applications').update({ status: 'rejected', reviewed_at: new Date().toISOString() }).eq('id', req.body.application_id);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
@@ -3051,22 +3059,22 @@ app.get('/admin/sellers', adminGuard, async (req, res) => {
     const statusFilter = req.query.status || '';
     const searchQuery = req.query.search || '';
     const sortBy = req.query.sort || 'created_at';
-    
+
     let query = supabase.from('sellers').select('*', { count: 'exact' });
-    
+
     if (statusFilter) {
       query = query.eq('status', statusFilter);
     }
-    
+
     if (searchQuery) {
       query = query.or(`full_name.ilike.%${searchQuery}%,business_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
     }
-    
+
     query = query.order(sortBy, { ascending: sortBy === 'full_name' }).range(offset, offset + limit - 1);
-    
+
     const { data: sellers, error, count } = await query;
     if (error) throw error;
-    
+
     // Get statistics
     const [totalRes, activeRes, pendingRes, productsRes] = await Promise.all([
       supabase.from('sellers').select('*', { count: 'exact', head: true }),
@@ -3074,16 +3082,16 @@ app.get('/admin/sellers', adminGuard, async (req, res) => {
       supabase.from('sellers').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
       supabase.from('products').select('*', { count: 'exact', head: true })
     ]);
-    
+
     const stats = {
       total: totalRes.count || 0,
       active: activeRes.count || 0,
       pending: pendingRes.count || 0,
       totalProducts: productsRes.count || 0
     };
-    
+
     const totalPages = Math.ceil((count || 0) / limit);
-    
+
     res.render('admin/seller-management', {
       active: 'sellers',
       sellers: sellers || [],
@@ -3108,9 +3116,9 @@ app.get('/admin/sellers/export', adminGuard, async (req, res) => {
       .from('sellers')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
-    
+
     // Create CSV content
     const headers = ['ID', 'Full Name', 'Email', 'Phone', 'Business Name', 'Location', 'Status', 'Created At'];
     const csvContent = [
@@ -3126,7 +3134,7 @@ app.get('/admin/sellers/export', adminGuard, async (req, res) => {
         new Date(seller.created_at).toISOString().split('T')[0]
       ].join(','))
     ].join('\n');
-    
+
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="sellers-${new Date().toISOString().split('T')[0]}.csv"`);
     res.send(csvContent);
@@ -3144,7 +3152,7 @@ app.get('/admin/sellers/:id', adminGuard, async (req, res) => {
       .select('*')
       .eq('id', req.params.id)
       .single();
-    
+
     if (error) throw error;
     res.json(seller);
   } catch (e) {
@@ -3158,11 +3166,11 @@ app.post('/admin/sellers/add', adminGuard, upload.single('profile_image'), async
   try {
     const { full_name, email, phone, business_name, location, status, bio } = req.body;
     const profile_image = req.file ? '/media/uploads/' + req.file.filename : null;
-    
+
     // Generate temporary password
     const tempPassword = Math.random().toString(36).slice(-8);
     const password_hash = await bcrypt.hash(tempPassword, 10);
-    
+
     const { data, error } = await supabase.from('sellers').insert({
       full_name,
       email,
@@ -3174,14 +3182,14 @@ app.post('/admin/sellers/add', adminGuard, upload.single('profile_image'), async
       profile_image,
       password_hash
     }).select().single();
-    
+
     if (error) throw error;
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       seller: data,
       tempPassword,
-      message: 'Seller added successfully' 
+      message: 'Seller added successfully'
     });
   } catch (e) {
     console.error('ADD_SELLER_ERROR', e);
@@ -3196,7 +3204,7 @@ app.post('/admin/sellers/:id/approve', adminGuard, async (req, res) => {
       .from('farmers')
       .update({ status: 'approved', updated_at: new Date().toISOString() })
       .eq('id', req.params.id);
-    
+
     if (error) throw error;
     res.json({ success: true });
   } catch (e) {
@@ -3212,7 +3220,7 @@ app.post('/admin/sellers/:id/suspend', adminGuard, async (req, res) => {
       .from('farmers')
       .update({ status: 'suspended', updated_at: new Date().toISOString() })
       .eq('id', req.params.id);
-    
+
     if (error) throw error;
     res.json({ success: true });
   } catch (e) {
@@ -3228,7 +3236,7 @@ app.post('/admin/sellers/:id/reactivate', adminGuard, async (req, res) => {
       .from('farmers')
       .update({ status: 'approved', updated_at: new Date().toISOString() })
       .eq('id', req.params.id);
-    
+
     if (error) throw error;
     res.json({ success: true });
   } catch (e) {
@@ -3242,10 +3250,10 @@ app.post('/admin/sellers/:id/delete', adminGuard, async (req, res) => {
   try {
     // First, update all products to remove seller reference
     await supabase.from('products').update({ farmer_id: null }).eq('farmer_id', req.params.id);
-    
+
     // Then delete the seller
     const { error } = await supabase.from('farmers').delete().eq('id', req.params.id);
-    
+
     if (error) throw error;
     res.json({ success: true });
   } catch (e) {
@@ -3329,7 +3337,7 @@ app.post('/admin/seller-applications/reject', adminGuard, async (req, res) => {
 });
 
 // Serve remaining static assets with caching
-app.use('/', express.static(path.join(__dirname, staticRoot), { 
+app.use('/', express.static(path.join(__dirname, staticRoot), {
   index: false,
   maxAge: '1d',
   etag: true,
@@ -3337,17 +3345,17 @@ app.use('/', express.static(path.join(__dirname, staticRoot), {
 }));
 
 // Catch-all 404 handler: render the simple-message template so we keep the minimal Not Found UI
-app.use(function(req, res){
+app.use(function (req, res) {
   // Prefer specific messages for product/category-like routes
   let message = 'Page not found.';
-  try{
-    if(String(req.path).startsWith('/details/') || String(req.path).startsWith('/product')) message = 'Product not found.';
-    if(String(req.path).startsWith('/shop/')) message = 'Category not found.';
-  }catch(e){}
+  try {
+    if (String(req.path).startsWith('/details/') || String(req.path).startsWith('/product')) message = 'Product not found.';
+    if (String(req.path).startsWith('/shop/')) message = 'Category not found.';
+  } catch (e) { }
   return res.status(404).render('simple-message', { title: 'Not Found', message });
 });
 
-function start(port, attempt=0){
+function start(port, attempt = 0) {
   const srv = app.listen(port, () => {
     // Enable HTTP keep-alive
     srv.keepAliveTimeout = 65000;
@@ -3364,11 +3372,11 @@ function start(port, attempt=0){
     }
     console.log('='.repeat(60));
   });
-  srv.on('error', (err)=>{
-    if(err.code === 'EADDRINUSE' && attempt < 5){
+  srv.on('error', (err) => {
+    if (err.code === 'EADDRINUSE' && attempt < 5) {
       const next = port + 1;
       console.warn(`Port ${port} in use, trying ${next}...`);
-      start(next, attempt+1);
+      start(next, attempt + 1);
     } else {
       console.error('Failed to start server:', err);
       process.exit(1);
