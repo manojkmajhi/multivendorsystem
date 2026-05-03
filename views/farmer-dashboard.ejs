@@ -171,7 +171,17 @@
 
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
+    // Premium notification helper
+    const toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
+    });
+
     // Media type toggle
     $('#mediaType').on('change', function() {
       if ($(this).val() === 'link') {
@@ -187,18 +197,36 @@
     $('#profileForm').on('submit', function(e) {
       e.preventDefault();
       const formData = new FormData(this);
+      
+      Swal.fire({
+        title: 'Updating Profile...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+      });
+
       $.ajax({
         url: '/farmers/profile/update',
         method: 'POST',
         data: formData,
         processData: false,
         contentType: false,
-        success: function() {
-          alert('Profile updated successfully!');
-          location.reload();
+        success: function(res) {
+          if (res.success) {
+            Swal.fire({
+              icon: 'success',
+              title: 'Profile Updated!',
+              text: 'Your changes have been saved.',
+              confirmButtonColor: '#28a745'
+            }).then(() => {
+              location.reload();
+            });
+          } else {
+            Swal.fire('Error', res.error || 'Failed to update profile', 'error');
+          }
         },
-        error: function() {
-          alert('Failed to update profile');
+        error: function(xhr) {
+          const errMsg = xhr.responseJSON?.error || 'Failed to update profile';
+          Swal.fire('Error', errMsg, 'error');
         }
       });
     });
@@ -207,18 +235,36 @@
     $('#addPostForm').on('submit', function(e) {
       e.preventDefault();
       const formData = new FormData(this);
+
+      Swal.fire({
+        title: 'Posting...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+      });
+
       $.ajax({
         url: '/farmers/posts/add',
         method: 'POST',
         data: formData,
         processData: false,
         contentType: false,
-        success: function() {
-          alert('Post added successfully!');
-          location.reload();
+        success: function(res) {
+          if (res.success) {
+            Swal.fire({
+              icon: 'success',
+              title: 'Posted!',
+              text: 'Your post has been shared.',
+              confirmButtonColor: '#28a745'
+            }).then(() => {
+              location.reload();
+            });
+          } else {
+            Swal.fire('Error', res.error || 'Failed to add post', 'error');
+          }
         },
-        error: function() {
-          alert('Failed to add post');
+        error: function(xhr) {
+          const errMsg = xhr.responseJSON?.error || 'Failed to add post';
+          Swal.fire('Error', errMsg, 'error');
         }
       });
     });

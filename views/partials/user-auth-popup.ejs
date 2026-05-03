@@ -211,7 +211,10 @@ function logout() {
 
 async function verifyMobileWithOTP(phone, name, callback) {
   otpCallback = callback;
-  pendingPhone = '+977' + phone;
+  // Remove any spaces, dashes, or special characters
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  // Add Nepal country code if not present
+  pendingPhone = cleanPhone.startsWith('977') ? '+' + cleanPhone : '+977' + cleanPhone;
   pendingName = name;
   
   document.getElementById('verifyPhone').textContent = pendingPhone;
@@ -243,6 +246,10 @@ async function verifyMobileWithOTP(phone, name, callback) {
   
   // Send OTP via server
   try {
+    console.log('📱 Sending OTP request...');
+    console.log('Phone (before format):', phone);
+    console.log('Pending phone (after format):', pendingPhone);
+    
     const response = await fetch('/api/send-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -257,7 +264,8 @@ async function verifyMobileWithOTP(phone, name, callback) {
     }
   } catch(e) {
     console.error('Failed to send OTP:', e);
-    alert('Failed to send OTP. Please try again.');
+    alert('Failed to send OTP: ' + e.message);
+    closeOTPModal();
   }
 }
 
@@ -282,11 +290,11 @@ async function verifyOTP() {
     const response = await fetch('/api/verify-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: pendingPhone, otp: otp, orderId: otpOrderId })
+      body: JSON.stringify({ phone: pendingPhone, otp: otp })
     });
     const data = await response.json();
     
-    if (data.isOTPVerified) {
+    if (data.success && (data.isOTPVerified || data.verified)) {
       currentUser = {
         phone: pendingPhone,
         name: pendingName,
@@ -320,7 +328,8 @@ async function verifyOTP() {
 }
 
 async function resendOTP() {
-  await verifyMobileWithOTP(pendingPhone.replace('+977', ''), pendingName, otpCallback);
+  const cleanPhone = pendingPhone.replace(/^\+977/, '');
+  await verifyMobileWithOTP(cleanPhone, pendingName, otpCallback);
   alert('OTP resent to ' + pendingPhone);
 }
 

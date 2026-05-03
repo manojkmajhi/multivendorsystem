@@ -1,362 +1,644 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title><%= siteSetting.name %><% if(typeof seo !== 'undefined' && seo.site_tagline) { %> | <%= seo.site_tagline %><% } else { %> | Fresh From Farms, Direct to You<% } %></title>
-  <% if(typeof seo !== 'undefined' && seo.meta_description) { %>
-  <meta name="description" content="<%= seo.meta_description %>" />
-  <% } %>
-  <% if(typeof seo !== 'undefined' && seo.meta_keywords) { %>
-  <meta name="keywords" content="<%= seo.meta_keywords %>" />
-  <% } %>
-  <style>body{opacity:0;transition:opacity .15s;}.body-loaded{opacity:1!important;}#search-form-in-navbar{width:28%;}#search-form-in-navbar input::placeholder{font-size:15px;}@media(max-width:600px){#search-form-in-navbar{width:55%;}#search-form-in-navbar input::placeholder{font-size:12px;}}</style>
-  <script>window.addEventListener('load',function(){document.body.classList.add('body-loaded');});</script>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
-  <link rel="stylesheet" href="/css/style.blue.css">
-  <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>">
-  <link rel="stylesheet" href="/css/floating-button.css">
-  <link rel="stylesheet" href="/css/performance-animations.css">
-  <link rel="stylesheet" href="/css/product-quickview.css?v=1">
-  <link rel="stylesheet" href="/css/loading-indicator.css">
-  <style>
-    .category-item{display:block;position:relative;border:1px solid #bebebe;overflow:hidden;border-radius:2px;background:#fff;}.category-img-container{position:relative;width:100%;padding-top:100%;overflow:hidden;}
-    .category-item img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;transition:transform .45s;}
-    .category-item:hover img{transform:scale(1.12);}
-    .category-item-title{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:.35rem 1rem;font-size:.95rem;font-weight:700;letter-spacing:.05em;border:2px dotted #0a0a0a;text-transform:uppercase;z-index:1;}
-    .scroll-menu-wrapper{position:relative;padding:10px 0;height:220px;}.menu{white-space:nowrap;overflow-x:auto;overflow-y:hidden;}.menu::-webkit-scrollbar{width:0;}.scroll-item{display:inline-block;width:200px;}
-    @media(max-width:600px){.scroll-menu-wrapper{height:150px;}.scroll-item{width:120px;}.category-item-title{padding:.2rem .4rem;font-size:.7rem;}}
-    .product{text-align:center;background:#f8f8f8;border:1px solid #f8f8f8;transition:box-shadow .25s,transform .25s;padding:4px;}.product:hover{box-shadow:0 6px 18px -6px rgba(0,0,0,.12);transform:translateY(-3px);}
-    .product-img-container{position:relative;width:100%;padding-top:50%;overflow:hidden;background:#f8f8f8;}
-    .product img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;}
-    .product h5{font-size:0.85rem;margin-top:4px;}
-    .product .text-muted{font-size:0.8rem;}
-    
-    /* Hero carousel - fixed aspect ratio and better design */
-    .hero-wrapper{position:relative; width:100%; padding-top:0; margin-bottom:1.5rem;}
-    #hero-carousel{position:relative; width:100%; border-radius:8px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,.08);}
-    #hero-carousel .owl-stage-outer, #hero-carousel .owl-stage, #hero-carousel .owl-item{height:100%;}
-    #hero-carousel .item{position:relative; width:100%; padding-top:42%; overflow:hidden; background:#f8f9fa;}
-    #hero-carousel .item a, #hero-carousel .item .hero-image-wrapper{position:absolute; top:0; left:0; width:100%; height:100%; display:block;}
-    #hero-carousel img{position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:1; transition:opacity .3s ease-in-out;}
-    #hero-carousel .hero-label{position:absolute; left:20px; bottom:20px; right:20px; background:rgba(0,0,0,.7); backdrop-filter:blur(8px); color:#fff; padding:10px 18px; border-radius:6px; font-size:15px; font-weight:600; letter-spacing:.8px; text-transform:uppercase; box-shadow:0 4px 12px rgba(0,0,0,.25); z-index:10; max-width:fit-content;}
-    #hero-carousel .owl-dots{position:absolute; bottom:15px; left:50%; transform:translateX(-50%); z-index:20; display:flex; gap:8px;}
-    #hero-carousel .owl-dot{width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.5); transition:all .3s; border:none; padding:0;}
-    #hero-carousel .owl-dot.active{width:24px; border-radius:4px; background:#fff;}
-    #hero-carousel .owl-nav{display:none;}
-    
-    @media (max-width:768px){
-      #hero-carousel .item{padding-top:56%;}
-      #hero-carousel .hero-label{left:12px; bottom:12px; right:12px; padding:8px 12px; font-size:12px; letter-spacing:.6px;}
-      #hero-carousel .owl-dots{bottom:10px; gap:6px;}
-      #hero-carousel .owl-dot{width:6px; height:6px;}
-      #hero-carousel .owl-dot.active{width:18px;}
-    }
-    @media (max-width:576px){
-      #hero-carousel .item{padding-top:65%;}
-      #hero-carousel .hero-label{left:10px; bottom:10px; right:10px; padding:6px 10px; font-size:11px; letter-spacing:.5px;}
-      .hero-wrapper{margin-bottom:1rem;}
-    }
-  </style>
+  <title>
+    <%= siteSetting.name %>
+      <% if(typeof seo !=='undefined' && seo.site_tagline) { %> | <%= seo.site_tagline %>
+          <% } else { %> | Fresh From Farms, Direct to You<% } %>
+  </title>
+  <% if(typeof seo !=='undefined' && seo.meta_description) { %>
+    <meta name="description" content="<%= seo.meta_description %>" />
+    <% } %>
+      <% if(typeof seo !=='undefined' && seo.meta_keywords) { %>
+        <meta name="keywords" content="<%= seo.meta_keywords %>" />
+        <% } %>
+          <style>
+            body {
+              opacity: 0;
+              transition: opacity .15s;
+            }
+
+            .body-loaded {
+              opacity: 1 !important;
+            }
+
+            #search-form-in-navbar {
+              width: 28%;
+            }
+
+            #search-form-in-navbar input::placeholder {
+              font-size: 15px;
+            }
+
+            @media(max-width:600px) {
+              #search-form-in-navbar {
+                width: 55%;
+              }
+
+              #search-form-in-navbar input::placeholder {
+                font-size: 12px;
+              }
+            }
+          </style>
+          <script>window.addEventListener('load', function () { document.body.classList.add('body-loaded'); });</script>
+          <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+          <link rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
+          <link rel="stylesheet" href="/css/style.blue.css">
+          <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>">
+          <link rel="stylesheet" href="/css/floating-button.css">
+          <link rel="stylesheet" href="/css/performance-animations.css">
+          <link rel="stylesheet" href="/css/product-quickview.css?v=1">
+          <link rel="stylesheet" href="/css/loading-indicator.css">
+          <style>
+            .category-item {
+              display: block;
+              position: relative;
+              border: 1px solid #bebebe;
+              overflow: hidden;
+              border-radius: 2px;
+              background: #fff;
+            }
+
+            .category-img-container {
+              position: relative;
+              width: 100%;
+              padding-top: 100%;
+              overflow: hidden;
+            }
+
+            .category-item img {
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              transition: transform .45s;
+            }
+
+            .category-item:hover img {
+              transform: scale(1.12);
+            }
+
+            .category-item-title {
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              background: #fff;
+              padding: .35rem 1rem;
+              font-size: .95rem;
+              font-weight: 700;
+              letter-spacing: .05em;
+              border: 2px dotted #0a0a0a;
+              text-transform: uppercase;
+              z-index: 1;
+            }
+
+            .scroll-menu-wrapper {
+              position: relative;
+              padding: 10px 0;
+              height: 220px;
+            }
+
+            .menu {
+              white-space: nowrap;
+              overflow-x: auto;
+              overflow-y: hidden;
+            }
+
+            .menu::-webkit-scrollbar {
+              width: 0;
+            }
+
+            .scroll-item {
+              display: inline-block;
+              width: 200px;
+            }
+
+            @media(max-width:600px) {
+              .scroll-menu-wrapper {
+                height: 150px;
+              }
+
+              .scroll-item {
+                width: 120px;
+              }
+
+              .category-item-title {
+                padding: .2rem .4rem;
+                font-size: .7rem;
+              }
+            }
+
+            .product {
+              text-align: center;
+              background: #f8f8f8;
+              border: 1px solid #f8f8f8;
+              transition: box-shadow .25s, transform .25s;
+              padding: 4px;
+            }
+
+            .product:hover {
+              box-shadow: 0 6px 18px -6px rgba(0, 0, 0, .12);
+              transform: translateY(-3px);
+            }
+
+            .product-img-container {
+              position: relative;
+              width: 100%;
+              padding-top: 50%;
+              overflow: hidden;
+              background: #f8f8f8;
+            }
+
+            .product img {
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
+            }
+
+            .product h5 {
+              font-size: 0.85rem;
+              margin-top: 4px;
+            }
+
+            .product .text-muted {
+              font-size: 0.8rem;
+            }
+
+            /* Hero carousel - fixed aspect ratio and better design */
+            .hero-wrapper {
+              position: relative;
+              width: 100%;
+              padding-top: 0;
+              margin-bottom: 1.5rem;
+            }
+
+            #hero-carousel {
+              position: relative;
+              width: 100%;
+              border-radius: 8px;
+              overflow: hidden;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
+            }
+
+            #hero-carousel .owl-stage-outer,
+            #hero-carousel .owl-stage,
+            #hero-carousel .owl-item {
+              height: 100%;
+            }
+
+            #hero-carousel .item {
+              position: relative;
+              width: 100%;
+              padding-top: 42%;
+              overflow: hidden;
+              background: #f8f9fa;
+            }
+
+            #hero-carousel .item a,
+            #hero-carousel .item .hero-image-wrapper {
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              display: block;
+            }
+
+            #hero-carousel img {
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              opacity: 1;
+              transition: opacity .3s ease-in-out;
+            }
+
+            #hero-carousel .hero-label {
+              position: absolute;
+              left: 30px;
+              bottom: 30px;
+              color: #fff;
+              font-size: 28px;
+              font-weight: 700;
+              letter-spacing: 1.5px;
+              text-transform: uppercase;
+              text-shadow: 2px 2px 8px rgba(0, 0, 0, .8), 0 0 20px rgba(0, 0, 0, .5);
+              z-index: 10;
+              max-width: 70%;
+              line-height: 1.3;
+            }
+
+            #hero-carousel .owl-dots {
+              position: absolute;
+              bottom: 15px;
+              left: 50%;
+              transform: translateX(-50%);
+              z-index: 20;
+              display: flex;
+              gap: 8px;
+            }
+
+            #hero-carousel .owl-dot {
+              width: 8px;
+              height: 8px;
+              border-radius: 50%;
+              background: rgba(255, 255, 255, .5);
+              transition: all .3s;
+              border: none;
+              padding: 0;
+            }
+
+            #hero-carousel .owl-dot.active {
+              width: 24px;
+              border-radius: 4px;
+              background: #fff;
+            }
+
+            #hero-carousel .owl-nav {
+              display: none;
+            }
+
+            @media (max-width:768px) {
+              #hero-carousel .item {
+                padding-top: 56%;
+              }
+
+              #hero-carousel .hero-label {
+                left: 15px;
+                bottom: 15px;
+                font-size: 18px;
+                letter-spacing: 1px;
+                max-width: 80%;
+              }
+
+              #hero-carousel .owl-dots {
+                bottom: 10px;
+                gap: 6px;
+              }
+
+              #hero-carousel .owl-dot {
+                width: 6px;
+                height: 6px;
+              }
+
+              #hero-carousel .owl-dot.active {
+                width: 18px;
+              }
+            }
+
+            @media (max-width:576px) {
+              #hero-carousel .item {
+                padding-top: 65%;
+              }
+
+              #hero-carousel .hero-label {
+                left: 12px;
+                bottom: 12px;
+                font-size: 14px;
+                letter-spacing: .8px;
+                max-width: 85%;
+              }
+
+              .hero-wrapper {
+                margin-bottom: 1rem;
+              }
+            }
+          </style>
 </head>
+
 <body style="opacity:0;">
   <div id="page-loader"></div>
   <nav class="navbar navbar-light fixed-top py-0 px-2">
     <div class="container px-0 px-lg-3">
       <a class="navbar-brand" href="/">
-        <img src="<%= (siteSetting && siteSetting.logo_url) || '/images/brand.svg' %>" height="60" alt="<%= (siteSetting && siteSetting.name) || 'Cropsay' %>">
+        <img src="<%= (siteSetting && siteSetting.logo_url) || '/images/brand.svg' %>" height="60"
+          alt="<%= (siteSetting && siteSetting.name) || 'Cropsay' %>">
       </a>
       <form method="POST" id="search-form-in-navbar" style="margin-left:auto;">
         <div class="input-group search-input-group">
-          <input class="form-control form-control-lg search" id="search" name="search" type="text" placeholder="Search Farm Products">
+          <input class="form-control form-control-lg search" id="search" name="search" type="text"
+            placeholder="Search Farm Products">
           <div class="input-group-append">
             <button class="input-group-text search-icon" id="search-icon-id"><i class="fas fa-search"></i></button>
           </div>
         </div>
       </form>
       <ul class="navbar-nav ml-auto phone-in-navbar" style="display: none;">
-        <li class="nav-item"><a class="nav-link" href="tel:9814789009"> <i class="fas fa-phone-alt"></i> 9814789009<sup><small> NP</small></sup></a></li>
+        <li class="nav-item"><a class="nav-link" href="tel:9814789009"> <i class="fas fa-phone-alt"></i>
+            9814789009<sup><small> NP</small></sup></a></li>
       </ul>
     </div>
   </nav>
-  
+
   <%- include('partials/user-auth-popup') %>
 
-  <div style="margin-top: 80px;"></div>
+    <div style="margin-top: 80px;"></div>
 
-  <!-- Hero Images Slider (if any) -->
-  <% if(heroImages && heroImages.length){ %>
-  <div class="container">
-    <div class="hero-wrapper">
-      <div class="owl-carousel" id="hero-carousel">
-        <% heroImages.forEach(h=>{ %>
-          <div class="item">
-            <% if(h.link_url){ %>
-              <a href="<%= h.link_url %>" class="hero-image-wrapper">
-                <img src="<%= h.image_url %>" alt="<%= h.title || 'Hero Image' %>" decoding="async" fetchpriority="high">
-              </a>
-            <% } else { %>
-              <div class="hero-image-wrapper">
-                <img src="<%= h.image_url %>" alt="<%= h.title || 'Hero Image' %>" decoding="async" fetchpriority="high">
+    <!-- Hero Images Slider (if any) -->
+    <% if(heroImages && heroImages.length){ %>
+      <div class="container">
+        <div class="hero-wrapper">
+          <div class="owl-carousel" id="hero-carousel">
+            <% heroImages.forEach(h=>{ %>
+              <div class="item">
+                <% if(h.link_url){ %>
+                  <a href="<%= h.link_url %>" class="hero-image-wrapper">
+                    <img src="<%= h.image_url %>" alt="<%= h.title || 'Hero Image' %>" decoding="async"
+                      fetchpriority="high">
+                  </a>
+                  <% } else { %>
+                    <div class="hero-image-wrapper">
+                      <img src="<%= h.image_url %>" alt="<%= h.title || 'Hero Image' %>" decoding="async"
+                        fetchpriority="high">
+                    </div>
+                    <% } %>
               </div>
-            <% } %>
-            <% if(h.title){ %>
-              <div class="hero-label"><%= h.title %></div>
-            <% } %>
+              <% }) %>
           </div>
-        <% }) %>
+        </div>
       </div>
-    </div>
-  </div>
-  <% } %>
+      <% } %>
 
-  <div class="container">
-    <section class="pt-2 pt-sm-4">
-      <header class="text-center mb-3">
-        <p class="small text-muted text-uppercase mb-1">Fresh From Farm</p>
-        <h2 class="h5 text-uppercase" style="letter-spacing:1.3px;">Browse Categories</h2>
-      </header>
-      <div class="scroll-menu-wrapper">
-        <ul class="menu list-unstyled mb-0 pl-0">
-          <% categories.forEach(c=>{ %>
-            <div class="text-center scroll-item">
-              <a class="category-item" href="/shop/<%= c.name %>/">
-                <div class="category-img-container">
-                  <img src="<%= c.image || '/staticfiles/brand.svg' %>" alt="<%- c.name.replace(/"/g,'&quot;') %>" loading="lazy" decoding="async">
-                  <div class="skeleton-loader"></div>
-                </div>
-                <span class="category-item-title"><%= c.name %></span>
-              </a>
-            </div>
-          <% }) %>
-        </ul>
-      </div>
-    </section>
-
-    <section class="py-3 py-sm-4">
-      <header>
-        <p class="small text-muted text-uppercase mb-1">You Will Love These</p>
-        <h2 class="h5 text-uppercase mb-2">Popular Items</h2>
-      </header>
-      <div class="row">
-        <% products.forEach(p=>{ %>
-          <div class="col-xl-3 col-lg-4 col-6 px-1 py-1">
-            <div class="product pt-2" style="height:100%;">
-              <div class="position-relative mb-1">
-                <div class="<%= p.id %>-added-message show-added-message" style="display:none; position:absolute; left:4px; top:4px; background:#000; color:#fff; font-size:11px; padding:2px 5px; border-radius:3px; z-index:2;">Added</div>
-                <a class="d-block" href="/details/<%= p.id %>/">
-                  <div class="product-img-container">
-                    <img src="<%= p.image %>" alt="<%= p.name %>" loading="lazy" decoding="async">
-                    <div class="skeleton-loader"></div>
+        <div class="container">
+          <section class="pt-2 pt-sm-4">
+            <header class="text-center mb-3">
+              <p class="small text-muted text-uppercase mb-1">Fresh From Farm</p>
+              <h2 class="h5 text-uppercase" style="letter-spacing:1.3px;">Browse Categories</h2>
+            </header>
+            <div class="scroll-menu-wrapper">
+              <ul class="menu list-unstyled mb-0 pl-0">
+                <% categories.forEach(c=>{ %>
+                  <div class="text-center scroll-item">
+                    <a class="category-item" href="/shop/<%= c.name %>/">
+                      <div class="category-img-container">
+                        <img src="<%= c.image || '/staticfiles/brand.svg' %>" alt="<%- c.name.replace(/"/g,'&quot;') %>" loading="lazy" decoding="async">
+                        <div class="skeleton-loader"></div>
+                      </div>
+                      <span class="category-item-title">
+                        <%= c.name %>
+                      </span>
+                    </a>
                   </div>
-                </a>
-              </div>
-              <h5 class="mb-0 text-sm"><a class="reset-anchor" href="/details/<%= p.id %>/"><%= p.name %></a></h5>
-              <p class="small text-muted mb-2">Rs. <%= p.price %></p>
-              <ul class="mb-2 mt-0 list-inline">
-                <% if(p.has_variants) { %>
-                  <li class="list-inline-item m-0 p-0"><a href="/details/<%= p.id %>/" class="btn btn-sm btn-dark py-1 px-2" style="min-width:90px;">Select Options</a></li>
-                <% } else { %>
-                  <li class="list-inline-item m-0 p-0"><button class="btn btn-sm btn-dark py-1 px-2" style="min-width:90px;" onclick="addToCart('<%= p.id %>','1', false)">Add to Cart</button></li>
-                <% } %>
-                <li class="list-inline-item mr-0"><a class="btn btn-sm btn-outline-dark py-1 px-2 view-btn" data-id="<%= p.id %>" data-img="<%= p.image %>" data-name="<%- p.name.replace(/\"/g,'&quot;') %>" data-price="<%= p.price %>" data-link="/details/<%= p.id %>/" data-short="<%- (p.short_description || '').replace(/\"/g,'&quot;') %>" data-has-variants="<%= p.has_variants ? 'true' : 'false' %>"><i class="fas fa-expand"></i></a></li>
+                  <% }) %>
               </ul>
             </div>
-          </div>
-        <% }) %>
-        <% if(!products.length){ %>
-          <div class="col-12"><p class="text-muted">No products yet.</p></div>
-        <% } %>
-      </div>
-    </section>
-  </div>
+          </section>
 
-  <!-- Unified Quickview Modal -->
-  <div class="modal fade quickview-modal" id="productQuickView" tabindex="-1" role="dialog" aria-hidden="true" aria-modal="true" aria-labelledby="quickview-title" aria-describedby="quickview-description">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-      <div class="modal-content" role="document">
-        <div class="quickview-wrap" role="group">
-          <button class="close quickview-close" type="button" data-dismiss="modal" aria-label="Close" id="quickview-close-btn"><span aria-hidden="true">×</span></button>
-          <div class="quickview-grid">
-            <div class="quickview-media">
-              <a id="quickview-img-link" href="#" class="d-block" aria-label="Product details link"><img id="quickview-img" class="quickview-img" src="" alt="Product image"></a>
-            </div>
-            <div class="quickview-info">
-              <h3 class="quickview-title" id="quickview-title"></h3>
-              <div class="quickview-price" id="quickview-price"></div>
-              <div class="quickview-description" id="quickview-description"></div>
-              <div class="variant-block" id="quickview-size-block" style="display:none;">
-                <div class="quickview-section-label">Size</div>
-                <select id="quickview-size" class="quickview-select" aria-label="Select size"></select>
-              </div>
-              <div class="variant-block" id="quickview-color-block" style="display:none;">
-                <div class="quickview-section-label">Color</div>
-                <div class="variant-row" id="quickview-colors" role="radiogroup" aria-label="Choose color"></div>
-              </div>
-              <div class="add-to-cart-row mt-2">
-                <div class="quantity-bar" role="group" aria-label="Quantity selector">
-                  <button type="button" id="quickview-dec" aria-label="Decrease quantity">‹</button>
-                  <input type="text" id="quickview-qty" value="1" aria-label="Quantity" inputmode="numeric" pattern="[0-9]*">
-                  <button type="button" id="quickview-inc" aria-label="Increase quantity">›</button>
+          <section class="py-3 py-sm-4">
+            <header>
+              <p class="small text-muted text-uppercase mb-1">You Will Love These</p>
+              <h2 class="h5 text-uppercase mb-2">Popular Items</h2>
+            </header>
+            <div class="row">
+              <% products.forEach(p=>{ %>
+                <div class="col-xl-3 col-lg-4 col-6 px-1 py-1">
+                  <div class="product pt-2" style="height:100%;">
+                    <div class="position-relative mb-1">
+                      <div class="<%= p.id %>-added-message show-added-message"
+                        style="display:none; position:absolute; left:4px; top:4px; background:#000; color:#fff; font-size:11px; padding:2px 5px; border-radius:3px; z-index:2;">
+                        Added</div>
+                      <a class="d-block" href="/details/<%= p.id %>/">
+                        <div class="product-img-container">
+                          <img src="<%= p.image %>" alt="<%= p.name %>" loading="lazy" decoding="async">
+                          <div class="skeleton-loader"></div>
+                        </div>
+                      </a>
+                    </div>
+                    <h5 class="mb-0 text-sm"><a class="reset-anchor" href="/details/<%= p.id %>/">
+                        <%= p.name %>
+                      </a></h5>
+                    <p class="small text-muted mb-2">Rs. <%= p.price %>
+                    </p>
+                    <ul class="mb-2 mt-0 list-inline">
+                      <% if(p.has_variants) { %>
+                        <li class="list-inline-item m-0 p-0"><a href="/details/<%= p.id %>/"
+                            class="btn btn-sm btn-dark py-1 px-2" style="min-width:90px;">Select Options</a></li>
+                        <% } else { %>
+                          <li class="list-inline-item m-0 p-0"><button class="btn btn-sm btn-dark py-1 px-2"
+                              style="min-width:90px;" onclick="addToCart('<%= p.id %>','1', false)">Add to Cart</button>
+                          </li>
+                          <% } %>
+                            <li class="list-inline-item mr-0"><a class="btn btn-sm btn-outline-dark py-1 px-2 view-btn"
+                                data-id="<%= p.id %>" data-img="<%= p.image %>" data-name="<%- p.name.replace(/"/g,'&quot;') %>"
+                                data-price="<%= p.price %>" data-link="/details/<%= p.id %>/"
+                                    data-short="<%- (p.short_description || '' ).replace(/"/g,'&quot;') %>"
+                                      data-has-variants="<%= p.has_variants ? 'true' : 'false' %>"><i
+                                          class="fas fa-expand"></i></a></li>
+                    </ul>
+                  </div>
                 </div>
-                <button id="quickview-add-to-cart" class="btn btn-dark btn-sm" aria-label="Add to cart">Add to Cart</button>
+                <% }) %>
+                  <% if(!products.length){ %>
+                    <div class="col-12">
+                      <p class="text-muted">No products yet.</p>
+                    </div>
+                    <% } %>
+            </div>
+          </section>
+        </div>
+
+        <!-- Unified Quickview Modal -->
+        <div class="modal fade quickview-modal" id="productQuickView" tabindex="-1" role="dialog" aria-hidden="true"
+          aria-modal="true" aria-labelledby="quickview-title" aria-describedby="quickview-description">
+          <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" role="document">
+              <div class="quickview-wrap" role="group">
+                <button class="close quickview-close" type="button" data-dismiss="modal" aria-label="Close"
+                  id="quickview-close-btn"><span aria-hidden="true">×</span></button>
+                <div class="quickview-grid">
+                  <div class="quickview-media">
+                    <a id="quickview-img-link" href="#" class="d-block" aria-label="Product details link"><img
+                        id="quickview-img" class="quickview-img" src="" alt="Product image"></a>
+                  </div>
+                  <div class="quickview-info">
+                    <h3 class="quickview-title" id="quickview-title"></h3>
+                    <div class="quickview-price" id="quickview-price"></div>
+                    <div class="quickview-description" id="quickview-description"></div>
+                    <div class="variant-block" id="quickview-size-block" style="display:none;">
+                      <div class="quickview-section-label">Size</div>
+                      <select id="quickview-size" class="quickview-select" aria-label="Select size"></select>
+                    </div>
+                    <div class="variant-block" id="quickview-color-block" style="display:none;">
+                      <div class="quickview-section-label">Color</div>
+                      <div class="variant-row" id="quickview-colors" role="radiogroup" aria-label="Choose color"></div>
+                    </div>
+                    <div class="add-to-cart-row mt-2">
+                      <div class="quantity-bar" role="group" aria-label="Quantity selector">
+                        <button type="button" id="quickview-dec" aria-label="Decrease quantity">‹</button>
+                        <input type="text" id="quickview-qty" value="1" aria-label="Quantity" inputmode="numeric"
+                          pattern="[0-9]*">
+                        <button type="button" id="quickview-inc" aria-label="Increase quantity">›</button>
+                      </div>
+                      <button id="quickview-add-to-cart" class="btn btn-dark btn-sm" aria-label="Add to cart">Add to
+                        Cart</button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-  </div> <!-- End main-content -->
+        </div> <!-- End main-content -->
 
-  <!-- Floating Cart Trigger (reuse existing scripts) -->
-  <%- include('partials/floating-cart') %>
+        <!-- Floating Cart Trigger (reuse existing scripts) -->
+        <%- include('partials/floating-cart') %>
 
-  <script src="/js/font-loader.js"></script>
-  <script src="/js/performance-boost.js" defer></script>
-  <script src="/js/image-fast-load.js" defer></script>
-  <script src="/js/ultra-fast-cart.js" defer></script>
-  <script src="/js/page-transition.js" defer></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js" defer></script>
-  <script src="/js/owl.carousel2.thumbs.min.js" defer></script>
-  <script src="/js/cart-shared.js?v=5" defer></script>
-  <script src="/js/front.js?v=3" defer></script>
-  <script src="https://kit.fontawesome.com/d6db3c2373.js" crossorigin="anonymous" defer></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-    // Initialize hero carousel
-    $('#hero-carousel').owlCarousel({items:1, loop:true, autoplay:true, autoplayTimeout:4000, dots:true});
-    if(typeof addToCart === 'undefined') { console.warn('addToCart not in scope - ensure front.js loaded'); }
-    
-    // Unified quickview logic with variants + a11y
-    let quickviewSelectedId=null; let lastFocusedEl=null; let quickviewVariants=null; let quickviewSelectedVariant=null;
-    function openQuickview(id,image,name,price,shortDescription,link, variantData){
-      quickviewSelectedId=id; lastFocusedEl=document.activeElement; quickviewVariants=variantData; quickviewSelectedVariant=null;
-      $('#quickview-img').attr('src', image); $('#quickview-img-link').attr('href', link);
-      $('#quickview-title').text(name); $('#quickview-price').text('Rs. '+price);
-      const desc = shortDescription && shortDescription.trim() ? shortDescription : 'Premium quality product perfect for you.'; $('#quickview-description').text(desc);
-      $('#quickview-qty').val('1');
-      
-      console.log('🛠️ Opening quickview with variant data:', variantData);
-      $('.variant-blocks-container').remove();
-      
-      if(variantData && variantData.attributes && variantData.attributes.length){
-        console.log('✅ Creating variant selectors for', variantData.attributes.length, 'attributes');
-        const $container = $('<div class="variant-blocks-container"></div>');
-        
-        variantData.attributes.forEach(attr => {
-          console.log('  ➡️ Adding attribute:', attr.name, 'with', attr.values?.length, 'values');
-          const $block = $('<div class="variant-block"></div>');
-          $block.append('<span class="quickview-section-label">' + attr.name + ':</span> ');
-          
-          const $select = $('<select class="quickview-select variant-selector" data-attr="' + attr.slug + '"></select>');
-          $select.append('<option value="">Select</option>');
-          attr.values.forEach(v => $select.append('<option value="' + v.value + '">' + v.value + '</option>'));
-          $block.append($select);
-          $container.append($block);
-        });
-        
-        $('#quickview-description').after($container);
-        $('.variant-selector').on('change', updateQuickviewVariant);
-        $('#quickview-add-to-cart').prop('disabled', true).text('Select Options');
-        console.log('✅ Variant selectors created');
-      } else {
-        console.log('⚠️ No variant data, showing regular add to cart');
-        $('#quickview-add-to-cart').prop('disabled', false).text('Add to Cart');
-      }
-      
-      $('#productQuickView').modal('show');
-      setTimeout(()=>{ $('#quickview-close-btn').focus(); }, 400);
-    }
-    
-    function updateQuickviewVariant(){
-      if(!quickviewVariants) return;
-      
-      const selections = {};
-      let allSelected = true;
-      $('.variant-selector').each(function(){
-        const val = $(this).val();
-        if(val) selections[$(this).data('attr')] = val;
-        else allSelected = false;
-      });
-      
-      if(allSelected && quickviewVariants.variants){
-        quickviewSelectedVariant = quickviewVariants.variants.find(v => {
-          const combo = v.attribute_combination || {};
-          return Object.keys(selections).every(k => combo[k] === selections[k]);
-        });
-        
-        if(quickviewSelectedVariant){
-          const finalPrice = quickviewVariants.basePrice + parseFloat(quickviewSelectedVariant.price_adjustment || 0);
-          $('#quickview-price').text('Rs. ' + finalPrice.toFixed(2));
-          $('#quickview-add-to-cart').prop('disabled', quickviewSelectedVariant.stock === 0).text(quickviewSelectedVariant.stock === 0 ? 'Out of Stock' : 'Add to Cart');
-          if(quickviewSelectedVariant.image && quickviewSelectedVariant.image.trim()) {
-            $('#quickview-img').attr('src', quickviewSelectedVariant.image);
-            console.log('✅ Updated quickview image:', quickviewSelectedVariant.image);
-          }
-        }
-      } else {
-        $('#quickview-add-to-cart').prop('disabled', true).text('Select Options');
-      }
-    }
-    // Trigger
-    $(document).on('click','.view-btn', function(){
-      const $t=$(this); let short=($t.data('short')||'').trim(); if(short){ short=short.replace(/^[✓✔☑•\-*]\s*/,''); let w=short.split(/\s+/); if(w.length>40) short=w.slice(0,40).join(' ')+'…'; }
-      const hasVariants = $t.data('has-variants') === 'true' || $t.data('has-variants') === true;
-      const productId = $t.data('id');
-      
-      console.log('👁️ Quick view clicked:', { productId, hasVariants });
-      
-      if(hasVariants){
-        console.log('🔄 Fetching variants for:', productId);
-        $.get('/api/product-variants/' + productId, function(data){
-          console.log('✅ Variant data received:', data);
-          const variantData = { attributes: data.attributes, variants: data.variants, basePrice: parseFloat($t.data('price')) };
-          openQuickview(productId, $t.data('img'), $t.data('name'), $t.data('price'), short, $t.data('link'), variantData);
-        }).fail(function(err){
-          console.error('❌ Failed to fetch variants:', err);
-          openQuickview(productId, $t.data('img'), $t.data('name'), $t.data('price'), short, $t.data('link'), null);
-        });
-      } else {
-        openQuickview(productId, $t.data('img'), $t.data('name'), $t.data('price'), short, $t.data('link'), null);
-      }
-    });
-    // Quantity
-    $('#quickview-dec').on('click', ()=>{ let v=parseInt($('#quickview-qty').val(),10)||1; v=Math.max(1,v-1); $('#quickview-qty').val(v); });
-    $('#quickview-inc').on('click', ()=>{ let v=parseInt($('#quickview-qty').val(),10)||1; v=Math.min(999,v+1); $('#quickview-qty').val(v); });
-    $('#quickview-qty').on('input', function(){ let v=this.value.replace(/[^0-9]/g,''); if(!v) v='1'; v=parseInt(v,10); if(v<1) v=1; if(v>999) v=999; this.value=v; });
-    // Color swatch interaction
-    $(document).on('click keypress','.color-swatch', function(e){ if(e.type==='click' || (e.type==='keypress' && (e.key==='Enter'|| e.key===' '))){ $('.color-swatch').removeClass('active').attr('aria-checked','false'); $(this).addClass('active').attr('aria-checked','true'); } });
-    // Trap focus basic
-    $('#productQuickView').on('shown.bs.modal', function(){ const focusable = $('#productQuickView').find('button, [href], select, input').filter(':visible'); const first=focusable.first()[0]; const last=focusable.last()[0]; $(this).on('keydown.quicktrap', function(e){ if(e.key==='Tab'){ if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); } else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); } } if(e.key==='Escape'){ $('#productQuickView').modal('hide'); } }); });
-    $('#productQuickView').on('hidden.bs.modal', function(){ $(this).off('keydown.quicktrap'); if(lastFocusedEl) $(lastFocusedEl).focus(); });
-    $('#quickview-add-to-cart').on('click', function(){ if(!quickviewSelectedId) return; const variantId = quickviewSelectedVariant ? quickviewSelectedVariant.id : null; addToCart(quickviewSelectedId, $('#quickview-qty').val(), true, variantId); $('#productQuickView').modal('hide'); });
-    
-    // Search form handler
-    $('#search-form-in-navbar').submit(function(e){ e.preventDefault(); var search_term=$('#search').val(); if(search_term){ window.location=window.location.origin+'/search/all/?q='+search_term; }});
-    
-    // --- Floating cart core (extracted from original static index) ---
-    function getCookie(name){ var cookieValue=null; if(document.cookie && document.cookie!==''){ var cookies=document.cookie.split(';'); for(var i=0;i<cookies.length;i++){ var cookie=cookies[i].trim(); if(cookie.substring(0,name.length+1)===(name+'=')){ cookieValue=decodeURIComponent(cookie.substring(name.length+1)); break; } } } return cookieValue; }
-    function uuidv4(){ return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){ var r=Math.random()*16|0,v=c=='x'?r:(r&0x3|0x8); return v.toString(16); }); }
-  // cart logic now provided by shared /staticfiles/cart-shared.js
-  
-  });
-  
-  // Theme customizer live preview support
-  window.addEventListener('message', function(e) {
-    if (e.data.type === 'updateTheme' && e.data.colors) {
-      const colors = e.data.colors;
-      let style = document.getElementById('live-theme-preview');
-      if (!style) {
-        style = document.createElement('style');
-        style.id = 'live-theme-preview';
-        document.head.appendChild(style);
-      }
-      style.textContent = `
+          <script src="/js/font-loader.js"></script>
+          <script src="/js/performance-boost.js" defer></script>
+          <script src="/js/image-fast-load.js" defer></script>
+          <script src="/js/ultra-fast-cart.js" defer></script>
+          <script src="/js/page-transition.js" defer></script>
+          <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+          <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" defer></script>
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js" defer></script>
+          <script src="/js/owl.carousel2.thumbs.min.js" defer></script>
+          <script src="/js/cart-shared.js?v=5" defer></script>
+          <script src="/js/front.js?v=3" defer></script>
+          <script src="https://kit.fontawesome.com/d6db3c2373.js" crossorigin="anonymous" defer></script>
+          <script>
+            document.addEventListener('DOMContentLoaded', function () {
+              // Initialize hero carousel
+              $('#hero-carousel').owlCarousel({ items: 1, loop: true, autoplay: true, autoplayTimeout: 4000, dots: true });
+              if (typeof addToCart === 'undefined') { console.warn('addToCart not in scope - ensure front.js loaded'); }
+
+              // Unified quickview logic with variants + a11y
+              let quickviewSelectedId = null; let lastFocusedEl = null; let quickviewVariants = null; let quickviewSelectedVariant = null;
+              function openQuickview(id, image, name, price, shortDescription, link, variantData) {
+                quickviewSelectedId = id; lastFocusedEl = document.activeElement; quickviewVariants = variantData; quickviewSelectedVariant = null;
+                $('#quickview-img').attr('src', image); $('#quickview-img-link').attr('href', link);
+                $('#quickview-title').text(name); $('#quickview-price').text('Rs. ' + price);
+                const desc = shortDescription && shortDescription.trim() ? shortDescription : 'Premium quality product perfect for you.'; $('#quickview-description').text(desc);
+                $('#quickview-qty').val('1');
+
+                console.log('🛠️ Opening quickview with variant data:', variantData);
+                $('.variant-blocks-container').remove();
+
+                if (variantData && variantData.attributes && variantData.attributes.length) {
+                  console.log('✅ Creating variant selectors for', variantData.attributes.length, 'attributes');
+                  const $container = $('<div class="variant-blocks-container"></div>');
+
+                  variantData.attributes.forEach(attr => {
+                    console.log('  ➡️ Adding attribute:', attr.name, 'with', attr.values?.length, 'values');
+                    const $block = $('<div class="variant-block"></div>');
+                    $block.append('<span class="quickview-section-label">' + attr.name + ':</span> ');
+
+                    const $select = $('<select class="quickview-select variant-selector" data-attr="' + attr.slug + '"></select>');
+                    $select.append('<option value="">Select</option>');
+                    attr.values.forEach(v => $select.append('<option value="' + v.value + '">' + v.value + '</option>'));
+                    $block.append($select);
+                    $container.append($block);
+                  });
+
+                  $('#quickview-description').after($container);
+                  $('.variant-selector').on('change', updateQuickviewVariant);
+                  $('#quickview-add-to-cart').prop('disabled', true).text('Select Options');
+                  console.log('✅ Variant selectors created');
+                } else {
+                  console.log('⚠️ No variant data, showing regular add to cart');
+                  $('#quickview-add-to-cart').prop('disabled', false).text('Add to Cart');
+                }
+
+                $('#productQuickView').modal('show');
+                setTimeout(() => { $('#quickview-close-btn').focus(); }, 400);
+              }
+
+              function updateQuickviewVariant() {
+                if (!quickviewVariants) return;
+
+                const selections = {};
+                let allSelected = true;
+                $('.variant-selector').each(function () {
+                  const val = $(this).val();
+                  if (val) selections[$(this).data('attr')] = val;
+                  else allSelected = false;
+                });
+
+                if (allSelected && quickviewVariants.variants) {
+                  quickviewSelectedVariant = quickviewVariants.variants.find(v => {
+                    const combo = v.attribute_combination || {};
+                    return Object.keys(selections).every(k => combo[k] === selections[k]);
+                  });
+
+                  if (quickviewSelectedVariant) {
+                    const finalPrice = quickviewVariants.basePrice + parseFloat(quickviewSelectedVariant.price_adjustment || 0);
+                    $('#quickview-price').text('Rs. ' + finalPrice.toFixed(2));
+                    $('#quickview-add-to-cart').prop('disabled', quickviewSelectedVariant.stock === 0).text(quickviewSelectedVariant.stock === 0 ? 'Out of Stock' : 'Add to Cart');
+                    if (quickviewSelectedVariant.image && quickviewSelectedVariant.image.trim()) {
+                      $('#quickview-img').attr('src', quickviewSelectedVariant.image);
+                      console.log('✅ Updated quickview image:', quickviewSelectedVariant.image);
+                    }
+                  }
+                } else {
+                  $('#quickview-add-to-cart').prop('disabled', true).text('Select Options');
+                }
+              }
+              // Trigger
+              $(document).on('click', '.view-btn', function () {
+                const $t = $(this); let short = ($t.data('short') || '').trim(); if (short) { short = short.replace(/^[✓✔☑•\-*]\s*/, ''); let w = short.split(/\s+/); if (w.length > 40) short = w.slice(0, 40).join(' ') + '…'; }
+                const hasVariants = $t.data('has-variants') === 'true' || $t.data('has-variants') === true;
+                const productId = $t.data('id');
+
+                console.log('👁️ Quick view clicked:', { productId, hasVariants });
+
+                if (hasVariants) {
+                  console.log('🔄 Fetching variants for:', productId);
+                  $.get('/api/product-variants/' + productId, function (data) {
+                    console.log('✅ Variant data received:', data);
+                    const variantData = { attributes: data.attributes, variants: data.variants, basePrice: parseFloat($t.data('price')) };
+                    openQuickview(productId, $t.data('img'), $t.data('name'), $t.data('price'), short, $t.data('link'), variantData);
+                  }).fail(function (err) {
+                    console.error('❌ Failed to fetch variants:', err);
+                    openQuickview(productId, $t.data('img'), $t.data('name'), $t.data('price'), short, $t.data('link'), null);
+                  });
+                } else {
+                  openQuickview(productId, $t.data('img'), $t.data('name'), $t.data('price'), short, $t.data('link'), null);
+                }
+              });
+              // Quantity
+              $('#quickview-dec').on('click', () => { let v = parseInt($('#quickview-qty').val(), 10) || 1; v = Math.max(1, v - 1); $('#quickview-qty').val(v); });
+              $('#quickview-inc').on('click', () => { let v = parseInt($('#quickview-qty').val(), 10) || 1; v = Math.min(999, v + 1); $('#quickview-qty').val(v); });
+              $('#quickview-qty').on('input', function () { let v = this.value.replace(/[^0-9]/g, ''); if (!v) v = '1'; v = parseInt(v, 10); if (v < 1) v = 1; if (v > 999) v = 999; this.value = v; });
+              // Color swatch interaction
+              $(document).on('click keypress', '.color-swatch', function (e) { if (e.type === 'click' || (e.type === 'keypress' && (e.key === 'Enter' || e.key === ' '))) { $('.color-swatch').removeClass('active').attr('aria-checked', 'false'); $(this).addClass('active').attr('aria-checked', 'true'); } });
+              // Trap focus basic
+              $('#productQuickView').on('shown.bs.modal', function () { const focusable = $('#productQuickView').find('button, [href], select, input').filter(':visible'); const first = focusable.first()[0]; const last = focusable.last()[0]; $(this).on('keydown.quicktrap', function (e) { if (e.key === 'Tab') { if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } } if (e.key === 'Escape') { $('#productQuickView').modal('hide'); } }); });
+              $('#productQuickView').on('hidden.bs.modal', function () { $(this).off('keydown.quicktrap'); if (lastFocusedEl) $(lastFocusedEl).focus(); });
+              $('#quickview-add-to-cart').on('click', function () { if (!quickviewSelectedId) return; const variantId = quickviewSelectedVariant ? quickviewSelectedVariant.id : null; addToCart(quickviewSelectedId, $('#quickview-qty').val(), true, variantId); $('#productQuickView').modal('hide'); });
+
+              // Search form handler
+              $('#search-form-in-navbar').submit(function (e) { e.preventDefault(); var search_term = $('#search').val(); if (search_term) { window.location = window.location.origin + '/search/all/?q=' + search_term; } });
+
+              // --- Floating cart core (extracted from original static index) ---
+              function getCookie(name) { var cookieValue = null; if (document.cookie && document.cookie !== '') { var cookies = document.cookie.split(';'); for (var i = 0; i < cookies.length; i++) { var cookie = cookies[i].trim(); if (cookie.substring(0, name.length + 1) === (name + '=')) { cookieValue = decodeURIComponent(cookie.substring(name.length + 1)); break; } } } return cookieValue; }
+              function uuidv4() { return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) { var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); }); }
+              // cart logic now provided by shared /staticfiles/cart-shared.js
+
+            });
+
+            // Theme customizer live preview support
+            window.addEventListener('message', function (e) {
+              if (e.data.type === 'updateTheme' && e.data.colors) {
+                const colors = e.data.colors;
+                let style = document.getElementById('live-theme-preview');
+                if (!style) {
+                  style = document.createElement('style');
+                  style.id = 'live-theme-preview';
+                  document.head.appendChild(style);
+                }
+                style.textContent = `
         .btn, .btn-dark, .btn-primary, button.btn-dark, button.btn-primary {
           background-color: ${colors.btn_bg} !important;
           border-color: ${colors.btn_bg} !important;
@@ -376,29 +658,37 @@
         .btn-success { background-color: ${colors.success_color} !important; }
         .btn-danger { background-color: ${colors.danger_color} !important; }
       `;
-    }
-  });
-  </script>
+              }
+            });
+          </script>
 
-  <footer class="bg-dark text-white shadow" style="color: #fff; margin-top: 40px;">
-    <div class="container py-4">
-      <div class="row">
-        <div class="col-lg-6">
-          <p class="small mb-2"><a class="text-white" href="/farmers/"><i class="fas fa-users"></i> Our Farmers & Seller</a></p>
-          <p class="small text-gray mb-0">© <%= new Date().getFullYear() %> All rights reserved.</p>
-          <p class="small text-gray mb-0">Crafted by <a class="text-white reset-anchor" href="https://gauravsah.com.np" target="_blank">Gaurav Sah</a></p>
-        </div>
-        <div class="col-lg-6 text-lg-right">
-          <p class="small mb-0">FIND US &nbsp;
-            <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.facebook_url) ? socialLinks.facebook_url : 'https://facebook.com/cropsay/' %>" target="_blank"><i class="fab fa-facebook-square mr-1" style="color: #f5f5f5;"></i></a>
-            <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.instagram_url) ? socialLinks.instagram_url : 'https://instagram.com/cropsay/' %>" target="_blank"><i class="fab fa-instagram" style="color: #f5f5f5;"></i></a>
-          </p>
-          <p class="text-sm text-gray mb-0"><a class="text-gray reset-anchor" href="mailto:<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@cropsay.com' %>" target="_blank"><i class="fas fa-envelope"></i> &nbsp;<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@cropsay.com' %></a></p>
-          <p class="text-sm text-gray mb-0 mt-2"><a class="text-white reset-anchor" href="/track-order"><i class="fas fa-shipping-fast"></i> Track Order</a></p>
-        </div>
-      </div>
-    </div>
-  </footer>
+          <footer class="bg-dark text-white shadow" style="color: #fff; margin-top: 40px;">
+            <div class="container py-4">
+              <div class="row">
+                <div class="col-lg-6">
+                  <p class="small mb-2"><a class="text-white" href="/farmers/"><i class="fas fa-users"></i> Our Farmers
+                      & Seller</a></p>
+                  <p class="small text-gray mb-0">© <%= new Date().getFullYear() %> All rights reserved.</p>
+                  <p class="small text-gray mb-0">Crafted by <a class="text-white reset-anchor"
+                      href="https://gauravsah.com.np" target="_blank">Gaurav Sah</a></p>
+                </div>
+                <div class="col-lg-6 text-lg-right">
+                  <p class="small mb-0">FIND US &nbsp;
+                    <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.facebook_url) ? socialLinks.facebook_url : 'https://facebook.com/cropsay/' %>"
+                      target="_blank"><i class="fab fa-facebook-square mr-1" style="color: #f5f5f5;"></i></a>
+                    <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.instagram_url) ? socialLinks.instagram_url : 'https://instagram.com/cropsay/' %>"
+                      target="_blank"><i class="fab fa-instagram" style="color: #f5f5f5;"></i></a>
+                  </p>
+                  <p class="text-sm text-gray mb-0"><a class="text-gray reset-anchor"
+                      href="mailto:<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@cropsay.com' %>"
+                      target="_blank"><i class="fas fa-envelope"></i> &nbsp;<%= (typeof socialLinks !=='undefined' &&
+                        socialLinks.contact_email) ? socialLinks.contact_email : 'info@cropsay.com' %></a></p>
+                  <p class="text-sm text-gray mb-0 mt-2"><a class="text-white reset-anchor" href="/track-order"><i
+                        class="fas fa-shipping-fast"></i> Track Order</a></p>
+                </div>
+              </div>
+            </div>
+          </footer>
 </body>
-</html>
 
+</html>

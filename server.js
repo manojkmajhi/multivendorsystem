@@ -10,6 +10,17 @@ const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
 const { productCache, categoryCache, settingsCache, heroCache, cacheMiddleware, clearResponseCache } = require('./src/services/cacheService');
 
+const twilio = require('twilio');
+const twilioClient = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN 
+  ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+  : null;
+
+if (twilioClient) {
+  console.log('✓ Twilio WhatsApp initialized');
+} else {
+  console.warn('⚠ Twilio not configured');
+}
+
 const app = express();
 
 const PORT = process.env.PORT || 3000;
@@ -508,24 +519,22 @@ const upload = multer({
 });
 
 // Multer error handling middleware
+// Multer error handling middleware
 function handleMulterError(err, req, res, next) {
-  if (err instanceof multer.MulterError) {
-    console.error('Multer error:', err);
-    if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).render('simple-message', {
-        title: 'Error',
-        message: 'File too large. Maximum size is 5MB.'
-      });
+  if (err) {
+    console.error('🔴 Multer/Upload Error:', err);
+    
+    const isAjax = req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'));
+    const status = (err instanceof multer.MulterError) ? 400 : 500;
+    const message = (err.code === 'LIMIT_FILE_SIZE') ? 'File too large. Maximum size is 5MB.' : err.message;
+
+    if (isAjax) {
+      return res.status(status).json({ success: false, error: message });
     }
-    return res.status(400).render('simple-message', {
-      title: 'Error',
-      message: 'File upload error: ' + err.message
-    });
-  } else if (err) {
-    console.error('Upload error:', err);
-    return res.status(500).render('simple-message', {
-      title: 'Error',
-      message: err.message
+
+    return res.status(status).render('simple-message', {
+      title: 'Upload Error',
+      message: message
     });
   }
   next();
@@ -1662,54 +1671,81 @@ function getCart(device) {
 }
 
 // OTP API endpoints
+app.get('/test-whatsapp-otp', (req, res) => {
+  res.sendFile(path.join(__dirname, 'test-whatsapp-otp.html'));
+});
+
+// OTP storage (reusing existing otpStore)
+
 app.post('/api/send-otp', async (req, res) => {
   try {
     const { phone } = req.body;
-    const response = await fetch('https://auth.otpless.app/auth/otp/v1/send', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'clientId': process.env.OTPLESS_CLIENT_ID,
-        'clientSecret': process.env.OTPLESS_CLIENT_SECRET
-      },
-      body: JSON.stringify({
-        phoneNumber: phone,
-        otpLength: 6,
-        channel: 'WHATSAPP',
-        expiry: 300
-      })
+    
+    if (!phone) {
+      return res.status(400).json({ success: false, message: 'Phone number is required' });
+    }
+
+    const formattedPhone = phone.startsWith('+') ? phone : '+' + phone;
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    console.log('\n📱 OTP REQUEST');
+    console.log('Phone:', formattedPhone);
+    console.log('OTP:', otp);
+
+    if (!twilioClient) {
+      return res.status(500).json({ success: false, message: 'Twilio not configured' });
+    }
+
+    const message = await twilioClient.messages.create({
+      from: process.env.TWILIO_WHATSAPP_FROM,
+      to: `whatsapp:${formattedPhone}`,
+      body: `Your OTP is: ${otp}\n\nValid for 5 minutes.\n\n- Cropsay`
     });
-    const data = await response.json();
-    console.log('OTPless send response:', data);
-    res.json(data);
+    
+    otpStore[formattedPhone] = {
+      otp,
+      expiry: Date.now() + 5 * 60 * 1000,
+      sid: message.sid
+    };
+    
+    console.log('✅ WhatsApp sent! SID:', message.sid);
+    res.json({ success: true, orderId: message.sid });
   } catch (e) {
-    console.error('Send OTP error:', e);
-    res.status(500).json({ success: false, error: e.message });
+    console.error('❌ Error:', e.message);
+    res.status(500).json({ success: false, message: e.message });
   }
 });
 
 app.post('/api/verify-otp', async (req, res) => {
   try {
-    const { phone, otp, orderId } = req.body;
-    const response = await fetch('https://auth.otpless.app/auth/otp/v1/verify', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'clientId': process.env.OTPLESS_CLIENT_ID,
-        'clientSecret': process.env.OTPLESS_CLIENT_SECRET
-      },
-      body: JSON.stringify({
-        orderId: orderId,
-        otp: otp,
-        phoneNumber: phone
-      })
-    });
-    const data = await response.json();
-    console.log('OTPless verify response:', data);
-    res.json(data);
+    const { phone, otp } = req.body;
+    
+    if (!phone || !otp) {
+      return res.status(400).json({ success: false, message: 'Phone and OTP required' });
+    }
+
+    const formattedPhone = phone.startsWith('+') ? phone : '+' + phone;
+    const stored = otpStore[formattedPhone];
+    
+    if (!stored) {
+      return res.json({ success: false, message: 'OTP expired or not found', isOTPVerified: false });
+    }
+    
+    if (Date.now() > stored.expiry) {
+      delete otpStore[formattedPhone];
+      return res.json({ success: false, message: 'OTP expired', isOTPVerified: false });
+    }
+    
+    if (stored.otp === otp) {
+      delete otpStore[formattedPhone];
+      console.log('✅ OTP verified for:', formattedPhone);
+      res.json({ success: true, verified: true, isOTPVerified: true });
+    } else {
+      res.json({ success: false, message: 'Invalid OTP', isOTPVerified: false });
+    }
   } catch (e) {
-    console.error('Verify OTP error:', e);
-    res.status(500).json({ success: false, error: e.message });
+    console.error('❌ Verify error:', e);
+    res.status(500).json({ success: false, message: e.message });
   }
 });
 
@@ -2956,39 +2992,104 @@ app.post('/farmers/products/:id/delete', sellerGuard, async (req, res) => {
   }
 });
 
-app.post('/farmers/profile/update', sellerGuard, upload.fields([{ name: 'profile_image' }, { name: 'cover_image' }]), async (req, res) => {
+app.post('/farmers/profile/update', sellerGuard, upload.fields([{ name: 'profile_image' }, { name: 'cover_image' }]), handleMulterError, async (req, res) => {
   try {
     // Decode JWT to get farmer_id
     const token = req.cookies.farmer_session;
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
     const farmerId = decoded.farmer_id;
 
-    const { full_name, phone, business_name, location, bio } = req.body;
-    const updateData = { full_name, phone, business_name, location, bio };
-    if (req.files?.profile_image) updateData.profile_image = '/media/uploads/' + req.files.profile_image[0].filename;
-    if (req.files?.cover_image) updateData.cover_image = '/media/uploads/' + req.files.cover_image[0].filename;
+    if (!farmerId) {
+      console.error('❌ Profile update failed: No farmer ID in session');
+      return res.status(401).json({ success: false, error: 'Unauthorized session' });
+    }
 
-    await supabase.from('sellers').update(updateData).eq('id', farmerId);
+    const { full_name, phone, business_name, location, bio } = req.body;
+    
+    // Prepare update data
+    const updateData = { 
+      full_name, 
+      phone, 
+      business_name, 
+      location, 
+      bio,
+      updated_at: new Date().toISOString()
+    };
+
+    // DEBUG: Write to a file since terminal might be hard to read
+    const debugInfo = {
+      timestamp: new Date().toISOString(),
+      farmerId,
+      body: req.body,
+      hasFiles: !!req.files,
+      fileKeys: req.files ? Object.keys(req.files) : [],
+    };
+
+    // Add image paths if uploaded
+    if (req.files) {
+      if (req.files.profile_image && req.files.profile_image[0]) {
+        updateData.profile_image = '/media/uploads/' + req.files.profile_image[0].filename;
+        debugInfo.profile_image = updateData.profile_image;
+      }
+      if (req.files.cover_image && req.files.cover_image[0]) {
+        updateData.cover_image = '/media/uploads/' + req.files.cover_image[0].filename;
+        debugInfo.cover_image = updateData.cover_image;
+      }
+    }
+
+    fs.appendFileSync(path.join(__dirname, 'debug_profile.log'), JSON.stringify(debugInfo, null, 2) + "\n---\n");
+
+    console.log(`📝 Updating profile for farmer ${farmerId}:`, {
+      ...updateData,
+      profile_image: updateData.profile_image ? 'updated' : 'unchanged',
+      cover_image: updateData.cover_image ? 'updated' : 'unchanged'
+    });
+
+    const { error } = await supabase.from('sellers').update(updateData).eq('id', farmerId);
+    
+    if (error) {
+      console.error('❌ Supabase profile update error:', error);
+      return res.status(500).json({ success: false, error: error.message });
+    }
+
+    console.log(`✅ Profile updated successfully for farmer ${farmerId}`);
     res.json({ success: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('💥 Profile update exception:', e);
+    res.status(500).json({ success: false, error: e.message });
   }
 });
 
-app.post('/farmers/posts/add', sellerGuard, upload.single('media_file'), async (req, res) => {
+app.post('/farmers/posts/add', sellerGuard, upload.single('media_file'), handleMulterError, async (req, res) => {
   try {
     // Decode JWT to get farmer_id
     const token = req.cookies.farmer_session;
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
     const farmerId = decoded.farmer_id;
+
+    if (!farmerId) {
+      console.error('❌ Post creation failed: No farmer ID in session');
+      return res.status(401).json({ success: false, error: 'Unauthorized session' });
+    }
 
     const { content, media_type, media_url } = req.body;
     let finalUrl = media_url;
     if (req.file) finalUrl = '/media/uploads/' + req.file.filename;
-    await supabase.from('farmer_posts').insert({ farmer_id: farmerId, content, media_type, media_url: finalUrl });
+
+    console.log(`📝 Creating post for farmer ${farmerId}:`, { content, media_type, media_url: finalUrl });
+
+    const { error } = await supabase.from('seller_posts').insert({ seller_id: farmerId, content, media_type, media_url: finalUrl });
+    
+    if (error) {
+      console.error('❌ Supabase post creation error:', error);
+      return res.status(500).json({ success: false, error: error.message });
+    }
+
+    console.log(`✅ Post created successfully for farmer ${farmerId}`);
     res.json({ success: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('💥 Post creation exception:', e);
+    res.status(500).json({ success: false, error: e.message });
   }
 });
 
@@ -3383,4 +3484,16 @@ function start(port, attempt = 0) {
     }
   });
 }
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled Application Error:', err);
+  if (res.headersSent) {
+    return next(err);
+  }
+  res.status(500).render('simple-message', { 
+    title: 'Server Error', 
+    message: 'An unexpected error occurred. Please try again later.' 
+  });
+});
+
 start(Number(PORT));

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test WhatsApp OTP</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+  <div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card shadow">
+          <div class="card-body">
+            <h3 class="text-center mb-4">Test WhatsApp OTP</h3>
+            
+            <div id="message" class="alert" style="display: none;"></div>
+            
+            <!-- Step 1: Send OTP -->
+            <div id="sendOtpSection">
+              <div class="form-group">
+                <label>Phone Number (with country code)</label>
+                <input type="tel" id="phone" class="form-control" placeholder="+9779814789009" value="+9779814789009">
+                <small class="form-text text-muted">Format: +977XXXXXXXXXX (Nepal)</small>
+              </div>
+              <button onclick="sendOTP()" class="btn btn-primary btn-block" id="sendBtn">Send OTP via WhatsApp</button>
+            </div>
+            
+            <!-- Step 2: Verify OTP -->
+            <div id="verifyOtpSection" style="display: none;">
+              <div class="form-group">
+                <label>Enter OTP from WhatsApp</label>
+                <input type="text" id="otp" class="form-control" placeholder="Enter 6-digit OTP" maxlength="6">
+              </div>
+              <button onclick="verifyOTP()" class="btn btn-success btn-block" id="verifyBtn">Verify OTP</button>
+              <button onclick="resetForm()" class="btn btn-secondary btn-block mt-2">Try Again</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let orderId = null;
+    let phoneNumber = null;
+
+    function showMessage(message, type = 'info') {
+      const messageDiv = document.getElementById('message');
+      messageDiv.textContent = message;
+      messageDiv.className = `alert alert-${type}`;
+      messageDiv.style.display = 'block';
+    }
+
+    async function sendOTP() {
+      const phone = document.getElementById('phone').value.trim();
+      
+      if (!phone) {
+        showMessage('Please enter a phone number', 'danger');
+        return;
+      }
+
+      const sendBtn = document.getElementById('sendBtn');
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Sending...';
+
+      try {
+        const response = await fetch('/api/send-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone })
+        });
+
+        const data = await response.json();
+        console.log('Send OTP response:', data);
+
+        if (data.success && data.orderId) {
+          orderId = data.orderId;
+          phoneNumber = phone;
+          showMessage('OTP sent to your WhatsApp! Check your messages.', 'success');
+          document.getElementById('sendOtpSection').style.display = 'none';
+          document.getElementById('verifyOtpSection').style.display = 'block';
+        } else {
+          showMessage(data.message || 'Failed to send OTP', 'danger');
+          sendBtn.disabled = false;
+          sendBtn.textContent = 'Send OTP via WhatsApp';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showMessage('Error: ' + error.message, 'danger');
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Send OTP via WhatsApp';
+      }
+    }
+
+    async function verifyOTP() {
+      const otp = document.getElementById('otp').value.trim();
+      
+      if (!otp || otp.length !== 6) {
+        showMessage('Please enter a valid 6-digit OTP', 'danger');
+        return;
+      }
+
+      const verifyBtn = document.getElementById('verifyBtn');
+      verifyBtn.disabled = true;
+      verifyBtn.textContent = 'Verifying...';
+
+      try {
+        const response = await fetch('/api/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            phone: phoneNumber,
+            otp: otp,
+            orderId: orderId
+          })
+        });
+
+        const data = await response.json();
+        console.log('Verify OTP response:', data);
+
+        if (data.success && data.verified) {
+          showMessage('✅ OTP verified successfully!', 'success');
+        } else {
+          showMessage(data.message || 'Invalid OTP', 'danger');
+          verifyBtn.disabled = false;
+          verifyBtn.textContent = 'Verify OTP';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showMessage('Error: ' + error.message, 'danger');
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = 'Verify OTP';
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('sendOtpSection').style.display = 'block';
+      document.getElementById('verifyOtpSection').style.display = 'none';
+      document.getElementById('sendBtn').disabled = false;
+      document.getElementById('sendBtn').textContent = 'Send OTP via WhatsApp';
+      document.getElementById('otp').value = '';
+      document.getElementById('message').style.display = 'none';
+      orderId = null;
+      phoneNumber = null;
+    }
+  </script>
+</body>
+</html>

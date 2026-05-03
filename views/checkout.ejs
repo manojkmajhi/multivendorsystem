@@ -232,7 +232,7 @@
             <div class="col-md-6 form-group">
               <label class="sr-only" for="mobile">WhatsApp Number *</label>
               <input id="mobile" class="form-control" placeholder="WhatsApp Number *" type="tel" pattern="[0-9]{10}" maxlength="10" required />
-              <small class="helper-text">OTP verification required</small>
+              <small class="helper-text">OTP will be sent via WhatsApp</small>
             </div>
             <div class="col-md-6 form-group">
               <label class="sr-only" for="region">Region</label>
@@ -682,7 +682,8 @@
 
     // Pre-fill from logged in user
     if (window.currentUser) {
-      document.getElementById('mobile').value = window.currentUser.phone.replace(/^\+91/, '');
+      const cleanPhone = window.currentUser.phone.replace(/^\+977/, '');
+      document.getElementById('mobile').value = cleanPhone;
       document.getElementById('name').value = window.currentUser.name;
     }
     
@@ -731,7 +732,7 @@
         return;
       }
       
-      // Show OTP verification
+      // Re-enable OTP verification with Twilio
       window.verifyMobileWithOTP(mobile, name, async (verified) => {
         if (verified) {
           await submitOrder();

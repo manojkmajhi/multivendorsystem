@@ -6,7 +6,6 @@
   "scripts": {
     "start": "NODE_ENV=production node server.js",
     "dev": "nodemon server.js",
-    "build": "node scripts/build-production.js",
     "test": "echo \"Tests will be added\""
   },
   "engines": {
@@ -24,10 +23,11 @@
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "express": "^4.19.2",
-    "jsonwebtoken": "^9.0.2",
+    "jsonwebtoken": "^9.0.3",
     "multer": "^1.4.5-lts.1",
     "node-cache": "^5.1.2",
-    "nodemailer": "^7.0.10"
+    "nodemailer": "^7.0.10",
+    "twilio": "^5.12.2"
   },
   "devDependencies": {
     "nodemon": "^3.1.4"
