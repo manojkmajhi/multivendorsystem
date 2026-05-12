@@ -1,17 +1,19 @@
-# Documentation
+# Documentation Index
 
-## Setup Guides
-- [EMAIL_SETUP.md](./EMAIL_SETUP.md) - Email configuration for OTP and notifications
-- [POPULAR_ITEMS_SETUP.md](./POPULAR_ITEMS_SETUP.md) - Popular items feature setup
+This directory contains the comprehensive documentation for the All Strawhats Multivendor Platform.
 
-## Migration Guides
-- [SELLER_MIGRATION_SUMMARY.md](./SELLER_MIGRATION_SUMMARY.md) - Farmer to Seller migration details
+## 📄 Main Documents
+- **[Project Report](PROJECT_REPORT.md)**: High-level overview, achievements, and roadmap.
+- **[Technical Architecture](TECHNICAL_ARCHITECTURE.md)**: System design, tech stack, and data flow.
+- **[Codebase Documentation](CODE_DOCUMENTATION.md)**: File structure and detailed code analysis.
 
-## Architecture
-- [FINAL_CLEAN_STRUCTURE.md](./FINAL_CLEAN_STRUCTURE.md) - Project structure documentation
+## 🛠 Setup & Guides
+- **[Email Setup](EMAIL_SETUP.md)**: Configuring Nodemailer and SMTP.
+- **[Popular Items Setup](POPULAR_ITEMS_SETUP.md)**: Guide to managing the "Popular" section.
+- **[Seller Migration](SELLER_MIGRATION_SUMMARY.md)**: Details on the farmer-to-seller transition.
 
-## API Documentation
-See [api/](./api/) folder for API documentation
+## 📁 Cleanup & Structure
+- **[Final Structure](FINAL_CLEAN_STRUCTURE.md)**: Documentation of the structural cleanup.
 
-## Deployment
-See [deployment/](./deployment/) folder for deployment guides
+---
+*For quick start instructions, please refer to the root [README.md](../README.md).*
