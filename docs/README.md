@@ -15,5 +15,10 @@ This directory contains the comprehensive documentation for the All Strawhats Mu
 ## 📁 Cleanup & Structure
 - **[Final Structure](FINAL_CLEAN_STRUCTURE.md)**: Documentation of the structural cleanup.
 
+## 🎓 T.U. Academic Report
+- **[Full Project Report](projectreport/REPORT.md)**: Formatted as per T.U. Fourth Semester standards.
+- **[IEEE References](projectreport/REFERENCES.md)**: Academic citations and bibliography.
+- **[Appendices](projectreport/APPENDICES.md)**: Screenshots and demonstration details.
+
 ---
 *For quick start instructions, please refer to the root [README.md](../README.md).*
