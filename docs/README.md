@@ -1,6 +1,6 @@
 # Documentation Index
 
-This directory contains the comprehensive documentation for the All Strawhats Multivendor Platform.
+This directory contains the comprehensive documentation for the Multivendor System Multivendor Platform.
 
 ## 📄 Main Documents
 - **[Project Report](PROJECT_REPORT.md)**: High-level overview, achievements, and roadmap.

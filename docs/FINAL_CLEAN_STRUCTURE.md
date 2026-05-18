@@ -3,7 +3,7 @@
 ## 📋 Final Minimal Structure
 
 ```
-allstrawhats/
+multivendor-system/
 ├── src/                    # 🎯 Source code (modular)
 │   ├── config/            # Configuration modules
 │   ├── controllers/       # Route handlers

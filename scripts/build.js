@@ -19,7 +19,7 @@ const EXCLUDE = [
   '.git/**',
   '.gitignore',
   'build.js',
-  'allstrawhats/**',
+  'multivendor-system/**',
   '**/legacy/**'
 ];
 
@@ -118,7 +118,7 @@ OTPLESS_CLIENT_SECRET=your_otpless_client_secret
 fs.writeFileSync(path.join(OUTPUT_DIR, '.env.production'), envTemplate);
 
 // Create deployment README
-const deployReadme = `# All Strawhats - Production Deployment
+const deployReadme = `# Multivendor System - Production Deployment
 
 ## Quick Deploy
 
@@ -181,7 +181,7 @@ output.on('close', () => {
   console.log(`3. Install: npm install --production`);
   console.log(`4. Configure: cp .env.production .env (and edit)`);
   console.log(`5. Start: npm start`);
-  console.log(`\n💡 For PM2: pm2 start server.js --name allstrawhats`);
+  console.log(`\n💡 For PM2: pm2 start server.js --name multivendor-system`);
 });
 
 archive.on('error', (err) => { throw err; });

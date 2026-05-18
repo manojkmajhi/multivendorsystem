@@ -1,6 +1,6 @@
 # Technical Architecture & System Design
 
-This document provides a deep dive into the technical architecture of the All Strawhats multivendor e-commerce platform.
+This document provides a deep dive into the technical architecture of the Multivendor System multivendor e-commerce platform.
 
 ## 1. System Overview
 The platform is built as a monolithic Node.js application with a decoupled database layer using Supabase. It follows an MVC-lite pattern, using EJS for templating and Express for routing and business logic.

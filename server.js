@@ -98,9 +98,9 @@ async function sendOTPEmail(email, otp) {
 
   try {
     const mailOptions = {
-      from: process.env.SMTP_FROM_EMAIL || process.env.GMAIL_USER || 'noreply@cropsay.com',
+      from: process.env.SMTP_FROM_EMAIL || process.env.GMAIL_USER || 'noreply@multivendor.com',
       to: email,
-      subject: 'Cropsay - Password Reset Code',
+      subject: 'Multivendor System - Password Reset Code',
       html: `
         <h2>Reset Your Password</h2>
         <p>We received a request to reset the password for your account. Use the following One-Time Password (OTP) to reset your password:</p>
@@ -114,7 +114,7 @@ async function sendOTPEmail(email, otp) {
         <p>If you didn't request a password reset, please ignore this email.</p>
         
         <p style="color: #999; font-size: 12px; margin-top: 30px;">
-          Do not share this OTP with anyone. Cropsay will never ask you for this code via email or phone.
+          Do not share this OTP with anyone. Multivendor System will never ask you for this code via email or phone.
         </p>
       `
     };
@@ -156,7 +156,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Performance and security headers
 app.use((req, res, next) => {
-  res.locals.title = 'All Strawhats';
+  res.locals.title = 'Multivendor System';
   // Security headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
@@ -178,16 +178,16 @@ app.use((req, res, next) => {
 // -------- Site Setting Injection (for dynamic logo/name in admin UI) --------
 let siteCache = { value: null, fetchedAt: 0 };
 async function loadSiteSetting(force = false) {
-  if (!supabase) return { name: 'Cropsay', logo_url: '/staticfiles/brand.svg' };
+  if (!supabase) return { name: 'Multivendor System', logo_url: '/staticfiles/brand.svg' };
   if (!force && siteCache.value && Date.now() - siteCache.fetchedAt < 60_000) {
     return siteCache.value;
   }
   try {
-    const site = await getSetting('site', { name: 'Cropsay', logo_url: '/staticfiles/brand.svg' });
+    const site = await getSetting('site', { name: 'Multivendor System', logo_url: '/staticfiles/brand.svg' });
     siteCache = { value: site, fetchedAt: Date.now() };
     return site;
   } catch (e) {
-    return { name: 'Cropsay', logo_url: '/staticfiles/brand.svg' };
+    return { name: 'Multivendor System', logo_url: '/staticfiles/brand.svg' };
   }
 }
 
@@ -1025,7 +1025,7 @@ app.post('/admin/categories/:id/delete', adminGuard, async (req, res) => {
 // Settings (logo, site name, etc.)
 app.get('/admin/settings', adminGuard, async (req, res) => {
   try {
-    const site = await getSetting('site', { name: 'All Strawhats', logo_url: '/staticfiles/brand.svg' });
+    const site = await getSetting('site', { name: 'Multivendor System', logo_url: '/staticfiles/brand.svg' });
     const customColors = await getSetting('custom_colors', { primary: '#2b90d9', secondary: '#6c757d', success: '#28a745', danger: '#dc3545' });
     const seo = await getSetting('seo', {});
     const social = await getSetting('social', {});
@@ -1699,7 +1699,7 @@ app.post('/api/send-otp', async (req, res) => {
     const message = await twilioClient.messages.create({
       from: process.env.TWILIO_WHATSAPP_FROM,
       to: `whatsapp:${formattedPhone}`,
-      body: `Your OTP is: ${otp}\n\nValid for 5 minutes.\n\n- Cropsay`
+      body: `Your OTP is: ${otp}\n\nValid for 5 minutes.\n\n- Multivendor System`
     });
     
     otpStore[formattedPhone] = {
@@ -2230,7 +2230,7 @@ app.get('/sellers/signup', (req, res) => {
 app.post('/api/sellers/signup-send-otp', async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email.endsWith('@cropsay.com')) return res.json({ success: false, message: 'Only @cropsay.com emails allowed' });
+    if (!email.endsWith('@multivendor.com')) return res.json({ success: false, message: 'Only @multivendor.com emails allowed' });
 
     console.log('📧 Sending Supabase OTP to:', email);
 
@@ -2359,7 +2359,7 @@ app.get('/farmers/reset-password-otp', (req, res) => {
 app.post('/api/farmers/send-otp', async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email.endsWith('@cropsay.com')) return res.json({ success: false, message: 'Only @cropsay.com emails allowed' });
+    if (!email.endsWith('@multivendor.com')) return res.json({ success: false, message: 'Only @multivendor.com emails allowed' });
 
     console.log('📧 Sending Supabase OTP to:', email);
 
@@ -2495,8 +2495,8 @@ app.post('/api/farmers/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
 
-    if (!email.endsWith('@cropsay.com')) {
-      return res.json({ success: false, message: 'Only @cropsay.com emails are allowed' });
+    if (!email.endsWith('@multivendor.com')) {
+      return res.json({ success: false, message: 'Only @multivendor.com emails are allowed' });
     }
 
     // Check sellers table for the email
@@ -2604,7 +2604,7 @@ app.post('/api/farmers/reset-password', async (req, res) => {
       .eq('email', email)
       .single();
 
-    if (!seller && email.endsWith('@cropsay.com')) {
+    if (!seller && email.endsWith('@multivendor.com')) {
       console.log('📝 Creating seller during password reset for:', email);
       const username = email.split('@')[0];
       const { data: newSeller, error: createError } = await supabase
@@ -3130,7 +3130,7 @@ app.post('/admin/farmer-applications/approve', adminGuard, async (req, res) => {
   try {
     const { application_id, email_prefix, password } = req.body;
     const { data: app } = await supabase.from('farmer_applications').select('*').eq('id', application_id).single();
-    const email = email_prefix + '@cropsay.com';
+    const email = email_prefix + '@multivendor.com';
     const password_hash = await bcrypt.hash(password, 10);
     await supabase.from('sellers').insert({ email, full_name: app.full_name, phone: app.phone, business_name: app.business_name, location: app.location, password_hash, status: 'approved' });
     await supabase.from('farmer_applications').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', application_id);
@@ -3418,7 +3418,7 @@ app.post('/admin/seller-applications/approve', adminGuard, async (req, res) => {
   try {
     const { application_id, email_prefix, password } = req.body;
     const { data: app } = await supabase.from('seller_applications').select('*').eq('id', application_id).single();
-    const email = email_prefix + '@cropsay.com';
+    const email = email_prefix + '@multivendor.com';
     const password_hash = await bcrypt.hash(password, 10);
     await supabase.from('sellers').insert({ email, full_name: app.full_name, phone: app.phone, business_name: app.business_name, location: app.location, password_hash, status: 'approved' });
     await supabase.from('seller_applications').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', application_id);
@@ -3462,7 +3462,7 @@ function start(port, attempt = 0) {
     srv.keepAliveTimeout = 65000;
     srv.headersTimeout = 66000;
     console.log('='.repeat(60));
-    console.log(`✓ All Strawhats Server [${NODE_ENV.toUpperCase()}]`);
+    console.log(`✓ Multivendor System Server [${NODE_ENV.toUpperCase()}]`);
     console.log(`✓ Running on http://localhost:${port}`);
     console.log(`✓ Admin panel: http://localhost:${port}/admin/`);
     if (NODE_ENV !== 'production') {

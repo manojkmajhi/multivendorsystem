@@ -1,7 +1,7 @@
 {
-  "name": "allstrawhats",
+  "name": "multivendor-system",
   "version": "1.0.0",
-  "description": "Minimal full-stack setup for All Strawhats (anime store frontend + Express backend)",
+  "description": "Full-stack multivendor e-commerce platform (Express backend + EJS frontend)",
   "main": "server.js",
   "scripts": {
     "start": "NODE_ENV=production node server.js",

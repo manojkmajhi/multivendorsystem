@@ -7,7 +7,7 @@
   <title>
     <%= siteSetting.name %>
       <% if(typeof seo !=='undefined' && seo.site_tagline) { %> | <%= seo.site_tagline %>
-          <% } else { %> | Fresh From Farms, Direct to You<% } %>
+          <% } else { %> | Your Marketplace, All in One Place<% } %>
   </title>
   <% if(typeof seo !=='undefined' && seo.meta_description) { %>
     <meta name="description" content="<%= seo.meta_description %>" />
@@ -325,12 +325,12 @@
     <div class="container px-0 px-lg-3">
       <a class="navbar-brand" href="/">
         <img src="<%= (siteSetting && siteSetting.logo_url) || '/images/brand.svg' %>" height="60"
-          alt="<%= (siteSetting && siteSetting.name) || 'Cropsay' %>">
+          alt="<%= (siteSetting && siteSetting.name) || 'Multivendor System' %>">
       </a>
       <form method="POST" id="search-form-in-navbar" style="margin-left:auto;">
         <div class="input-group search-input-group">
           <input class="form-control form-control-lg search" id="search" name="search" type="text"
-            placeholder="Search Farm Products">
+            placeholder="Search Products">
           <div class="input-group-append">
             <button class="input-group-text search-icon" id="search-icon-id"><i class="fas fa-search"></i></button>
           </div>
@@ -375,7 +375,7 @@
         <div class="container">
           <section class="pt-2 pt-sm-4">
             <header class="text-center mb-3">
-              <p class="small text-muted text-uppercase mb-1">Fresh From Farm</p>
+              <p class="small text-muted text-uppercase mb-1">Curated For You</p>
               <h2 class="h5 text-uppercase" style="letter-spacing:1.3px;">Browse Categories</h2>
             </header>
             <div class="scroll-menu-wrapper">
@@ -673,15 +673,15 @@
                 </div>
                 <div class="col-lg-6 text-lg-right">
                   <p class="small mb-0">FIND US &nbsp;
-                    <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.facebook_url) ? socialLinks.facebook_url : 'https://facebook.com/cropsay/' %>"
+                    <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.facebook_url) ? socialLinks.facebook_url : '#' %>"
                       target="_blank"><i class="fab fa-facebook-square mr-1" style="color: #f5f5f5;"></i></a>
-                    <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.instagram_url) ? socialLinks.instagram_url : 'https://instagram.com/cropsay/' %>"
+                    <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.instagram_url) ? socialLinks.instagram_url : '#' %>"
                       target="_blank"><i class="fab fa-instagram" style="color: #f5f5f5;"></i></a>
                   </p>
                   <p class="text-sm text-gray mb-0"><a class="text-gray reset-anchor"
-                      href="mailto:<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@cropsay.com' %>"
+                      href="mailto:<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@multivendor.com' %>"
                       target="_blank"><i class="fas fa-envelope"></i> &nbsp;<%= (typeof socialLinks !=='undefined' &&
-                        socialLinks.contact_email) ? socialLinks.contact_email : 'info@cropsay.com' %></a></p>
+                        socialLinks.contact_email) ? socialLinks.contact_email : 'info@multivendor.com' %></a></p>
                   <p class="text-sm text-gray mb-0 mt-2"><a class="text-white reset-anchor" href="/track-order"><i
                         class="fas fa-shipping-fast"></i> Track Order</a></p>
                 </div>

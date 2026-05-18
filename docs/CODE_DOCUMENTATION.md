@@ -1,6 +1,6 @@
 # Codebase Documentation
 
-This document provides a detailed breakdown of the file structure and key code components of the All Strawhats project.
+This document provides a detailed breakdown of the file structure and key code components of the Multivendor System project.
 
 ## Directory Structure
 

@@ -107,7 +107,7 @@ Successfully migrated the platform from "farmer" terminology to "seller" termino
 
 ### 5. Application Management
 - Review new seller applications
-- Auto-generate @cropsay.com email accounts
+- Auto-generate @multivendor.com email accounts
 - Create temporary passwords
 - Send credentials to approved sellers
 

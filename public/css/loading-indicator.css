@@ -1,0 +1,41 @@
+/* Loading Indicator & Page Loader */
+#page-loader {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #2b90d9 0%, #6dd5ed 50%, #2b90d9 100%);
+  background-size: 200% 100%;
+  z-index: 9999;
+  animation: pageLoaderSlide 1.2s ease-in-out infinite;
+  opacity: 1;
+  transition: opacity .3s ease;
+}
+#page-loader.loaded {
+  opacity: 0;
+  pointer-events: none;
+}
+@keyframes pageLoaderSlide {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Skeleton loader for images */
+.skeleton-loader {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s infinite;
+  z-index: 0;
+}
+@keyframes skeletonShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+img.loaded + .skeleton-loader,
+img[src]:not([src=""]) + .skeleton-loader {
+  display: none;
+}

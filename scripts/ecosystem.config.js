@@ -1,6 +1,6 @@
 module.exports = {
   apps: [{
-    name: 'allstrawhats',
+    name: 'multivendor-system',
     script: './server.js',
     instances: 'max',
     exec_mode: 'cluster',

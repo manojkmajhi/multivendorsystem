@@ -20,7 +20,7 @@
           <form method="POST" enctype="multipart/form-data">
             <div class="form-group">
               <label class="form-label">Site Name *</label>
-              <input name="name" class="form-control" value="<%= site.name %>" required placeholder="e.g., Cropsay" />
+              <input name="name" class="form-control" value="<%= site.name %>" required placeholder="e.g., Multivendor System" />
               <small class="form-text">Your store's name</small>
             </div>
             <div class="form-group">
@@ -143,19 +143,19 @@
             
             <div class="form-group">
               <label class="form-label">Meta Description</label>
-              <textarea name="meta_description" class="form-control" rows="3" maxlength="160" placeholder="Premium anime merchandise store in Nepal. Shop authentic anime products, figures, posters, and more."><%= typeof seo !== 'undefined' && seo.meta_description ? seo.meta_description : '' %></textarea>
+              <textarea name="meta_description" class="form-control" rows="3" maxlength="160" placeholder="Premium multivendor e-commerce platform. Shop quality products from multiple sellers."><%= typeof seo !== 'undefined' && seo.meta_description ? seo.meta_description : '' %></textarea>
               <small class="form-text">Recommended: 150-160 characters. Appears in search results.</small>
             </div>
             
             <div class="form-group">
               <label class="form-label">Meta Keywords</label>
-              <input name="meta_keywords" class="form-control" value="<%= typeof seo !== 'undefined' && seo.meta_keywords ? seo.meta_keywords : '' %>" placeholder="anime, merchandise, nepal, anime store, figures" />
-              <small class="form-text">Comma-separated keywords (e.g., anime, merchandise, nepal)</small>
+              <input name="meta_keywords" class="form-control" value="<%= typeof seo !== 'undefined' && seo.meta_keywords ? seo.meta_keywords : '' %>" placeholder="multivendor, e-commerce, marketplace, online store" />
+              <small class="form-text">Comma-separated keywords (e.g., multivendor, e-commerce, marketplace)</small>
             </div>
             
             <div class="form-group">
               <label class="form-label">Site Tagline</label>
-              <input name="site_tagline" class="form-control" value="<%= typeof seo !== 'undefined' && seo.site_tagline ? seo.site_tagline : '' %>" placeholder="Premium Anime Store in Nepal" />
+              <input name="site_tagline" class="form-control" value="<%= typeof seo !== 'undefined' && seo.site_tagline ? seo.site_tagline : '' %>" placeholder="Multivendor E-Commerce Platform" />
               <small class="form-text">Short tagline for your store</small>
             </div>
             
@@ -163,13 +163,13 @@
             
             <div class="form-group">
               <label class="form-label">OG Title</label>
-              <input name="og_title" class="form-control" value="<%= typeof seo !== 'undefined' && seo.og_title ? seo.og_title : '' %>" placeholder="All Strawhats - Premium Anime Store" />
+              <input name="og_title" class="form-control" value="<%= typeof seo !== 'undefined' && seo.og_title ? seo.og_title : '' %>" placeholder="Multivendor System - Multivendor Store" />
               <small class="form-text">Title when shared on Facebook/LinkedIn</small>
             </div>
             
             <div class="form-group">
               <label class="form-label">OG Description</label>
-              <textarea name="og_description" class="form-control" rows="2" placeholder="Shop authentic anime merchandise in Nepal. Best prices, fast delivery."><%= typeof seo !== 'undefined' && seo.og_description ? seo.og_description : '' %></textarea>
+              <textarea name="og_description" class="form-control" rows="2" placeholder="Shop quality products from multiple vendors. Best prices, fast delivery."><%= typeof seo !== 'undefined' && seo.og_description ? seo.og_description : '' %></textarea>
               <small class="form-text">Description when shared on social media</small>
             </div>
             
@@ -192,7 +192,7 @@
             
             <div class="form-group">
               <label class="form-label">Twitter Handle</label>
-              <input name="twitter_handle" class="form-control" value="<%= typeof seo !== 'undefined' && seo.twitter_handle ? seo.twitter_handle : '' %>" placeholder="@allstrawhats" />
+              <input name="twitter_handle" class="form-control" value="<%= typeof seo !== 'undefined' && seo.twitter_handle ? seo.twitter_handle : '' %>" placeholder="@multivendorsystem" />
               <small class="form-text">Your Twitter username (with @)</small>
             </div>
             
@@ -221,37 +221,37 @@
             
             <div class="form-group">
               <label class="form-label">Facebook URL</label>
-              <input name="facebook_url" class="form-control" value="<%= typeof social !== 'undefined' && social.facebook_url ? social.facebook_url : '' %>" placeholder="https://facebook.com/allstrawhats/" />
+              <input name="facebook_url" class="form-control" value="<%= typeof social !== 'undefined' && social.facebook_url ? social.facebook_url : '' %>" placeholder="https://facebook.com/multivendorsystem/" />
               <small class="form-text">Your Facebook page URL</small>
             </div>
             
             <div class="form-group">
               <label class="form-label">Instagram URL</label>
-              <input name="instagram_url" class="form-control" value="<%= typeof social !== 'undefined' && social.instagram_url ? social.instagram_url : '' %>" placeholder="https://instagram.com/allstrawhats/" />
+              <input name="instagram_url" class="form-control" value="<%= typeof social !== 'undefined' && social.instagram_url ? social.instagram_url : '' %>" placeholder="https://instagram.com/multivendorsystem/" />
               <small class="form-text">Your Instagram profile URL</small>
             </div>
             
             <div class="form-group">
               <label class="form-label">Twitter URL</label>
-              <input name="twitter_url" class="form-control" value="<%= typeof social !== 'undefined' && social.twitter_url ? social.twitter_url : '' %>" placeholder="https://twitter.com/allstrawhats" />
+              <input name="twitter_url" class="form-control" value="<%= typeof social !== 'undefined' && social.twitter_url ? social.twitter_url : '' %>" placeholder="https://twitter.com/multivendorsystem" />
               <small class="form-text">Your Twitter profile URL</small>
             </div>
             
             <div class="form-group">
               <label class="form-label">YouTube URL</label>
-              <input name="youtube_url" class="form-control" value="<%= typeof social !== 'undefined' && social.youtube_url ? social.youtube_url : '' %>" placeholder="https://youtube.com/@allstrawhats" />
+              <input name="youtube_url" class="form-control" value="<%= typeof social !== 'undefined' && social.youtube_url ? social.youtube_url : '' %>" placeholder="https://youtube.com/@multivendorsystem" />
               <small class="form-text">Your YouTube channel URL</small>
             </div>
             
             <div class="form-group">
               <label class="form-label">TikTok URL</label>
-              <input name="tiktok_url" class="form-control" value="<%= typeof social !== 'undefined' && social.tiktok_url ? social.tiktok_url : '' %>" placeholder="https://tiktok.com/@allstrawhats" />
+              <input name="tiktok_url" class="form-control" value="<%= typeof social !== 'undefined' && social.tiktok_url ? social.tiktok_url : '' %>" placeholder="https://tiktok.com/@multivendorsystem" />
               <small class="form-text">Your TikTok profile URL</small>
             </div>
             
             <div class="form-group">
               <label class="form-label">Contact Email</label>
-              <input name="contact_email" type="email" class="form-control" value="<%= typeof social !== 'undefined' && social.contact_email ? social.contact_email : '' %>" placeholder="info@allstrawhats.com" />
+              <input name="contact_email" type="email" class="form-control" value="<%= typeof social !== 'undefined' && social.contact_email ? social.contact_email : '' %>" placeholder="info@multivendor.com" />
               <small class="form-text">Public contact email displayed in footer</small>
             </div>
             

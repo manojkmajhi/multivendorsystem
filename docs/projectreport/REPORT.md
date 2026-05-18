@@ -1,9 +1,9 @@
-# ALL STRAWHATS: A MULTIVENDOR E-COMMERCE PLATFORM
+# Multivendor System: A MULTIVENDOR E-COMMERCE PLATFORM
 ## A Project Report submitted to the Department of Computer Science
 ## In partial fulfillment of the requirements for the Fourth Semester of Bachelor in Computer Applications (BCA)
 
 **Submitted By:**
-[Gaurav Kumar Sah]
+[Manoj Majhi and Nitu Kushwaha]
 [Exam Roll No: XXXXXX]
 [T.U. Regd. No: XXXXXX]
 
@@ -15,7 +15,7 @@
 ---
 
 ## ABSTRACT
-The "All Strawhats" project is a comprehensive multivendor e-commerce platform designed to bridge the gap between niche sellers and anime enthusiasts. Built using the Node.js ecosystem, the platform provides a robust environment where multiple sellers can manage their inventories, while customers enjoy a high-performance shopping experience. The system leverages Supabase for scalable data management, Twilio for secure OTP-based authentication and WhatsApp notifications, and advanced server-side caching to ensure sub-second page loads. This report details the full development lifecycle, from problem identification and system analysis to design, implementation, and rigorous testing.
+The "Multivendor System" project is a comprehensive multivendor e-commerce platform designed to bridge the gap between niche sellers and online shoppers. Built using the Node.js ecosystem, the platform provides a robust environment where multiple sellers can manage their inventories, while customers enjoy a high-performance shopping experience. The system leverages Supabase for scalable data management, Twilio for secure OTP-based authentication and WhatsApp notifications, and advanced server-side caching to ensure sub-second page loads. This report details the full development lifecycle, from problem identification and system analysis to design, implementation, and rigorous testing.
 
 ---
 
@@ -31,7 +31,7 @@ The "All Strawhats" project is a comprehensive multivendor e-commerce platform d
 ## Chapter 1: Introduction
 
 ### 1.1 Introduction
-The rapid digitization of commerce has created a demand for specialized marketplaces. "All Strawhats" is a dedicated multivendor platform that allows independent sellers to reach customers through a centralized portal. Unlike generic marketplaces, this platform focuses on community-driven niches, providing specialized features like variant management and real-time WhatsApp order tracking.
+The rapid digitization of commerce has created a demand for specialized marketplaces. "Multivendor System" is a dedicated multivendor platform that allows independent sellers to reach customers through a centralized portal. Unlike generic marketplaces, this platform focuses on community-driven niches, providing specialized features like variant management and real-time WhatsApp order tracking.
 
 ### 1.2 Problem Statement
 Traditional e-commerce setups for small-scale niche sellers often face hurdles such as:
@@ -140,7 +140,7 @@ Primary tables are defined in PostgreSQL with strict RLS (Row Level Security) po
 Successfully implemented a complex multivendor architecture. Learnt the importance of server-side caching and secure cloud database management.
 
 ### 5.2 Conclusion
-The "All Strawhats" platform meets all specified objectives. It provides a robust, fast, and secure marketplace for niche communities, demonstrating the power of modern JavaScript backend technologies.
+The "Multivendor System" platform meets all specified objectives. It provides a robust, fast, and secure marketplace for niche communities, demonstrating the power of modern JavaScript backend technologies.
 
 ### 5.3 Future Recommendations
 - Integration of a live chat feature between buyers and sellers.

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title><%= (siteSetting && siteSetting.name) ? siteSetting.name : 'Cropsay' %><% if(typeof seo !== 'undefined' && seo.site_tagline && title !== 'Home') { %> | <%= seo.site_tagline %><% } %><% if(title && title !== 'Home') { %> - <%= title %><% } %></title>
+  <title><%= (siteSetting && siteSetting.name) ? siteSetting.name : 'Multivendor System' %><% if(typeof seo !== 'undefined' && seo.site_tagline && title !== 'Home') { %> | <%= seo.site_tagline %><% } %><% if(title && title !== 'Home') { %> - <%= title %><% } %></title>
   <% if(typeof seo !== 'undefined' && seo.meta_description) { %>
   <meta name="description" content="<%= seo.meta_description %>" />
   <% } %>
@@ -79,11 +79,11 @@
   <nav class="navbar navbar-light fixed-top py-0 px-2">
     <div class="container px-0 px-lg-3">
       <a class="navbar-brand" href="/">
-        <img src="<%= (siteSetting && siteSetting.logo_url) || '/images/brand.svg' %>" height="60" alt="<%= (siteSetting && siteSetting.name) || 'Cropsay' %>">
+        <img src="<%= (siteSetting && siteSetting.logo_url) || '/images/brand.svg' %>" height="60" alt="<%= (siteSetting && siteSetting.name) || 'Multivendor System' %>">
       </a>
   <form method="POST" id="search-form-in-navbar">
         <div class="input-group search-input-group">
-          <input class="form-control form-control-lg search" id="search" name="search" type="text" placeholder="Search Farm Products">
+          <input class="form-control form-control-lg search" id="search" name="search" type="text" placeholder="Search Products">
           <div class="input-group-append">
             <button class="input-group-text search-icon" id="search-icon-id"><i class="fas fa-search"></i></button>
           </div>
@@ -117,10 +117,10 @@
         </div>
         <div class="col-lg-6 text-lg-right">
           <p class="small mb-0">FIND US &nbsp;
-            <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.facebook_url) ? socialLinks.facebook_url : 'https://facebook.com/cropsay/' %>" target="_blank"><i class="fab fa-facebook-square mr-1" style="color: #f5f5f5;"></i></a>
-            <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.instagram_url) ? socialLinks.instagram_url : 'https://instagram.com/cropsay/' %>" target="_blank"><i class="fab fa-instagram" style="color: #f5f5f5;"></i></a>
+            <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.facebook_url) ? socialLinks.facebook_url : '#' %>" target="_blank"><i class="fab fa-facebook-square mr-1" style="color: #f5f5f5;"></i></a>
+            <a href="<%= (typeof socialLinks !== 'undefined' && socialLinks.instagram_url) ? socialLinks.instagram_url : '#' %>" target="_blank"><i class="fab fa-instagram" style="color: #f5f5f5;"></i></a>
           </p>
-          <p class="text-sm text-gray mb-0"><a class="text-gray reset-anchor" href="mailto:<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@cropsay.com' %>" target="_blank"><i class="fas fa-envelope"></i> &nbsp;<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@cropsay.com' %></a></p>
+          <p class="text-sm text-gray mb-0"><a class="text-gray reset-anchor" href="mailto:<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@multivendor.com' %>" target="_blank"><i class="fas fa-envelope"></i> &nbsp;<%= (typeof socialLinks !== 'undefined' && socialLinks.contact_email) ? socialLinks.contact_email : 'info@multivendor.com' %></a></p>
           <p class="text-sm text-gray mb-0 mt-2"><a class="text-white reset-anchor" href="/track-order"><i class="fas fa-shipping-fast"></i> Track Order</a></p>
         </div>
       </div>

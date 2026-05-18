@@ -62,7 +62,7 @@ console.log('\n📦 Checking package.json...');
 try {
   const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
   
-  if (pkg.name === 'allstrawhats') {
+  if (pkg.name === 'multivendor-system') {
     console.log('  ✓ Package name correct');
     passed++;
   }

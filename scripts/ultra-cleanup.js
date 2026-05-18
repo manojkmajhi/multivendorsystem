@@ -123,7 +123,7 @@ const cleanPackageJson = () => {
 
 // Create final clean README
 const createCleanReadme = () => {
-  const readmeContent = `# All Strawhats - E-commerce Platform
+  const readmeContent = `# Multivendor System - E-commerce Platform
 
 ## Quick Start
 \`\`\`bash
