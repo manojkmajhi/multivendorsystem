@@ -1,4 +1,4 @@
-# All Strawhats - E-commerce Platform
+# Multivendor System - E-commerce Platform
 
 ## Quick Start
 ```bash
