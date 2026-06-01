@@ -3,17 +3,24 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const multer = require('multer');
 const fs = require('fs');
+const https = require('https');
 const compression = require('compression');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
 const { productCache, categoryCache, settingsCache, heroCache, cacheMiddleware, clearResponseCache } = require('./src/services/cacheService');
+const { getFrequentlyBoughtTogether, getPersonalizedRecommendations, getCartCrossSells } = require('./src/services/recommendationService');
 
 const twilio = require('twilio');
-const twilioClient = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN 
-  ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-  : null;
+const twilioClient = (() => {
+  if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+    return twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+  } else if (process.env.TWILIO_API_KEY && process.env.TWILIO_API_SECRET && process.env.TWILIO_ACCOUNT_SID) {
+    return twilio(process.env.TWILIO_API_KEY, process.env.TWILIO_API_SECRET, { accountSid: process.env.TWILIO_ACCOUNT_SID });
+  }
+  return null;
+})();
 
 if (twilioClient) {
   console.log('✓ Twilio WhatsApp initialized');
@@ -126,6 +133,98 @@ async function sendOTPEmail(email, otp) {
     console.error('Email send error:', err.message);
     return false;
   }
+}
+
+// EmailJS helper for sending Order Confirmation email
+async function sendOrderConfirmationEmail(order) {
+  // Only send if the customer provided an email address
+  if (!order.customer_email) return;
+
+  const serviceId = process.env.EMAILJS_SERVICE_ID || 'service_hbht5b5';
+  const templateId = process.env.EMAILJS_TEMPLATE_ID;
+  const publicKey = process.env.EMAILJS_PUBLIC_KEY;
+  const privateKey = process.env.EMAILJS_PRIVATE_KEY;
+
+  if (!templateId || !publicKey) {
+    console.warn('⚠ EmailJS not fully configured in environment variables. Email confirmation skipped.');
+    return;
+  }
+
+  // Pre-render order items to HTML for EmailJS
+  let ordersHtml = '<table style="width: 100%; border-collapse: collapse; margin-top: 15px;">';
+  const items = Array.isArray(order.items) ? order.items : [];
+  
+  items.forEach(item => {
+    ordersHtml += `
+      <tr style="border-bottom: 1px solid #eee; vertical-align: top;">
+        <td style="padding: 12px 8px 12px 0; width: 64px;">
+          <img style="height: 64px; width: 64px; object-fit: cover; border-radius: 4px;" height="64px" width="64px" src="${item.image || 'https://via.placeholder.com/64'}" alt="${item.productName}" />
+        </td>
+        <td style="padding: 12px 8px;">
+          <strong style="color: #333;">${item.productName}</strong><br>
+          <span style="color: #666; font-size: 12px;">Qty: ${item.qty} × Rs. ${item.price}</span>
+        </td>
+        <td style="padding: 12px 0 12px 8px; text-align: right; font-weight: bold; color: #333;">
+          Rs. ${item.subtotal}
+        </td>
+      </tr>
+    `;
+  });
+  ordersHtml += '</table>';
+
+  const payload = JSON.stringify({
+    service_id: serviceId,
+    template_id: templateId,
+    user_id: publicKey,
+    accessToken: privateKey,
+    template_params: {
+      order_id: order.order_number || order.id || 'N/A',
+      email: order.customer_email,
+      customer_name: order.customer_name || 'Valued Customer',
+      total_price: order.total,
+      delivery_fee: order.delivery_fee,
+      subtotal: order.subtotal,
+      delivery_address: `${order.address}, ${order.area}, ${order.region}`,
+      orders_html: ordersHtml
+    }
+  });
+
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: 'api.emailjs.com',
+      port: 443,
+      path: '/api/v1.0/email/send',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload)
+      }
+    };
+
+    console.log(`✉️ Sending EmailJS confirmation for Order #${order.order_number || order.id}...`);
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        if (res.statusCode === 200) {
+          console.log('✅ Order confirmation email sent successfully!');
+          resolve(true);
+        } else {
+          console.error('❌ EmailJS sending failed. Status:', res.statusCode, 'Response:', data);
+          resolve(false);
+        }
+      });
+    });
+
+    req.on('error', (err) => {
+      console.error('❌ EmailJS Exception:', err.message);
+      resolve(false);
+    });
+
+    req.write(payload);
+    req.end();
+  });
 }
 
 // Settings helpers with aggressive caching
@@ -384,7 +483,7 @@ async function dbFetchProducts(filter = {}) {
   const cached = productCache.get(cacheKey);
   if (cached) return cached;
 
-  let query = supabase.from('products').select('*').eq('active', true);
+  let query = supabase.from('products').select('*, variants(*)').eq('active', true);
   if (filter.category && filter.category.toLowerCase() !== 'all') {
     query = query.eq('category', filter.category);
   }
@@ -647,11 +746,12 @@ app.post('/admin/logout', (req, res) => {
 });
 
 app.get('/admin/products', adminGuard, async (req, res) => {
+  // Admin products list view - renders the table showing products along with categories, price, stock quantity, and status.
   try {
     let list = products; // fallback in-memory
     if (supabase) {
       const { data, error } = await supabase.from('products')
-        .select('*, seller:seller_id(full_name, business_name)')
+        .select('*, seller:seller_id(full_name, business_name), variants(*)')
         .order('created_at', { ascending: false }).limit(200);
       if (!error && data) list = data;
     }
@@ -1459,16 +1559,47 @@ app.get('/details/:id/', cacheMiddleware(60), async (req, res) => {
 
     if (!product) return res.status(404).render('simple-message', { title: 'Not Found', message: 'Product not found.' });
 
+    // Track recently viewed products in server cookies (fallback for uncached visits)
+    let viewed = [];
+    if (req.cookies.recently_viewed) {
+      try {
+        viewed = JSON.parse(req.cookies.recently_viewed);
+        if (!Array.isArray(viewed)) viewed = [];
+      } catch (e) {
+        viewed = [];
+      }
+    }
+    viewed = viewed.filter(v => v !== id);
+    viewed.unshift(id);
+    viewed = viewed.slice(0, 10);
+    res.cookie('recently_viewed', JSON.stringify(viewed), { httpOnly: true, sameSite: 'lax', maxAge: 30 * 24 * 3600 * 1000 });
+
     // Fetch variants if product has them
     if (product.has_variants && supabase) {
       const { data: variants } = await supabase.from('variants').select('*').eq('product_id', id).eq('active', true);
       product.variants = variants || [];
     }
 
+    // Fetch Frequently Bought Together (FBT) recommendation (limit 1 for interactive UI)
+    const fbtList = await getFrequentlyBoughtTogether(id, 1);
+    const fbtProduct = fbtList[0] || null;
+
+    // Fetch More from Same Seller
+    let sellerProducts = [];
+    if (product.seller_id && supabase) {
+      const { data } = await supabase.from('products')
+        .select('*')
+        .eq('seller_id', product.seller_id)
+        .eq('active', true)
+        .neq('id', id)
+        .limit(6);
+      sellerProducts = data || [];
+    }
+
     // Related products: same category (exclude current) limit 6
     let related = await dbFetchProducts({ category: product.category, limit: 12, orderLatest: true });
     related = related.filter(p => p.id !== product.id).slice(0, 6);
-    res.render('product-details', { product, related, siteSetting: res.locals.siteSetting });
+    res.render('product-details', { product, related, fbtProduct, sellerProducts, siteSetting: res.locals.siteSetting });
   } catch (e) {
     console.error('DETAILS_PAGE_ERROR', e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load product.' });
@@ -1678,6 +1809,8 @@ app.get('/test-whatsapp-otp', (req, res) => {
 // OTP storage (reusing existing otpStore)
 
 app.post('/api/send-otp', async (req, res) => {
+  let formattedPhone = '';
+  let otp = '';
   try {
     const { phone } = req.body;
     
@@ -1685,8 +1818,8 @@ app.post('/api/send-otp', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Phone number is required' });
     }
 
-    const formattedPhone = phone.startsWith('+') ? phone : '+' + phone;
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    formattedPhone = phone.startsWith('+') ? phone : '+' + phone;
+    otp = Math.floor(100000 + Math.random() * 900000).toString();
     
     console.log('\n📱 OTP REQUEST');
     console.log('Phone:', formattedPhone);
@@ -1712,6 +1845,27 @@ app.post('/api/send-otp', async (req, res) => {
     res.json({ success: true, orderId: message.sid });
   } catch (e) {
     console.error('❌ Error:', e.message);
+    if ((e.message.includes('Authenticate') || e.message.includes('authenticate')) && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_ACCOUNT_SID) {
+      console.log('🔄 Twilio API Key failed. Attempting legacy Auth Token fallback...');
+      try {
+        const fallbackClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+        const message = await fallbackClient.messages.create({
+          from: process.env.TWILIO_WHATSAPP_FROM,
+          to: `whatsapp:${formattedPhone}`,
+          body: `Your OTP is: ${otp}\n\nValid for 5 minutes.\n\n- Multivendor System`
+        });
+        
+        otpStore[formattedPhone] = {
+          otp,
+          expiry: Date.now() + 5 * 60 * 1000,
+          sid: message.sid
+        };
+        console.log('✅ WhatsApp sent via Legacy Fallback! SID:', message.sid);
+        return res.json({ success: true, orderId: message.sid });
+      } catch (fallbackError) {
+        console.error('❌ Legacy Fallback Error:', fallbackError.message);
+      }
+    }
     res.status(500).json({ success: false, message: e.message });
   }
 });
@@ -1896,6 +2050,35 @@ app.get('/__cache_stats', adminGuard, (req, res) => {
 
 
 
+// API endpoint for dynamic recommendations
+app.get('/api/recommendations', async (req, res) => {
+  try {
+    const productId = req.query.productId;
+    const viewedIdsStr = req.query.viewed || '';
+    const cartIdsStr = req.query.cart || '';
+    const limit = parseInt(req.query.limit || 6, 10);
+
+    const viewedIds = viewedIdsStr.split(',').filter(Boolean);
+    const cartIds = cartIdsStr.split(',').filter(Boolean);
+
+    let data = {};
+    if (productId) {
+      data.fbt = await getFrequentlyBoughtTogether(productId, limit);
+    }
+    if (viewedIds.length > 0 || !productId) {
+      data.personalized = await getPersonalizedRecommendations(viewedIds, limit);
+    }
+    if (cartIds.length > 0) {
+      data.crossSells = await getCartCrossSells(cartIds, limit);
+    }
+
+    res.json(data);
+  } catch (e) {
+    console.error('API RECOMMENDATIONS ERROR', e);
+    res.status(500).json({ error: 'Failed to fetch recommendations' });
+  }
+});
+
 // Dynamic homepage
 app.get('/', async (req, res) => {
   try {
@@ -1923,7 +2106,20 @@ app.get('/', async (req, res) => {
     if (!heroImages.length) {
       heroImages = [{ image_url: '/staticfiles/hero-banner.jpg', title: res.locals.siteSetting.name, link_url: '/shop/All/', position: 0 }];
     }
-    res.render('home', { categories, products: productsList, heroImages, siteSetting: res.locals.siteSetting });
+
+    // Fetch browsing history from cookie to serve Personalized Picks
+    let viewedIds = [];
+    if (req.cookies.recently_viewed) {
+      try {
+        viewedIds = JSON.parse(req.cookies.recently_viewed);
+        if (!Array.isArray(viewedIds)) viewedIds = [];
+      } catch (e) {
+        viewedIds = [];
+      }
+    }
+    const personalizedProducts = await getPersonalizedRecommendations(viewedIds, 4);
+
+    res.render('home', { categories, products: productsList, heroImages, personalizedProducts, siteSetting: res.locals.siteSetting });
   } catch (e) {
     console.error('HOME_RENDER_ERROR', e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load homepage.' });
@@ -1982,7 +2178,12 @@ app.get('/cart/', async (req, res) => {
 
     const total = items.reduce((s, i) => s + i.subtotal, 0);
     const itemCount = items.reduce((s, i) => s + i.qty, 0);
-    res.render('cart', { items, total, itemCount, siteSetting: res.locals.siteSetting });
+
+    // Fetch Cart Cross-Sells
+    const cartProductIds = cart.map(it => it.productId);
+    const crossSells = await getCartCrossSells(cartProductIds, 4);
+
+    res.render('cart', { items, total, itemCount, crossSells, siteSetting: res.locals.siteSetting });
   } catch (e) {
     console.error('CART_PAGE_ERROR', e);
     res.status(500).render('simple-message', { title: 'Error', message: 'Failed to load cart.' });
@@ -2142,8 +2343,65 @@ app.post('/checkout/', async (req, res) => {
         throw error;
       }
 
+      // Decrease stock for each item purchased
+      try {
+        for (const oItem of orderItems) {
+          if (oItem.variantId) {
+            // Decrement variant stock
+            const { data: variantData, error: varError } = await supabase
+              .from('variants')
+              .select('stock')
+              .eq('id', oItem.variantId)
+              .single();
+            
+            if (!varError && variantData) {
+              const currentStock = parseInt(variantData.stock || 0);
+              const newStock = Math.max(0, currentStock - parseInt(oItem.qty || 0));
+              
+              await supabase
+                .from('variants')
+                .update({ stock: newStock })
+                .eq('id', oItem.variantId);
+              
+              console.log(`📉 Decreased variant ${oItem.variantId} stock: ${currentStock} -> ${newStock}`);
+            }
+          } else {
+            // Decrement main product stock
+            const { data: productData, error: prodError } = await supabase
+              .from('products')
+              .select('stock')
+              .eq('id', oItem.productId)
+              .single();
+            
+            if (!prodError && productData) {
+              const currentStock = parseInt(productData.stock || 0);
+              const newStock = Math.max(0, currentStock - parseInt(oItem.qty || 0));
+              
+              await supabase
+                .from('products')
+                .update({ stock: newStock })
+                .eq('id', oItem.productId);
+              
+              console.log(`📉 Decreased product ${oItem.productId} stock: ${currentStock} -> ${newStock}`);
+            }
+          }
+        }
+        // Flush product caches to ensure list pages display the latest stock numbers instantly
+        productCache.flushAll();
+        clearResponseCache();
+      } catch (stockErr) {
+        console.error('FAILED_TO_DECREASE_STOCK_BUT_PROCEEDING', stockErr);
+      }
+
       // Clear cart after successful order
       carts[device] = [];
+
+      // Send EmailJS Order Confirmation asynchronously
+      if (email) {
+        sendOrderConfirmationEmail(data).catch(err => {
+          console.error('❌ Failed to dispatch order confirmation email:', err.message);
+        });
+      }
 
       res.json({
         success: true,
@@ -2154,7 +2412,41 @@ app.post('/checkout/', async (req, res) => {
     } else {
       // Fallback if no database
       console.warn('Order received but no database configured:', { name, mobile, total });
+      
+      // Fallback: Decrement in-memory fallback products array
+      for (const oItem of orderItems) {
+        const localProduct = products.find(p => p.id === oItem.productId);
+        if (localProduct) {
+          const currentStock = parseInt(localProduct.stock || 0);
+          localProduct.stock = Math.max(0, currentStock - parseInt(oItem.qty || 0));
+          console.log(`📉 Fallback: Decreased product ${oItem.productId} stock: ${currentStock} -> ${localProduct.stock}`);
+        }
+      }
+      productCache.flushAll();
+      clearResponseCache();
+
       carts[device] = [];
+
+      // Send EmailJS Order Confirmation asynchronously for fallback order
+      if (email) {
+        const tempOrder = {
+          id: 'TEMP-' + Date.now(),
+          order_number: 'TEMP-' + Date.now(),
+          customer_email: email,
+          customer_name: name,
+          total: parseFloat(total),
+          delivery_fee: parseFloat(deliveryFee),
+          subtotal: parseFloat(subtotal),
+          address,
+          area,
+          region,
+          items: orderItems
+        };
+        sendOrderConfirmationEmail(tempOrder).catch(err => {
+          console.error('❌ Failed to dispatch order confirmation email (test mode):', err.message);
+        });
+      }
+
       res.json({
         success: true,
         orderId: 'TEMP-' + Date.now(),
@@ -2230,7 +2522,7 @@ app.get('/sellers/signup', (req, res) => {
 app.post('/api/sellers/signup-send-otp', async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email.endsWith('@multivendor.com')) return res.json({ success: false, message: 'Only @multivendor.com emails allowed' });
+    if (!email.endsWith('@multivendor.com') && !email.endsWith('@gmail.com')) return res.json({ success: false, message: 'Only @gmail.com or @multivendor.com emails allowed' });
 
     console.log('📧 Sending Supabase OTP to:', email);
 
@@ -2359,7 +2651,7 @@ app.get('/farmers/reset-password-otp', (req, res) => {
 app.post('/api/farmers/send-otp', async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email.endsWith('@multivendor.com')) return res.json({ success: false, message: 'Only @multivendor.com emails allowed' });
+    if (!email.endsWith('@multivendor.com') && !email.endsWith('@gmail.com')) return res.json({ success: false, message: 'Only @gmail.com or @multivendor.com emails allowed' });
 
     console.log('📧 Sending Supabase OTP to:', email);
 
@@ -2495,8 +2787,8 @@ app.post('/api/farmers/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
 
-    if (!email.endsWith('@multivendor.com')) {
-      return res.json({ success: false, message: 'Only @multivendor.com emails are allowed' });
+    if (!email.endsWith('@multivendor.com') && !email.endsWith('@gmail.com')) {
+      return res.json({ success: false, message: 'Only @gmail.com or @multivendor.com emails are allowed' });
     }
 
     // Check sellers table for the email

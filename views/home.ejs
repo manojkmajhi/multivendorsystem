@@ -51,6 +51,7 @@
           <link rel="stylesheet" href="/css/style.blue.css">
           <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>">
           <link rel="stylesheet" href="/css/floating-button.css">
+          <link rel="stylesheet" href="/css/recommendations.css?v=<%= Date.now() %>">
           <link rel="stylesheet" href="/css/performance-animations.css">
           <link rel="stylesheet" href="/css/product-quickview.css?v=1">
           <link rel="stylesheet" href="/css/loading-indicator.css">
@@ -58,17 +59,26 @@
             .category-item {
               display: block;
               position: relative;
-              border: 1px solid #bebebe;
+              border-radius: 12px;
               overflow: hidden;
-              border-radius: 2px;
               background: #fff;
+              box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+              transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+              border: 1px solid rgba(0, 0, 0, 0.06);
+            }
+
+            .category-item:hover {
+              transform: translateY(-5px);
+              box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+              border-color: rgba(43, 144, 217, 0.25);
             }
 
             .category-img-container {
               position: relative;
               width: 100%;
-              padding-top: 100%;
+              padding-top: 105%;
               overflow: hidden;
+              background: #fdfdfd;
             }
 
             .category-item img {
@@ -78,32 +88,85 @@
               width: 100%;
               height: 100%;
               object-fit: cover;
-              transition: transform .45s;
+              transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
             }
 
             .category-item:hover img {
-              transform: scale(1.12);
+              transform: scale(1.08);
+            }
+
+            .category-img-overlay {
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background: linear-gradient(to top, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.15) 50%, rgba(0, 0, 0, 0) 100%);
+              z-index: 1;
+              transition: background 0.3s ease;
+            }
+
+            .category-item:hover .category-img-overlay {
+              background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.05) 100%);
             }
 
             .category-item-title {
               position: absolute;
-              top: 50%;
-              left: 50%;
-              transform: translate(-50%, -50%);
-              background: #fff;
-              padding: .35rem 1rem;
-              font-size: .95rem;
+              bottom: 12px;
+              left: 12px;
+              right: 12px;
+              background: rgba(255, 255, 255, 0.82);
+              backdrop-filter: blur(8px);
+              -webkit-backdrop-filter: blur(8px);
+              padding: 0.55rem 0.75rem;
+              border-radius: 8px;
+              text-align: center;
+              font-size: 0.82rem;
               font-weight: 700;
-              letter-spacing: .05em;
-              border: 2px dotted #0a0a0a;
+              color: #111;
+              letter-spacing: 0.06em;
               text-transform: uppercase;
-              z-index: 1;
+              z-index: 2;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+              border: 1px solid rgba(255, 255, 255, 0.45);
+              transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+              white-space: normal;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              flex-direction: column;
+            }
+
+            .category-item:hover .category-item-title {
+              background: #111;
+              color: #fff;
+              border-color: rgba(255, 255, 255, 0.1);
+              transform: translateY(-2px);
+              box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+            }
+
+            .category-item-action {
+              font-size: 0.55rem;
+              font-weight: 600;
+              color: #666;
+              margin-top: 3px;
+              letter-spacing: 0.1em;
+              opacity: 0;
+              height: 0;
+              overflow: hidden;
+              transition: all 0.3s ease;
+            }
+
+            .category-item:hover .category-item-action {
+              opacity: 0.85;
+              height: 10px;
+              color: #fff;
             }
 
             .scroll-menu-wrapper {
               position: relative;
-              padding: 10px 0;
-              height: 220px;
+              padding: 15px 0;
+              height: 250px;
             }
 
             .menu {
@@ -114,25 +177,38 @@
 
             .menu::-webkit-scrollbar {
               width: 0;
+              height: 0;
+              display: none;
             }
 
             .scroll-item {
               display: inline-block;
               width: 200px;
+              margin-right: 15px;
             }
 
             @media(max-width:600px) {
               .scroll-menu-wrapper {
-                height: 150px;
+                height: 175px;
+                padding: 10px 0;
               }
 
               .scroll-item {
-                width: 120px;
+                width: 130px;
+                margin-right: 10px;
               }
 
               .category-item-title {
-                padding: .2rem .4rem;
-                font-size: .7rem;
+                bottom: 8px;
+                left: 8px;
+                right: 8px;
+                padding: 0.35rem 0.5rem;
+                font-size: 0.65rem;
+                border-radius: 6px;
+              }
+              
+              .category-item-action {
+                display: none;
               }
             }
 
@@ -337,8 +413,7 @@
         </div>
       </form>
       <ul class="navbar-nav ml-auto phone-in-navbar" style="display: none;">
-        <li class="nav-item"><a class="nav-link" href="tel:9814789009"> <i class="fas fa-phone-alt"></i>
-            9814789009<sup><small> NP</small></sup></a></li>
+        <li class="nav-item"><a class="nav-link" href="tel:9811728715"> <i class="fas fa-phone-alt"></i> Need Help? 9811728715</a></li>
       </ul>
     </div>
   </nav>
@@ -374,10 +449,10 @@
 
         <div class="container">
           <section class="pt-2 pt-sm-4">
-            <header class="text-center mb-3">
-              <p class="small text-muted text-uppercase mb-1">Curated For You</p>
-              <h2 class="h5 text-uppercase" style="letter-spacing:1.3px;">Browse Categories</h2>
-            </header>
+            <div class="rec-section-header">
+              <span class="rec-subtitle">Curated For You</span>
+              <h2 class="rec-title">Browse Categories</h2>
+            </div>
             <div class="scroll-menu-wrapper">
               <ul class="menu list-unstyled mb-0 pl-0">
                 <% categories.forEach(c=>{ %>
@@ -386,9 +461,11 @@
                       <div class="category-img-container">
                         <img src="<%= c.image || '/staticfiles/brand.svg' %>" alt="<%- c.name.replace(/"/g,'&quot;') %>" loading="lazy" decoding="async">
                         <div class="skeleton-loader"></div>
+                        <div class="category-img-overlay"></div>
                       </div>
                       <span class="category-item-title">
                         <%= c.name %>
+                        <span class="category-item-action">EXPLORE <i class="fas fa-arrow-right ml-1" style="font-size:0.55rem;"></i></span>
                       </span>
                     </a>
                   </div>
@@ -397,47 +474,136 @@
             </div>
           </section>
 
+          <!-- Personalized Recommendations -->
+          <% if(typeof personalizedProducts !== 'undefined' && personalizedProducts.length > 0) { %>
+            <section class="py-3 py-sm-4">
+              <div class="rec-section-header">
+                <span class="rec-subtitle">Curated Just For You</span>
+                <h2 class="rec-title">Recommended Picks</h2>
+              </div>
+              <div class="row">
+                <% personalizedProducts.forEach((p, idx) => { %>
+                  <% 
+                    // Generate a simulated match percentage (e.g. 98%, 95%, 92%, etc.)
+                    const matchPercent = 99 - (idx * 3) - Math.floor(Math.random() * 2);
+                  %>
+                  <div class="col-xl-3 col-lg-4 col-6 px-1 py-1">
+                    <div class="rec-product-card pt-2">
+                      <div class="rec-match-badge">
+                        <i class="fas fa-heart"></i> <%= matchPercent %>% Match
+                      </div>
+                      
+                      <div class="position-relative mb-1">
+                        <div class="<%= p.id %>-added-message show-added-message" style="display:none; position:absolute; left:4px; top:4px; background:#000; color:#fff; font-size:11px; padding:2px 5px; border-radius:3px; z-index:2;">Added</div>
+                        <a class="d-block" href="/details/<%= p.id %>/">
+                          <% 
+                            const isOutOfStock = p.has_variants 
+                              ? (p.variants ? p.variants.reduce((sum, v) => sum + (v.stock || 0), 0) <= 0 : false)
+                              : (p.stock <= 0);
+                          %>
+                          <div class="rec-img-container" style="position: relative;">
+                            <img src="<%= p.image %>" alt="<%= p.name %>" loading="lazy" decoding="async" style="<%= isOutOfStock ? 'filter: grayscale(80%) opacity(60%);' : '' %>">
+                            <div class="skeleton-loader"></div>
+                            <% if (isOutOfStock) { %>
+                              <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(220, 38, 38, 0.9); color: #fff; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.5px; z-index: 3; pointer-events: none; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">Out of Stock</div>
+                            <% } %>
+                          </div>
+                        </a>
+                      </div>
+
+                      <div class="rec-card-body">
+                        <div class="rec-category-tag"><%= p.category %></div>
+                        <h5 class="rec-product-title">
+                          <a href="/details/<%= p.id %>/"><%= p.name %></a>
+                        </h5>
+                        <div class="rec-price-row">
+                          <span class="rec-price">Rs. <%= p.price %></span>
+                          <div class="rec-actions">
+                            <button class="rec-action-btn rec-view-btn view-btn" 
+                                    data-id="<%= p.id %>" 
+                                    data-img="<%= p.image %>" 
+                                    data-name="<%- p.name.replace(/"/g,'&quot;') %>"
+                                    data-price="<%= p.price %>" 
+                                    data-link="/details/<%= p.id %>/"
+                                    data-short="<%- (p.short_description || '').replace(/"/g,'&quot;') %>"
+                                    data-has-variants="<%= p.has_variants ? 'true' : 'false' %>"
+                                    title="Quick View">
+                              <i class="fas fa-expand"></i>
+                            </button>
+                            <% if (isOutOfStock) { %>
+                              <button class="rec-action-btn rec-add-btn" disabled style="opacity: 0.5; cursor: not-allowed; background: #999; border-color: #999;" title="Out of Stock"><i class="fas fa-times"></i></button>
+                            <% } else if(p.has_variants) { %>
+                              <a href="/details/<%= p.id %>/" class="rec-action-btn rec-add-btn" title="Select options"><i class="fas fa-cog"></i></a>
+                            <% } else { %>
+                              <button class="rec-action-btn rec-add-btn" onclick="addToCart('<%= p.id %>','1', false)" title="Add to Cart"><i class="fas fa-plus"></i></button>
+                            <% } %>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            </section>
+          <% } %>
+
           <section class="py-3 py-sm-4">
-            <header>
-              <p class="small text-muted text-uppercase mb-1">You Will Love These</p>
-              <h2 class="h5 text-uppercase mb-2">Popular Items</h2>
-            </header>
+            <div class="rec-section-header">
+              <span class="rec-subtitle">You Will Love These</span>
+              <h2 class="rec-title">Popular Items</h2>
+            </div>
             <div class="row">
               <% products.forEach(p=>{ %>
                 <div class="col-xl-3 col-lg-4 col-6 px-1 py-1">
-                  <div class="product pt-2" style="height:100%;">
+                  <div class="rec-product-card pt-2">
                     <div class="position-relative mb-1">
                       <div class="<%= p.id %>-added-message show-added-message"
                         style="display:none; position:absolute; left:4px; top:4px; background:#000; color:#fff; font-size:11px; padding:2px 5px; border-radius:3px; z-index:2;">
                         Added</div>
                       <a class="d-block" href="/details/<%= p.id %>/">
-                        <div class="product-img-container">
-                          <img src="<%= p.image %>" alt="<%= p.name %>" loading="lazy" decoding="async">
+                        <% 
+                          const isOutOfStock = p.has_variants 
+                            ? (p.variants ? p.variants.reduce((sum, v) => sum + (v.stock || 0), 0) <= 0 : false)
+                            : (p.stock <= 0);
+                        %>
+                        <div class="rec-img-container" style="position: relative;">
+                          <img src="<%= p.image %>" alt="<%= p.name %>" loading="lazy" decoding="async" style="<%= isOutOfStock ? 'filter: grayscale(80%) opacity(60%);' : '' %>">
                           <div class="skeleton-loader"></div>
+                          <% if (isOutOfStock) { %>
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(220, 38, 38, 0.9); color: #fff; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.5px; z-index: 3; pointer-events: none; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">Out of Stock</div>
+                          <% } %>
                         </div>
                       </a>
                     </div>
-                    <h5 class="mb-0 text-sm"><a class="reset-anchor" href="/details/<%= p.id %>/">
-                        <%= p.name %>
-                      </a></h5>
-                    <p class="small text-muted mb-2">Rs. <%= p.price %>
-                    </p>
-                    <ul class="mb-2 mt-0 list-inline">
-                      <% if(p.has_variants) { %>
-                        <li class="list-inline-item m-0 p-0"><a href="/details/<%= p.id %>/"
-                            class="btn btn-sm btn-dark py-1 px-2" style="min-width:90px;">Select Options</a></li>
-                        <% } else { %>
-                          <li class="list-inline-item m-0 p-0"><button class="btn btn-sm btn-dark py-1 px-2"
-                              style="min-width:90px;" onclick="addToCart('<%= p.id %>','1', false)">Add to Cart</button>
-                          </li>
+                    <div class="rec-card-body">
+                      <div class="rec-category-tag"><%= p.category || 'Popular' %></div>
+                      <h5 class="rec-product-title">
+                        <a href="/details/<%= p.id %>/"><%= p.name %></a>
+                      </h5>
+                      <div class="rec-price-row">
+                        <span class="rec-price">Rs. <%= p.price %></span>
+                        <div class="rec-actions">
+                          <button class="rec-action-btn rec-view-btn view-btn" 
+                                  data-id="<%= p.id %>" 
+                                  data-img="<%= p.image %>" 
+                                  data-name="<%- p.name.replace(/"/g,'&quot;') %>"
+                                  data-price="<%= p.price %>" 
+                                  data-link="/details/<%= p.id %>/"
+                                  data-short="<%- (p.short_description || '').replace(/"/g,'&quot;') %>"
+                                  data-has-variants="<%= p.has_variants ? 'true' : 'false' %>"
+                                  title="Quick View">
+                            <i class="fas fa-expand"></i>
+                          </button>
+                          <% if (isOutOfStock) { %>
+                            <button class="rec-action-btn rec-add-btn" disabled style="opacity: 0.5; cursor: not-allowed; background: #999; border-color: #999;" title="Out of Stock"><i class="fas fa-times"></i></button>
+                          <% } else if(p.has_variants) { %>
+                            <a href="/details/<%= p.id %>/" class="rec-action-btn rec-add-btn" title="Select Options"><i class="fas fa-cog"></i></a>
+                          <% } else { %>
+                            <button class="rec-action-btn rec-add-btn" onclick="addToCart('<%= p.id %>','1', false)" title="Add to Cart"><i class="fas fa-plus"></i></button>
                           <% } %>
-                            <li class="list-inline-item mr-0"><a class="btn btn-sm btn-outline-dark py-1 px-2 view-btn"
-                                data-id="<%= p.id %>" data-img="<%= p.image %>" data-name="<%- p.name.replace(/"/g,'&quot;') %>"
-                                data-price="<%= p.price %>" data-link="/details/<%= p.id %>/"
-                                    data-short="<%- (p.short_description || '' ).replace(/"/g,'&quot;') %>"
-                                      data-has-variants="<%= p.has_variants ? 'true' : 'false' %>"><i
-                                          class="fas fa-expand"></i></a></li>
-                    </ul>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <% }) %>
@@ -498,7 +664,7 @@
 
           <script src="/js/font-loader.js"></script>
           <script src="/js/performance-boost.js" defer></script>
-          <script src="/js/image-fast-load.js" defer></script>
+          <script src="/js/image-fast-load.js?v=<%= Date.now() %>" defer></script>
           <script src="/js/ultra-fast-cart.js" defer></script>
           <script src="/js/page-transition.js" defer></script>
           <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -575,7 +741,7 @@
                   if (quickviewSelectedVariant) {
                     const finalPrice = quickviewVariants.basePrice + parseFloat(quickviewSelectedVariant.price_adjustment || 0);
                     $('#quickview-price').text('Rs. ' + finalPrice.toFixed(2));
-                    $('#quickview-add-to-cart').prop('disabled', quickviewSelectedVariant.stock === 0).text(quickviewSelectedVariant.stock === 0 ? 'Out of Stock' : 'Add to Cart');
+                    $('#quickview-add-to-cart').prop('disabled', quickviewSelectedVariant.stock <= 0).text(quickviewSelectedVariant.stock <= 0 ? 'Out of Stock' : 'Add to Cart');
                     if (quickviewSelectedVariant.image && quickviewSelectedVariant.image.trim()) {
                       $('#quickview-img').attr('src', quickviewSelectedVariant.image);
                       console.log('✅ Updated quickview image:', quickviewSelectedVariant.image);

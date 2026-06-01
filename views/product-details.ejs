@@ -11,7 +11,8 @@
   <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>">
   <link rel="stylesheet" href="/css/floating-button.css" />
   <link rel="stylesheet" href="/css/product-quickview.css?v=1" />
-  <link rel="stylesheet" href="/css/image-loading.css" />
+  <link rel="stylesheet" href="/css/image-loading.css?v=<%= Date.now() %>" />
+  <link rel="stylesheet" href="/css/recommendations.css?v=<%= Date.now() %>" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <style>
@@ -68,8 +69,7 @@
         </div>
       </form>
       <ul class="navbar-nav ml-auto phone-in-navbar" style="display: none;">
-        <li class="nav-item"><a class="nav-link" href="tel:9814789009"> <i class="fas fa-phone-alt"></i>
-          9814789009<sup><small> NP</small></sup></a></li>
+        <li class="nav-item"><a class="nav-link" href="tel:9811728715"> <i class="fas fa-phone-alt"></i> Need Help? 9811728715</a></li>
       </ul>
     </div>
   </nav>
@@ -92,8 +92,20 @@
               <i class="fas fa-caret-down caret" style="display:none;"></i>
             </div>
             <div class="col-sm-10 order-1 order-sm-2">
-              <div class="owl-carousel product-slider" data-slider-id="1">
-                <div class="item"><img class="img-fluid" src="<%= product.image %>" style="width: 100% !important;" loading="eager" fetchpriority="high" decoding="async"></div>
+              <div class="owl-carousel product-slider" data-slider-id="1" style="position: relative;">
+                <div class="item" style="position: relative;">
+                  <% 
+                    const isOutOfStock = product.has_variants 
+                      ? (product.variants && product.variants.reduce((sum, v) => sum + (v.stock || 0), 0) <= 0)
+                      : (product.stock <= 0);
+                  %>
+                  <img class="img-fluid" src="<%= product.image %>" style="width: 100% !important; <%= isOutOfStock ? 'filter: grayscale(80%) opacity(60%);' : '' %>" loading="eager" fetchpriority="high" decoding="async">
+                  <% if (isOutOfStock) { %>
+                    <div class="out-of-stock-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(220, 38, 38, 0.9); color: white; padding: 0.75rem 1.5rem; font-weight: 700; font-size: 16px; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); pointer-events: none; z-index: 10; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap;">
+                      Out of Stock
+                    </div>
+                  <% } %>
+                </div>
               </div>
             </div>
           </div>
@@ -150,7 +162,8 @@
 
           <div class="row align-items-stretch mb-4">
             <div class="col-sm-5 pr-sm-0">
-              <div class="border d-flex align-items-center justify-content-between py-1 px-3 bg-white border-white"><span class="small text-uppercase text-gray mr-4 no-select">Quantity</span>
+              <div class="border d-flex align-items-center justify-content-between py-1 px-3 bg-white border-white" style="<%= product.stock <= 0 && !product.has_variants ? 'opacity: 0.5; pointer-events: none;' : '' %>">
+                <span class="small text-uppercase text-gray mr-4 no-select">Quantity</span>
                 <div class="quantity">
                   <button class="dec-btn p-0"><i class="fas fa-caret-left"></i></button>
                   <input class="form-control border-0 shadow-0 p-0" type="text" id="product_qty" value="1">
@@ -158,7 +171,14 @@
                 </div>
               </div>
             </div>
-            <div class="col-sm-3 pl-sm-0"><button class="btn btn-dark btn-sm btn-block h-100 d-flex align-items-center justify-content-center px-0" id="product-add-to-cart" value="<%= product.id %>" <%= product.has_variants ? 'disabled' : '' %>><%= product.has_variants ? 'Select options' : 'Add to cart' %></button></div>
+            <div class="col-sm-3 pl-sm-0">
+              <button class="btn btn-dark btn-sm btn-block h-100 d-flex align-items-center justify-content-center px-0" 
+                      id="product-add-to-cart" 
+                      value="<%= product.id %>" 
+                      <%= product.has_variants ? 'disabled' : (product.stock <= 0 ? 'disabled' : '') %>>
+                <%= product.has_variants ? 'Select options' : (product.stock <= 0 ? 'Out of Stock' : 'Add to cart') %>
+              </button>
+            </div>
           </div>
 
           <ul style="list-style: none;" class="descripton-ul pl-0 text-uppercase">
@@ -194,40 +214,301 @@
           </div>
         </div>
       </div>
-      <!-- RELATED PRODUCTS-->
-      <% var __related = (typeof related !== 'undefined' && Array.isArray(related)) ? related : []; %>
-      <% if(__related.length){ %>
-      <div class="related-products-wrapper">
-        <h2 class="related-title text-uppercase">Related Products</h2>
-        <div class="row product-grid related-products-grid">
-          <% __related.forEach(function(r){ %>
-            <div class="col-xl-2 col-lg-4 col-md-4 col-6 px-1 py-1">
-              <div class="product text-center pt-2 bg-light" style="border:1px solid #f8f8f8; height:100%!important;">
-                <div class="position-relative mb-1">
-                  <div class="<%= r.id %>-added-message show-added-message show-added-message-details" style="z-index:2;"></div>
-                  <a class="d-block" href="/details/<%= r.id %>/">
-                    <div class="product-img-container">
-                      <img src="<%= r.image %>" alt="<%- r.name.replace(/\"/g,'&quot;') %>" loading="lazy" decoding="async">
-                      <div class="skeleton-loader"></div>
-                    </div>
-                  </a>
+      <!-- Frequently Bought Together Interactive Bundle Builder -->
+      <% if(typeof fbtProduct !== 'undefined' && fbtProduct) { %>
+        <div class="fbt-wrapper mt-5">
+          <div class="rec-section-header">
+            <span class="rec-subtitle">Frequently Bought Together</span>
+            <h3 class="rec-title">Perfect Combo</h3>
+          </div>
+          <div class="fbt-grid">
+            <div class="fbt-items-container">
+              <!-- Current Product -->
+              <div class="fbt-item-card disabled">
+                <div class="fbt-checkbox-container">
+                  <input type="checkbox" checked disabled class="fbt-custom-checkbox">
                 </div>
-                <ul class="mb-2 mt-0 list-inline">
-                  <% if(r.has_variants) { %>
-                    <li class="list-inline-item m-0 p-0"><a href="/details/<%= r.id %>/" class="btn btn-sm btn-dark py-1 px-2" style="min-width:90px;">Select Options</a></li>
-                  <% } else { %>
-                    <li class="list-inline-item m-0 p-0"><button class="btn btn-sm btn-dark py-1 px-2" style="min-width:90px;" onclick="addToCart('<%= r.id %>','1', false)">Add to Cart</button></li>
-                  <% } %>
-                  <li class="list-inline-item mr-0"><a class="btn btn-sm btn-outline-dark py-1 px-2 quick-view-btn" data-id="<%= r.id %>" data-image="<%= r.image %>" data-name="<%- r.name %>" data-price="<%= r.price %>" data-short-description="<%- r.short_description || '' %>" data-link="/details/<%= r.id %>/" data-has-variants="<%= r.has_variants ? 'true' : 'false' %>"><i class="fas fa-expand"></i></a></li>
-                </ul>
-                <h5 class="mb-0 text-sm"><a class="reset-anchor" href="/details/<%= r.id %>/"><%= r.name %></a></h5>
-                <p class="small text-muted mb-2">Rs. <%= r.price %></p>
+                <img src="<%= product.image %>" alt="<%= product.name %>" class="fbt-item-img">
+                <div class="fbt-item-title"><%= product.name %></div>
+                <div class="fbt-item-price">Rs. <%= product.price %></div>
+              </div>
+
+              <div class="fbt-connector">+</div>
+
+              <!-- Recommended Product -->
+              <div class="fbt-item-card" id="fbt-rec-card">
+                <div class="fbt-checkbox-container">
+                  <input type="checkbox" id="fbt-toggle-checkbox" checked class="fbt-custom-checkbox">
+                </div>
+                <img src="<%= fbtProduct.image %>" alt="<%= fbtProduct.name %>" class="fbt-item-img">
+                <div class="fbt-item-title"><a href="/details/<%= fbtProduct.id %>/"><%= fbtProduct.name %></a></div>
+                <div class="fbt-item-price">Rs. <%= fbtProduct.price %></div>
               </div>
             </div>
-          <% }); %>
+
+            <div class="fbt-connector">=</div>
+
+            <!-- FBT Action Summary -->
+            <div class="fbt-action-panel">
+              <div class="fbt-total-label">Total Price</div>
+              <div class="fbt-total-price">Rs. <span id="fbt-bundle-total-price"><%= parseFloat(product.price) + parseFloat(fbtProduct.price) %></span></div>
+              <button class="btn btn-bundle-buy" id="fbt-add-bundle-btn">
+                <i class="fas fa-shopping-basket"></i> Add Bundle to Cart
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+
+        <script>
+          $(document).ready(function() {
+            const basePrice = parseFloat("<%= product.price %>");
+            const recPrice = parseFloat("<%= fbtProduct.price %>");
+            
+            $('#fbt-toggle-checkbox').change(function() {
+              const card = $('#fbt-rec-card');
+              if (this.checked) {
+                card.removeClass('disabled');
+                $('#fbt-bundle-total-price').text((basePrice + recPrice).toFixed(2));
+              } else {
+                card.addClass('disabled');
+                $('#fbt-bundle-total-price').text(basePrice.toFixed(2));
+              }
+            });
+
+            $('#fbt-add-bundle-btn').click(async function() {
+              const btn = $(this);
+              btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Adding...');
+              
+              try {
+                // Add current product
+                const qty = parseInt($('#product_qty').val()) || 1;
+                // Check if variants are defined for current product
+                if (productData.has_variants && !selectedVariant) {
+                  alert('Please select current product variants first!');
+                  btn.prop('disabled', false).html('<i class="fas fa-shopping-basket"></i> Add Bundle to Cart');
+                  return;
+                }
+                const currentVariantId = (typeof selectedVariant !== 'undefined' && selectedVariant) ? selectedVariant.id : null;
+                
+                await $.get('/add_to_cart/?productid=' + "<%= product.id %>" + '&qty=' + qty + (currentVariantId ? '&variantid=' + currentVariantId : ''));
+                
+                // Add recommended product if checked
+                const includeRec = $('#fbt-toggle-checkbox').is(':checked');
+                if (includeRec) {
+                  await $.get('/add_to_cart/?productid=' + "<%= fbtProduct.id %>" + '&qty=1');
+                }
+                
+                // Animation & success alert
+                btn.removeClass('btn-bundle-buy').addClass('btn-success').html('<i class="fas fa-check"></i> Added Bundle!');
+                if (typeof updateCartCount === 'function') {
+                  updateCartCount();
+                } else if (typeof updateCartFloatingIcon === 'function') {
+                  updateCartFloatingIcon();
+                } else {
+                  // Fallback refresh or cookie reading
+                  window.location.reload();
+                }
+                
+                setTimeout(() => {
+                  btn.removeClass('btn-success').addClass('btn-bundle-buy').prop('disabled', false).html('<i class="fas fa-shopping-basket"></i> Add Bundle to Cart');
+                }, 2500);
+
+              } catch(e) {
+                console.error(e);
+                alert('Failed to add bundle to cart.');
+                btn.prop('disabled', false).html('<i class="fas fa-shopping-basket"></i> Add Bundle to Cart');
+              }
+            });
+          });
+        </script>
       <% } %>
+
+      <!-- TABS FOR HYBRID RECOMMENDATIONS -->
+      <div class="mt-5">
+        <div class="rec-tabs-nav">
+          <button class="rec-tab-trigger active" data-target="#tab-similar">Similar Products</button>
+          <% if(typeof sellerProducts !== 'undefined' && sellerProducts.length > 0) { %>
+            <button class="rec-tab-trigger" data-target="#tab-seller">More from this Seller</button>
+          <% } %>
+        </div>
+
+        <!-- Tab 1: Similar Products -->
+        <div class="rec-tab-content active" id="tab-similar">
+          <% var __related = (typeof related !== 'undefined' && Array.isArray(related)) ? related : []; %>
+          <% if(__related.length){ %>
+            <div class="row product-grid related-products-grid">
+              <% __related.forEach(function(r){ %>
+                <div class="col-xl-2 col-lg-4 col-md-4 col-6 px-1 py-1">
+                  <div class="rec-product-card pt-2">
+                    <div class="position-relative mb-1">
+                      <div class="<%= r.id %>-added-message show-added-message show-added-message-details" style="display:none; position:absolute; left:4px; top:4px; background:#000; color:#fff; font-size:11px; padding:2px 5px; border-radius:3px; z-index:2;"></div>
+                      <a class="d-block" href="/details/<%= r.id %>/">
+                        <% 
+                          const isRelatedOutOfStock = r.has_variants 
+                            ? (r.variants ? r.variants.reduce((sum, v) => sum + (v.stock || 0), 0) <= 0 : false)
+                            : (r.stock <= 0);
+                        %>
+                        <div class="rec-img-container" style="position: relative;">
+                          <img src="<%= r.image %>" alt="<%- r.name.replace(/\"/g,'&quot;') %>" loading="lazy" decoding="async" style="<%= isRelatedOutOfStock ? 'filter: grayscale(80%) opacity(60%);' : '' %>">
+                          <div class="skeleton-loader"></div>
+                          <% if (isRelatedOutOfStock) { %>
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(220, 38, 38, 0.9); color: #fff; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.5px; z-index: 3; pointer-events: none; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">Out of Stock</div>
+                          <% } %>
+                        </div>
+                      </a>
+                    </div>
+                    <div class="rec-card-body">
+                      <div class="rec-category-tag"><%= r.category || 'Similar' %></div>
+                      <h5 class="rec-product-title">
+                        <a href="/details/<%= r.id %>/"><%= r.name %></a>
+                      </h5>
+                      <div class="rec-price-row">
+                        <span class="rec-price">Rs. <%= r.price %></span>
+                        <div class="rec-actions">
+                          <button class="rec-action-btn rec-view-btn quick-view-btn" 
+                                  data-id="<%= r.id %>" 
+                                  data-image="<%= r.image %>" 
+                                  data-name="<%- r.name %>" 
+                                  data-price="<%= r.price %>" 
+                                  data-short-description="<%- r.short_description || '' %>" 
+                                  data-link="/details/<%= r.id %>/" 
+                                  data-has-variants="<%= r.has_variants ? 'true' : 'false' %>"
+                                  title="Quick View">
+                            <i class="fas fa-expand"></i>
+                          </button>
+                          <% if (isRelatedOutOfStock) { %>
+                            <button class="rec-action-btn rec-add-btn" disabled style="opacity: 0.5; cursor: not-allowed; background: #999; border-color: #999;" title="Out of Stock"><i class="fas fa-times"></i></button>
+                          <% } else if(r.has_variants) { %>
+                            <a href="/details/<%= r.id %>/" class="rec-action-btn rec-add-btn" title="Select options"><i class="fas fa-cog"></i></a>
+                          <% } else { %>
+                            <button class="rec-action-btn rec-add-btn" onclick="addToCart('<%= r.id %>','1', false)" title="Add to Cart"><i class="fas fa-plus"></i></button>
+                          <% } %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          <% } else { %>
+            <p class="text-muted">No similar products found.</p>
+          <% } %>
+        </div>
+
+        <!-- Tab 2: Seller Products -->
+        <% if(typeof sellerProducts !== 'undefined' && sellerProducts.length > 0) { %>
+          <div class="rec-tab-content" id="tab-seller">
+            <div class="row product-grid related-products-grid">
+              <% sellerProducts.forEach(function(r){ %>
+                <div class="col-xl-2 col-lg-4 col-md-4 col-6 px-1 py-1">
+                  <div class="rec-product-card pt-2">
+                    <div class="position-relative mb-1">
+                      <div class="<%= r.id %>-added-message show-added-message show-added-message-details" style="display:none; position:absolute; left:4px; top:4px; background:#000; color:#fff; font-size:11px; padding:2px 5px; border-radius:3px; z-index:2;"></div>
+                      <a class="d-block" href="/details/<%= r.id %>/">
+                        <% 
+                          const isSellerOutOfStock = r.has_variants 
+                            ? (r.variants ? r.variants.reduce((sum, v) => sum + (v.stock || 0), 0) <= 0 : false)
+                            : (r.stock <= 0);
+                        %>
+                        <div class="rec-img-container" style="position: relative;">
+                          <img src="<%= r.image %>" alt="<%- r.name.replace(/\"/g,'&quot;') %>" loading="lazy" decoding="async" style="<%= isSellerOutOfStock ? 'filter: grayscale(80%) opacity(60%);' : '' %>">
+                          <div class="skeleton-loader"></div>
+                          <% if (isSellerOutOfStock) { %>
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(220, 38, 38, 0.9); color: #fff; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.5px; z-index: 3; pointer-events: none; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">Out of Stock</div>
+                          <% } %>
+                        </div>
+                      </a>
+                    </div>
+                    <div class="rec-card-body">
+                      <div class="rec-category-tag"><%= r.category || 'Seller' %></div>
+                      <h5 class="rec-product-title">
+                        <a href="/details/<%= r.id %>/"><%= r.name %></a>
+                      </h5>
+                      <div class="rec-price-row">
+                        <span class="rec-price">Rs. <%= r.price %></span>
+                        <div class="rec-actions">
+                          <button class="rec-action-btn rec-view-btn quick-view-btn" 
+                                  data-id="<%= r.id %>" 
+                                  data-image="<%= r.image %>" 
+                                  data-name="<%- r.name %>" 
+                                  data-price="<%= r.price %>" 
+                                  data-short-description="<%- r.short_description || '' %>" 
+                                  data-link="/details/<%= r.id %>/" 
+                                  data-has-variants="<%= r.has_variants ? 'true' : 'false' %>"
+                                  title="Quick View">
+                            <i class="fas fa-expand"></i>
+                          </button>
+                          <% if (isSellerOutOfStock) { %>
+                            <button class="rec-action-btn rec-add-btn" disabled style="opacity: 0.5; cursor: not-allowed; background: #999; border-color: #999;" title="Out of Stock"><i class="fas fa-times"></i></button>
+                          <% } else if(r.has_variants) { %>
+                            <a href="/details/<%= r.id %>/" class="rec-action-btn rec-add-btn" title="Select options"><i class="fas fa-cog"></i></a>
+                          <% } else { %>
+                            <button class="rec-action-btn rec-add-btn" onclick="addToCart('<%= r.id %>','1', false)" title="Add to Cart"><i class="fas fa-plus"></i></button>
+                          <% } %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Script for tab toggling -->
+      <script>
+        $(document).ready(function() {
+          $('.rec-tab-trigger').click(function() {
+            $('.rec-tab-trigger').removeClass('active');
+            $('.rec-tab-content').removeClass('active');
+            
+            $(this).addClass('active');
+            $($(this).data('target')).addClass('active');
+          });
+        });
+      </script>
+
+      <!-- Client-side Cookie Tracking for Recently Viewed Items (Handles Cache Hits) -->
+      <script>
+        $(document).ready(function() {
+          try {
+            const currentProductId = "<%= product.id %>";
+            
+            // Read viewed cookie
+            function getCookie(name) {
+              const value = `; ${document.cookie}`;
+              const parts = value.split(`; ${name}=`);
+              if (parts.length === 2) return parts.pop().split(';').shift();
+              return null;
+            }
+            
+            let viewed = [];
+            const cookieVal = getCookie('recently_viewed');
+            if (cookieVal) {
+              try {
+                viewed = JSON.parse(decodeURIComponent(cookieVal));
+                if (!Array.isArray(viewed)) viewed = [];
+              } catch (e) {
+                viewed = [];
+              }
+            }
+            
+            // Update viewed array
+            viewed = viewed.filter(id => id !== currentProductId);
+            viewed.unshift(currentProductId);
+            viewed = viewed.slice(0, 10);
+            
+            // Set cookie
+            const date = new Date();
+            date.setTime(date.getTime() + (30 * 24 * 60 * 60 * 1000));
+            document.cookie = `recently_viewed=${encodeURIComponent(JSON.stringify(viewed))}; expires=${date.toUTCString()}; path=/; SameSite=Lax`;
+            console.log('✅ Tracked product view client-side:', currentProductId);
+          } catch(e) {
+            console.warn('Failed tracking product client-side:', e);
+          }
+        });
+      </script>
     </div>
   </section>
   </div>
@@ -293,7 +574,7 @@
   <!-- Floating cart provided by partial earlier -->
 
   <!-- Image loading -->
-  <script src="/js/image-loading.js"></script>
+  <script src="/js/image-loading.js?v=<%= Date.now() %>"></script>
   
   <!-- Core libraries -->
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
@@ -363,7 +644,7 @@
         if(quickviewSelectedVariant){
           const finalPrice = quickviewVariants.basePrice + parseFloat(quickviewSelectedVariant.price_adjustment || 0);
           $('#quickview-price').text('Rs. ' + finalPrice.toFixed(2));
-          $('#quickview-add-to-cart').prop('disabled', quickviewSelectedVariant.stock === 0).text(quickviewSelectedVariant.stock === 0 ? 'Out of Stock' : 'Add to Cart');
+          $('#quickview-add-to-cart').prop('disabled', quickviewSelectedVariant.stock <= 0).text(quickviewSelectedVariant.stock <= 0 ? 'Out of Stock' : 'Add to Cart');
           if(quickviewSelectedVariant.image && quickviewSelectedVariant.image.trim()) {
             $('#quickview-img').attr('src', quickviewSelectedVariant.image);
             console.log('✅ Updated quickview image:', quickviewSelectedVariant.image);
@@ -458,15 +739,41 @@
           $('#variantStock').text(selectedVariant.stock);
           $('#variantSku').text(selectedVariant.sku);
           $('#variantInfo').show();
-          $('#product-add-to-cart').prop('disabled', selectedVariant.stock === 0).text(selectedVariant.stock === 0 ? 'Out of Stock' : 'Add to cart');
+          $('#product-add-to-cart').prop('disabled', selectedVariant.stock <= 0).text(selectedVariant.stock <= 0 ? 'Out of Stock' : 'Add to cart');
           
           if (selectedVariant.image) {
             $('.product-slider img').attr('src', selectedVariant.image);
+          }
+
+          // Dynamic Out of Stock Image Overlay for selected Variant
+          if (selectedVariant.stock <= 0) {
+            if ($('.out-of-stock-overlay').length === 0) {
+              $('.product-slider .item').append('<div class="out-of-stock-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(220, 38, 38, 0.9); color: white; padding: 0.75rem 1.5rem; font-weight: 700; font-size: 16px; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); pointer-events: none; z-index: 10; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap;">Out of Stock</div>');
+            }
+            $('.product-slider img').css('filter', 'grayscale(80%) opacity(60%)');
+          } else {
+            $('.out-of-stock-overlay').remove();
+            $('.product-slider img').css('filter', '');
           }
         }
       } else {
         $('#variantInfo').hide();
         $('#product-add-to-cart').prop('disabled', true).text('Select options');
+        
+        // Restore overall stock status on reset
+        const isOverallOut = productData.has_variants 
+          ? (productData.variants && productData.variants.reduce((sum, v) => sum + (v.stock || 0), 0) <= 0)
+          : (productData.stock <= 0);
+
+        if (isOverallOut) {
+          if ($('.out-of-stock-overlay').length === 0) {
+            $('.product-slider .item').append('<div class="out-of-stock-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(220, 38, 38, 0.9); color: white; padding: 0.75rem 1.5rem; font-weight: 700; font-size: 16px; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); pointer-events: none; z-index: 10; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap;">Out of Stock</div>');
+          }
+          $('.product-slider img').css('filter', 'grayscale(80%) opacity(60%)');
+        } else {
+          $('.out-of-stock-overlay').remove();
+          $('.product-slider img').css('filter', '');
+        }
       }
     });
 

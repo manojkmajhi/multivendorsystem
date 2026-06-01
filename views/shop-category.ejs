@@ -13,7 +13,8 @@
   <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>" />
   <link rel="stylesheet" href="/css/floating-button.css" />
   <link rel="stylesheet" href="/css/product-quickview.css?v=1" />
-  <link rel="stylesheet" href="/css/image-loading.css" />
+  <link rel="stylesheet" href="/css/image-loading.css?v=<%= Date.now() %>" />
+  <link rel="stylesheet" href="/css/recommendations.css?v=<%= Date.now() %>" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@300;400;700&display=swap" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Martel+Sans:wght@300;400;800&display=swap" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -113,7 +114,7 @@
         </div>
       </form>
       <ul class="navbar-nav ml-auto phone-in-navbar" style="display: none;">
-        <li class="nav-item"><a class="nav-link" href="tel:9814789009"> <i class="fas fa-phone-alt"></i> 9814789009<sup><small> NP</small></sup></a></li>
+        <li class="nav-item"><a class="nav-link" href="tel:9811728715"> <i class="fas fa-phone-alt"></i> Need Help? 9811728715</a></li>
       </ul>
     </div>
   </nav>
@@ -190,26 +191,53 @@
           <% } %>
           <% products.forEach(p=>{ %>
             <div class="col-xl-3 col-lg-4 col-6 px-1 py-1">
-              <div class="product text-center pt-2 bg-light" style="border:1px solid #f8f8f8; height:100%!important;">
+              <div class="rec-product-card pt-2">
                 <div class="position-relative mb-1">
-                  <div class="<%= p.id %>-added-message show-added-message" style="z-index:2;"></div>
+                  <div class="<%= p.id %>-added-message show-added-message" style="display:none; position:absolute; left:4px; top:4px; background:#000; color:#fff; font-size:11px; padding:2px 5px; border-radius:3px; z-index:2;">Added</div>
                   <a class="d-block" href="/details/<%= p.id %>/">
-                    <div class="product-img-container">
-                      <img src="<%= p.image %>" alt="<%- p.name.replace(/"/g,'&quot;') %>" loading="lazy" decoding="async">
+                    <% 
+                      const isOutOfStock = p.has_variants 
+                        ? (p.variants ? p.variants.reduce((sum, v) => sum + (v.stock || 0), 0) <= 0 : false)
+                        : (p.stock <= 0);
+                    %>
+                    <div class="rec-img-container" style="position: relative;">
+                      <img src="<%= p.image %>" alt="<%- p.name.replace(/"/g,'&quot;') %>" loading="lazy" decoding="async" style="<%= isOutOfStock ? 'filter: grayscale(80%) opacity(60%);' : '' %>">
                       <div class="skeleton-loader"></div>
+                      <% if (isOutOfStock) { %>
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(220, 38, 38, 0.9); color: #fff; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.5px; z-index: 3; pointer-events: none; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">Out of Stock</div>
+                      <% } %>
                     </div>
                   </a>
                 </div>
-                <ul class="mb-2 mt-0 list-inline">
-                  <% if(p.has_variants) { %>
-                    <li class="list-inline-item m-0 p-0"><a href="/details/<%= p.id %>/" class="btn btn-sm btn-dark py-1 px-2" style="min-width:90px;">Select Options</a></li>
-                  <% } else { %>
-                    <li class="list-inline-item m-0 p-0"><button class="btn btn-sm btn-dark py-1 px-2" style="min-width:90px;" onclick="addToCart('<%= p.id %>', '1', false)">Add to Cart</button></li>
-                  <% } %>
-                  <li class="list-inline-item mr-0"><a class="btn btn-sm btn-outline-dark py-1 px-2 view-btn" data-id="<%= p.id %>" data-img="<%= p.image %>" data-name="<%- p.name.replace(/"/g,'&quot;') %>" data-price="<%= p.price %>" data-link="/details/<%= p.id %>/" data-short="<%- (p.short_description || '').replace(/"/g,'&quot;') %>" data-has-variants="<%= p.has_variants ? 'true' : 'false' %>"><i class="fas fa-expand"></i></a></li>
-                </ul>
-                <h5 class="mb-0 text-sm"><a class="reset-anchor" href="/details/<%= p.id %>/"><%= p.name %></a></h5>
-                <p class="small text-muted mb-2">Rs. <%= p.price %></p>
+                <div class="rec-card-body">
+                  <div class="rec-category-tag"><%= p.category || activeCategory || 'Shop' %></div>
+                  <h5 class="rec-product-title">
+                    <a href="/details/<%= p.id %>/"><%= p.name %></a>
+                  </h5>
+                  <div class="rec-price-row">
+                    <span class="rec-price">Rs. <%= p.price %></span>
+                    <div class="rec-actions">
+                      <button class="rec-action-btn rec-view-btn view-btn" 
+                              data-id="<%= p.id %>" 
+                              data-img="<%= p.image %>" 
+                              data-name="<%- p.name.replace(/"/g,'&quot;') %>" 
+                              data-price="<%= p.price %>" 
+                              data-link="/details/<%= p.id %>/" 
+                              data-short="<%- (p.short_description || '').replace(/"/g,'&quot;') %>" 
+                              data-has-variants="<%= p.has_variants ? 'true' : 'false' %>"
+                              title="Quick View">
+                        <i class="fas fa-expand"></i>
+                      </button>
+                      <% if (isOutOfStock) { %>
+                        <button class="rec-action-btn rec-add-btn" disabled style="opacity: 0.5; cursor: not-allowed; background: #999; border-color: #999;" title="Out of Stock"><i class="fas fa-times"></i></button>
+                      <% } else if(p.has_variants) { %>
+                        <a href="/details/<%= p.id %>/" class="rec-action-btn rec-add-btn" title="Select options"><i class="fas fa-cog"></i></a>
+                      <% } else { %>
+                        <button class="rec-action-btn rec-add-btn" onclick="addToCart('<%= p.id %>', '1', false)" title="Add to Cart"><i class="fas fa-plus"></i></button>
+                      <% } %>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           <% }) %>
@@ -335,7 +363,7 @@
       if(quickviewSelectedVariant){
         const finalPrice = quickviewVariants.basePrice + parseFloat(quickviewSelectedVariant.price_adjustment || 0);
         $('#quickview-price').text('Rs. ' + finalPrice.toFixed(2));
-        $('#quickview-add-to-cart').prop('disabled', quickviewSelectedVariant.stock === 0).text(quickviewSelectedVariant.stock === 0 ? 'Out of Stock' : 'Add to Cart');
+        $('#quickview-add-to-cart').prop('disabled', quickviewSelectedVariant.stock <= 0).text(quickviewSelectedVariant.stock <= 0 ? 'Out of Stock' : 'Add to Cart');
         if(quickviewSelectedVariant.image && quickviewSelectedVariant.image.trim()) {
           $('#quickview-img').attr('src', quickviewSelectedVariant.image);
           console.log('✅ Updated quickview image:', quickviewSelectedVariant.image);
@@ -412,7 +440,7 @@
     </div>
   </footer>
 
-  <script src="/js/image-loading.js"></script>
+  <script src="/js/image-loading.js?v=<%= Date.now() %>"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>

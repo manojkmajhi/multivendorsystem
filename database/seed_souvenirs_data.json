@@ -1,0 +1,408 @@
+{
+  "seller": {
+    "id": "d87e07a3-e4c1-4b1f-bc87-9bb3a67d0251",
+    "email": "artisans@multivendor.com",
+    "full_name": "Himalayan Artisans Guild",
+    "phone": "+977-9841223344",
+    "business_name": "Himalayan Artisans Guild",
+    "location": "Lalitpur (Patan), Nepal",
+    "bio": "A cooperative of traditional woodcarvers, metal artisans, and weavers dedicated to preserving the fine arts of the Kathmandu Valley.",
+    "profile_image": "https://images.unsplash.com/photo-1544816155-12df9643f363?w=500&auto=format&fit=crop&q=60",
+    "status": "approved"
+  },
+  "categories": [
+    {
+      "id": "c16828df-2e21-482a-bc91-385d8be9201a",
+      "name": "Singing Bowls",
+      "image_url": "https://images.unsplash.com/photo-1599458252573-56ae36120de1?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+      "id": "c29759d3-5b8d-4f10-bf9e-1bb354c03de9",
+      "name": "Pashmina & Woolens",
+      "image_url": "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+      "id": "c3cf1d08-d218-4e89-8d19-450f39384993",
+      "name": "Teas & Spices",
+      "image_url": "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+      "id": "c41f71a0-b530-4e58-9be2-72bf62cf5ef9",
+      "name": "Thangka & Paper Crafts",
+      "image_url": "https://images.unsplash.com/photo-1606744824163-985d376605aa?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+      "id": "c5df1d74-c5b8-4c12-8e10-3847eb02e9cf",
+      "name": "Jewelry & Hemp Bags",
+      "image_url": "https://images.unsplash.com/photo-1524498250077-390f9e378fc0?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+      "id": "c6df1d74-c5b8-4c12-8e10-3847eb02e9d0",
+      "name": "Home Decor",
+      "image_url": "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+      "id": "c7df1d74-c5b8-4c12-8e10-3847eb02e9d1",
+      "name": "Handcrafted",
+      "image_url": "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+      "id": "c8df1d74-c5b8-4c12-8e10-3847eb02e9d2",
+      "name": "Art & Collectibles",
+      "image_url": "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+      "id": "c9df1d74-c5b8-4c12-8e10-3847eb02e9d3",
+      "name": "Spiritual",
+      "image_url": "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+      "id": "cadf1d74-c5b8-4c12-8e10-3847eb02e9d4",
+      "name": "Wearables & Accessories",
+      "image_url": "https://images.unsplash.com/photo-1544816155-12df9643f363?w=500&auto=format&fit=crop&q=60"
+    }
+  ],
+  "products": [
+    {
+      "id": "9705f4ea-fdbb-43d9-a764-75464adcb8fa",
+      "name": "Hand-Beaten Seven-Metal Tibetan Singing Bowl",
+      "price": 120.00,
+      "image": "https://images.unsplash.com/photo-1599458252573-56ae36120de1?w=800&auto=format&fit=crop&q=80",
+      "type": "Product",
+      "category": "Singing Bowls",
+      "short_description": "A premium 6-inch Tibetan singing bowl, hand-beaten from seven sacred metals. Produces resonant, deep-vibrating tones perfect for meditation and sound healing.",
+      "long_description": "Immerse yourself in mindfulness with our authentic hand-beaten singing bowl, crafted by multi-generational artisans in Lalitpur, Nepal. Made from a traditional alloy of seven metals (representing the Sun, Moon, and five celestial bodies), each bowl has a completely unique frequency and harmonic overtones. Comes as a complete set including a leather-wrapped wooden mallet and a hand-sewn silk cushion. Ideal for yoga, mindfulness practice, sound therapy, and home décor.",
+      "tags": ["handicraft", "singing bowl", "meditation", "lalitpur", "handmade", "nepal"],
+      "active": true,
+      "seller_id": "d87e07a3-e4c1-4b1f-bc87-9bb3a67d0251",
+      "has_variants": false,
+      "base_sku": "SB-HB-01",
+      "stock": 25,
+      "is_popular": true
+    },
+    {
+      "id": "aa264a2f-1249-43c2-bf7f-1d8f51a44e54",
+      "name": "Engraved Om Mani Padme Hum Singing Bowl",
+      "price": 65.00,
+      "image": "https://images.unsplash.com/photo-1512438248247-f0f2a5a8b7f0?w=800&auto=format&fit=crop&q=80",
+      "type": "Product",
+      "category": "Singing Bowls",
+      "short_description": "Elegant brass-finished singing bowl etched with the sacred Sanskrit compassion mantra and Tibetan auspicious symbols.",
+      "long_description": "This beautifully cast brass singing bowl is precision-machined and then hand-etched by skilled artists with the sacred Tibetan mantra 'Om Mani Padme Hum'. Inside the bowl features the Buddha's eyes or the double Dorje symbol, representing spiritual stability and wisdom. It creates clear, high-resonance sounds that clear negative energies. The package includes a solid wood striker and a gorgeous decorative ring cushion.",
+      "tags": ["singing bowl", "mantra", "brass", "kathmandu", "spirituality"],
+      "active": true,
+      "seller_id": "d87e07a3-e4c1-4b1f-bc87-9bb3a67d0251",
+      "has_variants": false,
+      "base_sku": "SB-EG-02",
+      "stock": 40,
+      "is_popular": false
+    },
+    {
+      "id": "c8430ea6-8b77-47b8-bde7-8e6c40a5a22d",
+      "name": "Handwoven Pure Pashmina Cashmere Shawl",
+      "price": 185.00,
+      "image": "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=800&auto=format&fit=crop&q=80",
+      "type": "Product",
+      "category": "Pashmina & Woolens",
+      "short_description": "Exquisite 100% pure Himalayan Chyangra Pashmina shawl, handwoven on traditional wooden looms in Kathmandu. Incredibly soft, warm, and lightweight.",
+      "long_description": "Wrap yourself in absolute luxury. This authentic Pashmina shawl is crafted from the finest undercoat fibers of the Chyangra mountain goats, grazing in the high-altitude trans-Himalayan region of Nepal. Each piece is hand-spun and handwoven by veteran weavers, using traditional techniques passed down for centuries. The signature soft fringe and delicate weave make it an elegant accessory for any season.",
+      "tags": ["pashmina", "cashmere", "shawl", "wool", "handwoven", "luxury"],
+      "active": true,
+      "seller_id": "d87e07a3-e4c1-4b1f-bc87-9bb3a67d0251",
+      "has_variants": true,
+      "base_sku": "PA-PS-01",
+      "stock": 60,
+      "is_popular": true,
+      "variants": [
+        {
+          "id": "011cf8d2-7fb2-4a11-b85b-cf42d72f10ee",
+          "sku": "PA-PS-01-BLUE",
+          "price_adjustment": 0.00,
+          "stock": 20,
+          "image": "https://images.unsplash.com/photo-1524498250077-390f9e378fc0?w=800&auto=format&fit=crop&q=80",
+          "attribute_combination": {
+            "color": "Royal Blue"
+          }
+        },
+        {
+          "id": "022cf8d2-7fb2-4a11-b85b-cf42d72f10ef",
+          "sku": "PA-PS-01-GREEN",
+          "price_adjustment": 0.00,
+          "stock": 25,
+          "image": "https://images.unsplash.com/photo-1574169208507-84376144848b?w=800&auto=format&fit=crop&q=80",
+          "attribute_combination": {
+            "color": "Emerald Green"
+          }
+        },
+        {
+          "id": "033cf8d2-7fb2-4a11-b85b-cf42d72f10f0",
+          "sku": "PA-PS-01-CHAR",
+          "price_adjustment": 10.00,
+          "stock": 15,
+          "image": "https://images.unsplash.com/photo-1516257984-b1b4d707412e?w=800&auto=format&fit=crop&q=80",
+          "attribute_combination": {
+            "color": "Classic Charcoal"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ddff1b23-2895-46f9-bb20-569d67964a30",
+      "name": "Handcrafted Himalayan Felt Ball Rug",
+      "price": 95.00,
+      "image": "https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=800&auto=format&fit=crop&q=80",
+      "type": "Product",
+      "category": "Pashmina & Woolens",
+      "short_description": "A colorful, eco-friendly 100cm round rug handmade from 100% pure New Zealand wool felt balls. Durable and cozy.",
+      "long_description": "Add warmth and joy to your living space with this vibrant felt ball rug. Ethically handmade by a women's cooperative in Kathmandu, this rug is comprised of thousands of individually hand-felted 2cm wool balls stitched together. Colored using non-toxic, eco-friendly dyes, it is naturally stain-resistant, flame-retardant, and extremely comfortable underfoot. Perfect for bedrooms, nursery, or living rooms.",
+      "tags": ["rug", "wool", "felt", "eco-friendly", "colorful", "women-coop"],
+      "active": true,
+      "seller_id": "d87e07a3-e4c1-4b1f-bc87-9bb3a67d0251",
+      "has_variants": false,
+      "base_sku": "WO-FR-02",
+      "stock": 8,
+      "is_popular": false
+    },
+    {
+      "id": "e20c6be1-b3b3-4691-888e-64d7e9742468",
+      "name": "Heritage Himalayan Orthodox Black Tea",
+      "price": 18.50,
+      "image": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=800&auto=format&fit=crop&q=80",
+      "type": "Product",
+      "category": "Teas & Spices",
+      "short_description": "Premium loose-leaf orthodox black tea, hand-harvested from high-altitude organic gardens in Ilam, Nepal. Floral notes with a sweet honey finish.",
+      "long_description": "Harvested at altitudes over 6,000 feet in the misty hills of Ilam, near the foothills of Mount Kanchanjunga, this orthodox black tea is characterized by delicate tips and rolled leaves. Slow grown in mineral-rich soil, it offers a complex flavor profile featuring light floral aromatics, a nutty undertone, and a naturally sweet honey-like finish. Rich in antioxidants and beautifully packaged in a handmade Lokta paper container, making it a wonderful gift.",
+      "tags": ["tea", "orthodox", "organic", "ilam", "beverage", "gift"],
+      "active": true,
+      "seller_id": "d87e07a3-e4c1-4b1f-bc87-9bb3a67d0251",
+      "has_variants": false,
+      "base_sku": "TS-BT-01",
+      "stock": 100,
+      "is_popular": true
+    },
+    {
+      "id": "e52e42ef-0ef7-4780-87a1-d703bc89f925",
+      "name": "Organic Wild Sichuan Pepper (Himalayan Timur)",
+      "price": 12.00,
+      "image": "https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=800&auto=format&fit=crop&q=80",
+      "type": "Product",
+      "category": "Teas & Spices",
+      "short_description": "Locally-sourced, handpicked wild Timur berries. Famous for its citrusy aroma and tongue-tingling numbing sensation.",
+      "long_description": "Timur (Zanthoxylum armatum) is a close relative of the Sichuan pepper, harvested wild in the remote mountain forests of Western Nepal. It features a unique, powerful grapefruit-citrus aroma followed by a delightful, tongue-tingling numbing effect. An essential spice in Nepalese cuisine, Timur is perfect for marinades, curries, dry rubs, and even craft cocktails or chocolates. Sourced directly from local farming communities to support sustainable forest harvesting.",
+      "tags": ["spice", "organic", "timur", "cooking", "wild-harvested", "gourmet"],
+      "active": true,
+      "seller_id": "d87e07a3-e4c1-4b1f-bc87-9bb3a67d0251",
+      "has_variants": false,
+      "base_sku": "TS-TP-02",
+      "stock": 150,
+      "is_popular": false
+    },
+    {
+      "id": "f3a61dfb-8d0c-4e80-8d2a-a9a3f2db7bb2",
+      "name": "Hand-Painted Wheel of Life Thangka",
+      "price": 250.00,
+      "image": "https://images.unsplash.com/photo-1580136579312-94651dfd596d?w=800&auto=format&fit=crop&q=80",
+      "type": "Product",
+      "category": "Thangka & Paper Crafts",
+      "short_description": "A stunning Tibetan Thangka painting of the Bhavachakra (Wheel of Life), meticulously hand-painted with natural mineral pigments and 24K gold accents.",
+      "long_description": "This sacred Buddhist Thangka is hand-painted on cotton canvas by master Thangka artists in the historic city of Bhaktapur, Nepal. Using ground mineral pigments (lapis lazuli, malachite, cinnabar) bound with organic hide glue, and highlights in genuine 24-karat gold leaf, this painting depicts the Bhavachakra, representing the cycle of existence (Samsara). The precision of the brushwork and the vibrant, everlasting colors make this not only a wonderful meditation aid but a spectacular masterpiece of sacred art.",
+      "tags": ["thangka", "art", "painting", "buddhism", "gold", "bhaktapur"],
+      "active": true,
+      "seller_id": "d87e07a3-e4c1-4b1f-bc87-9bb3a67d0251",
+      "has_variants": false,
+      "base_sku": "TC-TK-01",
+      "stock": 5,
+      "is_popular": true
+    },
+    {
+      "id": "b4c10702-53b4-4b5c-b17d-2b4756598c19",
+      "name": "Handmade Lokta Paper Journal & Ink Pen Set",
+      "price": 22.00,
+      "image": "https://images.unsplash.com/photo-1544816155-12df9643f363?w=800&auto=format&fit=crop&q=80",
+      "type": "Product",
+      "category": "Thangka & Paper Crafts",
+      "short_description": "Rustic, vintage journal hand-bound with acid-free Lokta paper made from native Himalayan Daphne bark. Includes a wooden dip pen.",
+      "long_description": "Experience the art of writing on timeless paper. Lokta paper is handmade in rural Nepal from the inner bark of the Daphne bush, which grows naturally above 6,000 feet. This bark regenerates fully in 5-7 years, making it incredibly eco-friendly. The paper is hand-harvested, boiled, beaten, and sun-dried on wooden frames. It is naturally resistant to tearing, moisture, and insects, ensuring your writing is preserved for centuries. Featuring a hand-pressed leaf cover and a leather strap closure.",
+      "tags": ["stationery", "journal", "notebook", "lokta", "eco-friendly", "handmade"],
+      "active": true,
+      "seller_id": "d87e07a3-e4c1-4b1f-bc87-9bb3a67d0251",
+      "has_variants": true,
+      "base_sku": "TC-LJ-02",
+      "stock": 80,
+      "is_popular": false,
+      "variants": [
+        {
+          "id": "044cf8d2-7fb2-4a11-b85b-cf42d72f10f1",
+          "sku": "TC-LJ-02-A5",
+          "price_adjustment": 0.00,
+          "stock": 50,
+          "image": "https://images.unsplash.com/photo-1544816155-12df9643f363?w=800&auto=format&fit=crop&q=80",
+          "attribute_combination": {
+            "size": "A5 (Classic)"
+          }
+        },
+        {
+          "id": "055cf8d2-7fb2-4a11-b85b-cf42d72f10f2",
+          "sku": "TC-LJ-02-A6",
+          "price_adjustment": -5.00,
+          "stock": 30,
+          "image": "https://images.unsplash.com/photo-1512438248247-f0f2a5a8b7f0?w=800&auto=format&fit=crop&q=80",
+          "attribute_combination": {
+            "size": "A6 (Pocket)"
+          }
+        }
+      ]
+    },
+    {
+      "id": "a5c0bda5-eebe-4d92-bf3d-24d14210cfef",
+      "name": "Handcrafted Sterling Silver Turquoise Mantra Ring",
+      "price": 48.00,
+      "image": "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80",
+      "type": "Product",
+      "category": "Jewelry & Hemp Bags",
+      "short_description": "Solid 925 sterling silver ring, hand-engraved with the 'Om' symbol and inlaid with high-quality Tibetan Turquoise and Coral.",
+      "long_description": "Handcrafted in the heart of Patan, the city of fine arts, this ring is fashioned from solid 925 sterling silver. It features an exquisite inlay of genuine Tibetan Turquoise and red Coral, framing a hand-carved Sanskrit 'Om' or 'Lotus' emblem. Known as a stone of protection and healing, turquoise has been worn by Himalayan people for generations. A timeless accessory of spiritual significance.",
+      "tags": ["ring", "jewelry", "silver", "turquoise", "spiritual", "patan"],
+      "active": true,
+      "seller_id": "d87e07a3-e4c1-4b1f-bc87-9bb3a67d0251",
+      "has_variants": true,
+      "base_sku": "JW-TR-01",
+      "stock": 30,
+      "is_popular": true,
+      "variants": [
+        {
+          "id": "066cf8d2-7fb2-4a11-b85b-cf42d72f10f3",
+          "sku": "JW-TR-01-SZ7",
+          "price_adjustment": 0.00,
+          "stock": 10,
+          "image": "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80",
+          "attribute_combination": {
+            "size": "Size 7"
+          }
+        },
+        {
+          "id": "077cf8d2-7fb2-4a11-b85b-cf42d72f10f4",
+          "sku": "JW-TR-01-SZ8",
+          "price_adjustment": 0.00,
+          "stock": 12,
+          "image": "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80",
+          "attribute_combination": {
+            "size": "Size 8"
+          }
+        },
+        {
+          "id": "088cf8d2-7fb2-4a11-b85b-cf42d72f10f5",
+          "sku": "JW-TR-01-SZ9",
+          "price_adjustment": 0.00,
+          "stock": 8,
+          "image": "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80",
+          "attribute_combination": {
+            "size": "Size 9"
+          }
+        }
+      ]
+    },
+    {
+      "id": "6f8d07eb-11cf-4d93-b6d8-4f2a1b92bf98",
+      "name": "Eco-Friendly Wild Himalayan Hemp Backpack",
+      "price": 39.90,
+      "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&auto=format&fit=crop&q=80",
+      "type": "Product",
+      "category": "Jewelry & Hemp Bags",
+      "short_description": "A rugged, stylish, and highly durable backpack handcrafted from 100% organic wild hemp and heavy-duty cotton.",
+      "long_description": "Our signature hemp backpack is ethically handmade in Pokhara, Nepal, from wild-growing Himalayan hemp. Known as one of the strongest natural fibers on Earth, hemp is highly resistant to wear, tear, and mildew, getting softer with every wash. It features a spacious main compartment, a padded 14-inch laptop sleeve, two side water bottle pockets, and a front zippered pocket. The earthy, multi-toned weave is naturally beautiful and aligns with sustainable, zero-waste living.",
+      "tags": ["backpack", "hemp", "bag", "eco-friendly", "sustainable", "pokhara"],
+      "active": true,
+      "seller_id": "d87e07a3-e4c1-4b1f-bc87-9bb3a67d0251",
+      "has_variants": false,
+      "base_sku": "JW-HB-02",
+      "stock": 50,
+      "is_popular": true
+    },
+    {
+      "id": "f4a61dfb-8d0c-4e80-8d2a-a9a3f2db7bb3",
+      "name": "Macrame Wall Decor",
+      "price": 500.00,
+      "image": "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?w=800&auto=format&fit=crop&q=80",
+      "type": "Product",
+      "category": "Home Decor",
+      "short_description": "Elegant handcrafted cotton macrame wall hanging, adding a warm bohemian accent to any room.",
+      "long_description": "Bring beauty and warmth to your home with this gorgeous Macrame Wall Decor. Hand-knotted using 100% natural, eco-friendly cotton cord on a sturdy wooden dowel, this piece features a vibrant rainbow pattern or classic cream designs. Crafted ethically by local weavers in Kathmandu, it adds a stunning bohemian texture and modern charm to your living room, bedroom, or entryway. Extremely lightweight and easy to hang.",
+      "tags": ["decor", "macrame", "handmade", "cotton", "bohemian", "home"],
+      "active": true,
+      "seller_id": "d87e07a3-e4c1-4b1f-bc87-9bb3a67d0251",
+      "has_variants": false,
+      "base_sku": "HD-MW-01",
+      "stock": 30,
+      "is_popular": true
+    },
+    {
+      "id": "152e42ef-0ef7-4780-87a1-d703bc89f926",
+      "name": "Hand-Carved Wooden Astamangala Plaque",
+      "price": 1500.00,
+      "image": "https://images.unsplash.com/photo-1606744824163-985d376605aa?w=800&auto=format&fit=crop&q=80",
+      "type": "Product",
+      "category": "Handcrafted",
+      "short_description": "Exquisite hand-carved wooden wall plaque depicting the eight auspicious symbols (Astamangala) of Himalayan Buddhism.",
+      "long_description": "This magnificent Astamangala plaque is entirely hand-carved from local wild walnut or rosewood by veteran master woodcarvers in Patan. It depicts the eight auspicious symbols of Tibetan Buddhism, representing good fortune, spiritual protection, and wisdom. Each symbol is carved with extreme detail, showcasing centuries-old Newari woodcarving techniques. Stained with organic lacquer to highlight the beautiful grain of the natural wood. Ready to mount on your wall as a protective heirloom.",
+      "tags": ["woodcarving", "handcrafted", "astamangala", "patan", "handmade", "heirloom"],
+      "active": true,
+      "seller_id": "d87e07a3-e4c1-4b1f-bc87-9bb3a67d0251",
+      "has_variants": false,
+      "base_sku": "HC-AP-02",
+      "stock": 10,
+      "is_popular": false
+    },
+    {
+      "id": "23a61dfb-8d0c-4e80-8d2a-a9a3f2db7bb4",
+      "name": "Vintage Nepalese Brass Butter Lamp",
+      "price": 850.00,
+      "image": "https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=800&auto=format&fit=crop&q=80",
+      "type": "Product",
+      "category": "Art & Collectibles",
+      "short_description": "Traditional solid brass butter lamp, hand-beaten and engraved by veteran Newar metal artisans.",
+      "long_description": "A quintessential spiritual collectible. Butter lamps (Choemey) are lit daily in Himalayan households and Buddhist monasteries as a symbol of offering and clarity. Hand-beaten from premium solid brass by generational metalsmiths in Kathmandu, this vintage-finished lamp features hand-engraved scrollwork and details. Beautiful as an authentic spiritual focal point, candle holder, or historical display piece. Extremely durable and heavy.",
+      "tags": ["brass", "collectible", "lamp", "buddhism", "vintage", "kathmandu"],
+      "active": true,
+      "seller_id": "d87e07a3-e4c1-4b1f-bc87-9bb3a67d0251",
+      "has_variants": false,
+      "base_sku": "AC-BL-03",
+      "stock": 20,
+      "is_popular": false
+    },
+    {
+      "id": "34c10702-53b4-4b5c-b17d-2b4756598c1a",
+      "name": "Himalayan Buddhist Prayer Flags (Pack of 5)",
+      "price": 250.00,
+      "image": "https://images.unsplash.com/photo-1542382156909-9ae37b3f56fd?w=800&auto=format&fit=crop&q=80",
+      "type": "Product",
+      "category": "Spiritual",
+      "short_description": "Authentic five-color cotton prayer flags printed with sacred mantras, wind horses, and prayers for peace and compassion.",
+      "long_description": "Hang these traditional prayer flags to bring peace, strength, and compassion. Ethically printed on durable 100% cotton sheets in Kathmandu, this set of 5 rolls features the standard five elemental colors (blue, white, red, green, yellow). As the wind blows, it is believed the prayers and mantras are carried to all corners of the universe, spreading good fortune and clearing obstacles. Each sheet features the Lungta (Wind Horse) and classic Tibetan prayers.",
+      "tags": ["prayer-flags", "spiritual", "cotton", "mantra", "peace", "nepal"],
+      "active": true,
+      "seller_id": "d87e07a3-e4c1-4b1f-bc87-9bb3a67d0251",
+      "has_variants": false,
+      "base_sku": "SP-PF-04",
+      "stock": 200,
+      "is_popular": true
+    },
+    {
+      "id": "45c0bda5-eebe-4d92-bf3d-24d14210cfef",
+      "name": "Wild Hemp Crossbody Passport Bag",
+      "price": 650.00,
+      "image": "https://images.unsplash.com/photo-1524498250077-390f9e378fc0?w=800&auto=format&fit=crop&q=80",
+      "type": "Product",
+      "category": "Wearables & Accessories",
+      "short_description": "Sleek, lightweight, and incredibly durable crossbody bag handmade from eco-friendly Himalayan wild hemp.",
+      "long_description": "Our wild hemp crossbody passport bag is the perfect travel companion. Handcrafted in Pokhara, it is designed to keep your passport, keys, phone, and cards secure and close by. Made from 100% natural, unbleached hemp fibers mixed with durable cotton linings. Features an adjustable shoulder strap, three zipped compartments, and unique earthy color block patterns. Extremely durable, eco-friendly, and machine washable.",
+      "tags": ["bag", "hemp", "crossbody", "wearable", "pokhara", "travel"],
+      "active": true,
+      "seller_id": "d87e07a3-e4c1-4b1f-bc87-9bb3a67d0251",
+      "has_variants": false,
+      "base_sku": "WA-HB-05",
+      "stock": 80,
+      "is_popular": true
+    }
+  ]
+}

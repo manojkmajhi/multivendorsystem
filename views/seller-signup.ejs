@@ -66,16 +66,86 @@
 
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <script>
+    // Real-time Name validation (only letters and spaces, instantly strips unwanted data)
+    $('#full_name').on('input', function() {
+      this.value = this.value.replace(/[^a-zA-Z\s]/g, '');
+      if (this.value.trim().length > 0) {
+        $(this).css('border-color', '#28a745');
+      } else {
+        $(this).css('border-color', '');
+      }
+    });
+
+    // Real-time Phone validation (numbers only, exactly 10 digits check)
+    $('#phone').on('input', function() {
+      this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+      if (this.value.length === 10) {
+        $(this).css('border-color', '#28a745');
+      } else if (this.value.length > 0) {
+        $(this).css('border-color', '#dc3545');
+      } else {
+        $(this).css('border-color', '');
+      }
+    });
+
     $('#sellerApplicationForm').on('submit', function(e) {
       e.preventDefault();
       
+      const fullName = $('#full_name').val().trim();
+      const phone = $('#phone').val().trim();
+      const email = $('#email').val().trim();
+      const businessName = $('#business_name').val().trim();
+      const location = $('#location').val().trim();
+      const messageText = $('#message_text').val().trim();
+
+      // Full Name Validation
+      const nameRegex = /^[a-zA-Z\s]+$/;
+      if (!nameRegex.test(fullName)) {
+        $('#message').removeClass('alert-success').addClass('alert-danger')
+          .text('Name should only contain letters and spaces (no numbers or special characters).')
+          .show();
+        $('html, body').animate({ scrollTop: 0 }, 300);
+        return;
+      }
+
+      // Phone Validation (exactly 10 digits)
+      const phoneRegex = /^[0-9]{10}$/;
+      if (!phoneRegex.test(phone)) {
+        $('#message').removeClass('alert-success').addClass('alert-danger')
+          .text('Phone number must be exactly 10 digits.')
+          .show();
+        $('html, body').animate({ scrollTop: 0 }, 300);
+        return;
+      }
+
+      // Email Validation (optional syntax check) - Enforce @gmail.com or @multivendor.com
+      if (email) {
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail\.com|multivendor\.com)$/i;
+        if (!emailRegex.test(email)) {
+          $('#message').removeClass('alert-success').addClass('alert-danger')
+            .text('Please enter a valid Gmail address (ending in @gmail.com).')
+            .show();
+          $('html, body').animate({ scrollTop: 0 }, 300);
+          return;
+        }
+      }
+
+      // Location Validation (min 5 characters if provided)
+      if (location && location.length < 5) {
+        $('#message').removeClass('alert-success').addClass('alert-danger')
+          .text('Please enter a detailed location (at least 5 characters).')
+          .show();
+        $('html, body').animate({ scrollTop: 0 }, 300);
+        return;
+      }
+
       const formData = {
-        full_name: $('#full_name').val(),
-        phone: $('#phone').val(),
-        email: $('#email').val(),
-        business_name: $('#business_name').val(),
-        location: $('#location').val(),
-        message: $('#message_text').val()
+        full_name: fullName,
+        phone: phone,
+        email: email,
+        business_name: businessName,
+        location: location,
+        message: messageText
       };
       
       $('#submitBtn').prop('disabled', true).text('Submitting...');
@@ -106,3 +176,4 @@
   </script>
 </body>
 </html>
+

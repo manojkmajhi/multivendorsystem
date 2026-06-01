@@ -40,6 +40,13 @@
       const images = document.querySelectorAll('img[loading="lazy"], img[data-src]');
       images.forEach(img => {
         if (!img.dataset.observed) {
+          const src = img.dataset.src || img.getAttribute('data-src') || img.src || img.getAttribute('src');
+          if (src && src.startsWith('data:')) {
+            img.style.opacity = '1';
+            img.classList.add('loaded');
+            img.dataset.observed = 'true';
+            return;
+          }
           this.prepareImage(img);
           this.observer.observe(img);
           img.dataset.observed = 'true';
@@ -74,6 +81,8 @@
       
       const src = img.dataset.src || img.getAttribute('data-src') || img.src;
       if (!src || src.startsWith('data:')) {
+        img.style.opacity = '1';
+        img.classList.add('loaded');
         this.activeLoads--;
         this.processQueue();
         return;
@@ -132,6 +141,12 @@
     optimizeExistingImages() {
       const images = document.querySelectorAll('img:not([loading="lazy"]):not([data-src])');
       images.forEach(img => {
+        const src = img.src || img.getAttribute('src');
+        if (src && src.startsWith('data:')) {
+          img.style.opacity = '1';
+          img.classList.add('loaded');
+          return;
+        }
         if (!img.complete) {
           img.style.opacity = '0';
           img.style.transition = 'opacity 0.3s ease-in-out';

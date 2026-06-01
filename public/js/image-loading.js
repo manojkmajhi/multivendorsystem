@@ -18,7 +18,7 @@
   }
   
   function initImages() {
-    const images = document.querySelectorAll('.product-img-container img, .category-img-container img');
+    const images = document.querySelectorAll('.product-img-container img, .category-img-container img, .rec-img-container img');
     images.forEach(handleImageLoad);
   }
   
@@ -34,7 +34,7 @@
       mutations.forEach(function(mutation) {
         mutation.addedNodes.forEach(function(node) {
           if (node.nodeType === 1) {
-            const imgs = node.querySelectorAll ? node.querySelectorAll('.product-img-container img, .category-img-container img') : [];
+            const imgs = node.querySelectorAll ? node.querySelectorAll('.product-img-container img, .category-img-container img, .rec-img-container img') : [];
             imgs.forEach(handleImageLoad);
           }
         });

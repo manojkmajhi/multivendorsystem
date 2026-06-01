@@ -980,6 +980,11 @@ tbody td {
   background-color: var(--gray-200);
 }
 
+.badge-info {
+  color: #0369a1;
+  background-color: #e0f2fe;
+}
+
 /* ========================================
    ALERTS
    ======================================== */

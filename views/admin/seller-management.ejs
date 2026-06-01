@@ -152,6 +152,15 @@
       e.preventDefault();
       const formData = new FormData(this);
       const data = Object.fromEntries(formData);
+      
+      if (data.email) {
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail\.com|multivendor\.com)$/i;
+        if (!emailRegex.test(data.email)) {
+          alert('Please enter a valid Gmail address (ending in @gmail.com).');
+          return;
+        }
+      }
+      
       data.status = 'approved';
       
       fetch('/admin/sellers/add', {

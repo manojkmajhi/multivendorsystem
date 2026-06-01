@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/css/style.blue.css" />
   <link rel="stylesheet" href="/custom-theme.css?v=<%= Date.now() %>" />
   <link rel="stylesheet" href="/css/floating-button.css" />
+  <link rel="stylesheet" href="/css/recommendations.css?v=<%= Date.now() %>" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@300;400;700&display=swap" />
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <style>
@@ -83,7 +84,7 @@
         </div>
       </form>
       <ul class="navbar-nav ml-auto phone-in-navbar" style="display:none;">
-        <li class="nav-item"><a class="nav-link" href="tel:9814789009"> <i class="fas fa-phone-alt"></i> 9814789009<sup><small> NP</small></sup></a></li>
+        <li class="nav-item"><a class="nav-link" href="tel:9811728715"> <i class="fas fa-phone-alt"></i> Need Help? 9811728715</a></li>
       </ul>
     </div>
   </nav>
@@ -142,6 +143,65 @@
         </div>
       </div>
     <% } %>
+
+    <!-- Cart Cross-Sells Widget -->
+    <% if(typeof crossSells !== 'undefined' && crossSells.length > 0) { %>
+      <section class="py-4 mt-5 border-top">
+        <div class="rec-section-header">
+          <span class="rec-subtitle">Frequently Bought With Items in Your Cart</span>
+          <h2 class="rec-title">You Might Also Like</h2>
+        </div>
+        <div class="row">
+          <% crossSells.forEach((p, idx) => { %>
+            <% 
+              const matchPercent = 98 - (idx * 2) - Math.floor(Math.random() * 2);
+            %>
+            <div class="col-xl-3 col-lg-4 col-6 px-1 py-1">
+              <div class="rec-product-card pt-2">
+                <div class="rec-match-badge">
+                  <i class="fas fa-heart animate-pulse"></i> <%= matchPercent %>% Match
+                </div>
+                
+                <div class="position-relative mb-1">
+                  <div class="<%= p.id %>-added-message show-added-message" style="display:none; position:absolute; left:4px; top:4px; background:#000; color:#fff; font-size:11px; padding:2px 5px; border-radius:3px; z-index:2;">Added</div>
+                  <a class="d-block" href="/details/<%= p.id %>/">
+                    <% 
+                      const isOutOfStock = p.has_variants 
+                        ? (p.variants ? p.variants.reduce((sum, v) => sum + (v.stock || 0), 0) <= 0 : false)
+                        : (p.stock <= 0);
+                    %>
+                    <div class="rec-img-container" style="position: relative;">
+                      <img class="blur-up lazy-image" data-src="<%= p.image %>" src="/staticfiles/placeholder-blur.jpg" alt="<%= p.name %>" loading="lazy" decoding="async" style="<%= isOutOfStock ? 'filter: grayscale(80%) opacity(60%);' : '' %>">
+                      <div class="skeleton-loader"></div>
+                      <% if (isOutOfStock) { %>
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(220, 38, 38, 0.9); color: #fff; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.5px; z-index: 3; pointer-events: none; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">Out of Stock</div>
+                      <% } %>
+                    </div>
+                  </a>
+                </div>
+
+                <div class="rec-card-body">
+                  <div class="rec-category-tag"><%= p.category %></div>
+                  <h5 class="rec-product-title">
+                    <a href="/details/<%= p.id %>/"><%= p.name %></a>
+                  </h5>
+                  <div class="rec-price-row">
+                    <span class="rec-price">Rs. <%= p.price %></span>
+                    <% if (isOutOfStock) { %>
+                      <button class="rec-add-btn" disabled style="opacity: 0.5; cursor: not-allowed; background: #999; border-color: #999;" title="Out of Stock"><i class="fas fa-times"></i></button>
+                    <% } else if(p.has_variants) { %>
+                      <a href="/details/<%= p.id %>/" class="rec-add-btn" title="Select options"><i class="fas fa-cog"></i></a>
+                    <% } else { %>
+                      <button class="rec-add-btn" onclick="addCrossSellToCart('<%= p.id %>', this)" title="Add to Cart"><i class="fas fa-plus"></i></button>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </section>
+    <% } %>
   </div>
 
 
@@ -182,6 +242,24 @@
     $(document).on('click','.remove-btn',function(e){ e.preventDefault(); var card=$(this).closest('.cart-item-card'); var id=card.data('id'); var variantId=card.data('variant-id')||null; setQty(id,0,variantId); });
     $('#search-form-in-navbar').submit(function(e){ e.preventDefault(); var search_term=$('#search').val(); if(search_term){ window.location=window.location.origin+'/search/all/?q='+search_term; }});
     recalcTotals();
+
+    function addCrossSellToCart(productId, btn) {
+      const $btn = $(btn);
+      $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+      addToCart(productId, 1, false, null)
+        .then(function() {
+          const msg = $('.' + productId + '-added-message');
+          msg.fadeIn(150);
+          setTimeout(function() {
+            msg.fadeOut(300);
+            location.reload();
+          }, 800);
+        })
+        .catch(function(err) {
+          console.error('Failed to add cross-sell item:', err);
+          $btn.prop('disabled', false).html('<i class="fas fa-plus"></i>');
+        });
+    }
   </script>
   <script>
     (function(){

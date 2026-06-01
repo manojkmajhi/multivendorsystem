@@ -193,9 +193,56 @@
       }
     });
 
+    // Real-time Name validation (only letters and spaces, instantly strips unwanted data)
+    $('input[name="full_name"]').on('input', function() {
+      this.value = this.value.replace(/[^a-zA-Z\s]/g, '');
+      if (this.value.trim().length > 0) {
+        $(this).css('border-color', '#28a745');
+      } else {
+        $(this).css('border-color', '');
+      }
+    });
+
+    // Real-time Phone validation (numbers only, exactly 10 digits check)
+    $('input[name="phone"]').on('input', function() {
+      this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+      if (this.value.length === 10) {
+        $(this).css('border-color', '#28a745');
+      } else if (this.value.length > 0) {
+        $(this).css('border-color', '#dc3545');
+      } else {
+        $(this).css('border-color', '');
+      }
+    });
+
     // Profile form
     $('#profileForm').on('submit', function(e) {
       e.preventDefault();
+      
+      const fullName = $('input[name="full_name"]').val().trim();
+      const phone = $('input[name="phone"]').val().trim();
+      const locationVal = $('input[name="location"]').val().trim();
+
+      // Full Name Validation
+      const nameRegex = /^[a-zA-Z\s]+$/;
+      if (!nameRegex.test(fullName)) {
+        Swal.fire('Error', 'Full Name should only contain letters and spaces (no numbers or special characters).', 'error');
+        return;
+      }
+
+      // Phone Validation (exactly 10 digits)
+      const phoneRegex = /^[0-9]{10}$/;
+      if (!phoneRegex.test(phone)) {
+        Swal.fire('Error', 'Phone number must be exactly 10 digits.', 'error');
+        return;
+      }
+
+      // Location Validation (min 5 characters if entered)
+      if (locationVal && locationVal.length < 5) {
+        Swal.fire('Error', 'Please enter a detailed location (at least 5 characters).', 'error');
+        return;
+      }
+
       const formData = new FormData(this);
       
       Swal.fire({

@@ -80,6 +80,28 @@
 
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <script>
+    // Real-time Name validation (only letters and spaces, instantly strips unwanted data)
+    $('#full_name').on('input', function() {
+      this.value = this.value.replace(/[^a-zA-Z\s]/g, '');
+      if (this.value.trim().length > 0) {
+        $(this).css('border-color', '#28a745');
+      } else {
+        $(this).css('border-color', '');
+      }
+    });
+
+    // Real-time Phone validation (numbers only, exactly 10 digits check)
+    $('#phone').on('input', function() {
+      this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+      if (this.value.length === 10) {
+        $(this).css('border-color', '#28a745');
+      } else if (this.value.length > 0) {
+        $(this).css('border-color', '#dc3545');
+      } else {
+        $(this).css('border-color', '');
+      }
+    });
+
     $('#profileForm').on('submit', function(e) {
       e.preventDefault();
       
@@ -92,6 +114,37 @@
         alert('Please fill in all required fields');
         return;
       }
+
+      // Full Name Validation
+      const nameRegex = /^[a-zA-Z\s]+$/;
+      if (!nameRegex.test(fullName)) {
+        alert('Name should only contain letters and spaces.');
+        return;
+      }
+
+      // Phone validation (exactly 10 digits)
+      let cleanPhone = phone.replace(/\D/g, '');
+      if (cleanPhone.startsWith('977') && cleanPhone.length > 10) {
+        cleanPhone = cleanPhone.slice(3);
+      }
+      const phoneRegex = /^[0-9]{10}$/;
+      if (!phoneRegex.test(cleanPhone)) {
+        alert('Phone number must be exactly 10 digits.');
+        return;
+      }
+
+      // Password Validation
+      if (password.length < 6) {
+        alert('Password must be at least 6 characters.');
+        return;
+      }
+
+      // Location Validation
+      const locationVal = $('#location').val().trim();
+      if (locationVal && locationVal.length < 5) {
+        alert('Please enter a detailed location (at least 5 characters).');
+        return;
+      }
       
       // Show loading
       $('#btnText').hide();
@@ -101,7 +154,7 @@
       // Submit
       $.post('/api/farmers/complete-signup', {
         full_name: fullName,
-        phone: phone,
+        phone: cleanPhone,
         password: password,
         business_name: $('#business_name').val() || '',
         location: $('#location').val() || '',

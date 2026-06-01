@@ -30,7 +30,7 @@ class VariantSelector {
       <div class="simple-product">
         <div class="price">${this.formatPrice(this.product.price)}</div>
         <div class="stock-info">${this.product.stock > 0 ? 'In Stock' : 'Out of Stock'}</div>
-        <button class="btn-add-cart" onclick="addToCart('${this.product.id}', null)" ${this.product.stock === 0 ? 'disabled' : ''}>
+        <button class="btn-add-cart" onclick="addToCart('${this.product.id}', null)" ${this.product.stock <= 0 ? 'disabled' : ''}>
           Add to Cart
         </button>
       </div>
@@ -100,8 +100,8 @@ class VariantSelector {
     
     if (this.currentVariant) {
       this.displayVariantInfo();
-      document.getElementById('addToCartBtn').disabled = this.currentVariant.stock === 0;
-      document.getElementById('addToCartBtn').textContent = this.currentVariant.stock === 0 ? 'Out of Stock' : 'Add to Cart';
+      document.getElementById('addToCartBtn').disabled = this.currentVariant.stock <= 0;
+      document.getElementById('addToCartBtn').textContent = this.currentVariant.stock <= 0 ? 'Out of Stock' : 'Add to Cart';
     } else {
       document.getElementById('variantInfo').style.display = 'none';
       document.getElementById('addToCartBtn').disabled = true;

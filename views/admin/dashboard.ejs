@@ -122,7 +122,11 @@
                 <div style="font-weight: 600; color: #333;"><%= product.name %></div>
                 <div style="color: #666; font-size: 12px;">Rs <%= product.price %></div>
               </div>
-              <span class="badge badge-warning"><%= product.stock %> left</span>
+              <% if (product.stock <= 0) { %>
+                <span class="badge badge-danger">Out of Stock</span>
+              <% } else { %>
+                <span class="badge badge-warning"><%= product.stock %> left</span>
+              <% } %>
             </div>
           <% }) %>
         <% } else { %>

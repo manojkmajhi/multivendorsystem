@@ -66,5 +66,20 @@
       </form>
     </div>
   </div>
+  <script>
+    document.querySelector('form').addEventListener('submit', function(e) {
+      const emailInput = document.querySelector('input[name="email"]');
+      if (emailInput) {
+        const email = emailInput.value.trim();
+        if (email) {
+          const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail\.com|multivendor\.com)$/i;
+          if (!emailRegex.test(email)) {
+            e.preventDefault();
+            alert('Please enter a valid Gmail address (ending in @gmail.com).');
+          }
+        }
+      }
+    });
+  </script>
 </body>
 </html>

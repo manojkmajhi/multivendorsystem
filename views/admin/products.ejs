@@ -49,6 +49,7 @@
                 <th>Category</th>
                 <th>Seller</th>
                 <th>Price</th>
+                <th>Quantity</th>
                 <th>Status</th>
                 <th style="width:280px;">Actions</th>
               </tr>
@@ -74,6 +75,35 @@
                   <% } %>
                 </td>
                 <td><strong>Rs. <%= p.price %></strong></td>
+                <td>
+                  <% if(p.has_variants) { %>
+                    <% const totalVarStock = p.variants ? p.variants.reduce((sum, v) => sum + (v.stock || 0), 0) : 0; %>
+                    <% if (totalVarStock <= 0) { %>
+                      <span class="badge badge-danger">Out of Stock</span>
+                    <% } else { %>
+                      <span class="badge badge-info" title="Sum of all variants stock">
+                        Variants (<%= totalVarStock %>)
+                      </span>
+                    <% } %>
+                    <% if (p.variants && p.variants.length > 0) { %>
+                      <div style="font-size: 11px; color: #555; margin-top: 4px; max-width: 150px; line-height: 1.3;">
+                        <% p.variants.forEach(v => { %>
+                          <% const label = Object.values(v.attribute_combination || {}).filter(val => val).join('/'); %>
+                          <div style="display: flex; justify-content: space-between; gap: 0.5rem; border-bottom: 1px dashed #eee; padding: 2px 0;">
+                            <span style="color:#666;"><%= label || 'Variant' %>:</span>
+                            <strong><%= v.stock %></strong>
+                          </div>
+                        <% }) %>
+                      </div>
+                    <% } %>
+                  <% } else { %>
+                    <% if (p.stock <= 0) { %>
+                      <span class="badge badge-danger">Out of Stock</span>
+                    <% } else { %>
+                      <span style="font-weight: 500;"><%= p.stock %></span>
+                    <% } %>
+                  <% } %>
+                </td>
                 <td>
                   <% if(typeof p.active === 'boolean'){ %>
                     <span class="badge <%= p.active? 'badge-success':'badge-secondary' %>">

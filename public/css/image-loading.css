@@ -66,6 +66,17 @@
 }
 
 .product-img-container img.loaded ~ .skeleton-loader,
-.category-img-container img.loaded ~ .skeleton-loader {
+.category-img-container img.loaded ~ .skeleton-loader,
+.rec-img-container img.loaded ~ .skeleton-loader {
   display: none;
+}
+
+/* Premium Recommendation Image support */
+.rec-img-container img {
+  opacity: 0;
+  transition: opacity 0.25s ease-in-out;
+}
+
+.rec-img-container img.loaded {
+  opacity: 1;
 }

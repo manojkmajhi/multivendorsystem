@@ -7,6 +7,7 @@
       <p class="text-muted small">Enter OTP sent to <strong id="verifyPhone"></strong> via WhatsApp</p>
       <input type="text" id="otpInput" class="form-control" placeholder="Enter 6-digit OTP" maxlength="6" style="font-size: 24px; text-align: center; letter-spacing: 8px; margin: 20px 0;" onkeypress="if(event.key==='Enter')verifyOTP()" oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value.length===6){setTimeout(verifyOTP, 300);}" autocomplete="one-time-code">
       <button id="verifyOTPBtn" onclick="verifyOTP()" class="btn btn-dark btn-block" style="height: 48px; font-weight: 600;">Verify OTP</button>
+      <div id="otpMessage" style="display: none; margin-top: 15px; padding: 10px; border-radius: 8px; font-size: 13px; text-align: center; font-weight: 500; transition: all 0.3s ease;"></div>
       <p class="text-center text-muted small mt-3">Didn't receive? <a href="#" onclick="resendOTP(); return false;">Resend OTP</a></p>
     </div>
   </div>
@@ -196,6 +197,25 @@ function closeUserModal() {
 function closeOTPModal() {
   document.getElementById('otpVerifyModal').classList.remove('active');
   document.body.style.overflow = '';
+  const msgEl = document.getElementById('otpMessage');
+  if (msgEl) msgEl.style.display = 'none';
+}
+
+function showOtpMessage(text, type = 'success') {
+  const msgEl = document.getElementById('otpMessage');
+  if (msgEl) {
+    msgEl.textContent = text;
+    msgEl.style.display = 'block';
+    if (type === 'success') {
+      msgEl.style.background = '#e8f5e9';
+      msgEl.style.color = '#2e7d32';
+      msgEl.style.border = '1px solid #a5d6a7';
+    } else {
+      msgEl.style.background = '#ffebee';
+      msgEl.style.color = '#c62828';
+      msgEl.style.border = '1px solid #ef9a9a';
+    }
+  }
 }
 
 function logout() {
@@ -219,6 +239,8 @@ async function verifyMobileWithOTP(phone, name, callback) {
   
   document.getElementById('verifyPhone').textContent = pendingPhone;
   document.getElementById('otpInput').value = '';
+  const msgEl = document.getElementById('otpMessage');
+  if (msgEl) msgEl.style.display = 'none';
   document.getElementById('otpVerifyModal').classList.add('active');
   document.body.style.overflow = 'hidden';
   
@@ -259,13 +281,15 @@ async function verifyMobileWithOTP(phone, name, callback) {
     console.log('OTP sent:', data);
     if (data.orderId) {
       otpOrderId = data.orderId;
+      return true;
     } else {
-      alert('Failed to send OTP: ' + (data.message || data.errorMessage || 'Unknown error'));
+      showOtpMessage('Failed to send OTP: ' + (data.message || data.errorMessage || 'Unknown error'), 'danger');
+      return false;
     }
   } catch(e) {
     console.error('Failed to send OTP:', e);
-    alert('Failed to send OTP: ' + e.message);
-    closeOTPModal();
+    showOtpMessage('Failed to send OTP: ' + e.message, 'danger');
+    return false;
   }
 }
 
@@ -275,7 +299,7 @@ async function verifyOTP() {
   const otp = document.getElementById('otpInput').value;
   
   if (!otp || otp.length !== 6) {
-    alert('Please enter 6-digit OTP');
+    showOtpMessage('Please enter 6-digit OTP', 'danger');
     return;
   }
   
@@ -312,7 +336,7 @@ async function verifyOTP() {
         verifyBtn.disabled = false;
         verifyBtn.textContent = 'Verify OTP';
       }
-      alert('Invalid OTP. Please try again.');
+      showOtpMessage('Invalid OTP. Please try again.', 'danger');
       document.getElementById('otpInput').value = '';
       document.getElementById('otpInput').focus();
     }
@@ -323,14 +347,29 @@ async function verifyOTP() {
       verifyBtn.disabled = false;
       verifyBtn.textContent = 'Verify OTP';
     }
-    alert('Failed to verify OTP. Please try again.');
+    showOtpMessage('Failed to verify OTP. Please try again.', 'danger');
   }
 }
 
 async function resendOTP() {
   const cleanPhone = pendingPhone.replace(/^\+977/, '');
-  await verifyMobileWithOTP(cleanPhone, pendingName, otpCallback);
-  alert('OTP resent to ' + pendingPhone);
+  const resendBtn = document.querySelector('a[onclick*="resendOTP"]');
+  if (resendBtn) {
+    resendBtn.style.pointerEvents = 'none';
+    resendBtn.style.opacity = '0.5';
+  }
+  
+  showOtpMessage('Resending OTP...', 'success');
+  const success = await verifyMobileWithOTP(cleanPhone, pendingName, otpCallback);
+  
+  if (resendBtn) {
+    resendBtn.style.pointerEvents = '';
+    resendBtn.style.opacity = '';
+  }
+  
+  if (success) {
+    showOtpMessage('OTP has been successfully resent to ' + pendingPhone, 'success');
+  }
 }
 
 if (document.readyState === 'loading') {

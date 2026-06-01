@@ -89,8 +89,8 @@ function updateQuickviewVariant() {
     `).show();
     
     $('#quickview-add-to-cart').data('selected-variant', matchedVariant.id)
-      .prop('disabled', matchedVariant.stock === 0)
-      .text(matchedVariant.stock === 0 ? 'Out of Stock' : 'Add to Cart');
+      .prop('disabled', matchedVariant.stock <= 0)
+      .text(matchedVariant.stock <= 0 ? 'Out of Stock' : 'Add to Cart');
     
     if (matchedVariant.image) {
       $('#quickview-img').attr('src', matchedVariant.image);

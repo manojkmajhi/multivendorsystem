@@ -203,7 +203,7 @@
     <div class="container px-0 px-lg-3 d-flex align-items-center justify-content-between">
   <a class="navbar-brand" href="/"><img src="<%= (siteSetting && siteSetting.logo_url) || '/staticfiles/brand.svg' %>" height="60" /></a>
       <ul class="navbar-nav ml-auto phone-in-navbar" style="display:flex; flex-direction:row;">
-        <li class="nav-item"><a class="nav-link" href="tel:9814789009"><i class="fas fa-phone-alt"></i> 9814789009<sup><small> NP</small></sup></a></li>
+        <li class="nav-item"><a class="nav-link" href="tel:9811728715"><i class="fas fa-phone-alt"></i> Need Help? 9811728715</a></li>
       </ul>
     </div>
   </nav>
@@ -228,10 +228,12 @@
             <div class="col-md-6 form-group">
               <label class="sr-only" for="name">Name *</label>
               <input id="name" class="form-control" placeholder="Name *" required />
+              <div class="validation-warning" id="nameWarning" style="display:none; color:#dc3545; font-size:11px; margin-top:4px; font-weight:500;"><i class="fas fa-exclamation-circle"></i> Name should only contain letters and spaces</div>
             </div>
             <div class="col-md-6 form-group">
               <label class="sr-only" for="mobile">WhatsApp Number *</label>
               <input id="mobile" class="form-control" placeholder="WhatsApp Number *" type="tel" pattern="[0-9]{10}" maxlength="10" required />
+              <div class="validation-warning" id="mobileWarning" style="display:none; color:#dc3545; font-size:11px; margin-top:4px; font-weight:500;"><i class="fas fa-exclamation-circle"></i> Phone number must be exactly 10 digits</div>
               <small class="helper-text">OTP will be sent via WhatsApp</small>
             </div>
             <div class="col-md-6 form-group">
@@ -252,6 +254,7 @@
             <div class="col-md-6 form-group">
               <label class="sr-only" for="email">Email (Optional)</label>
               <input id="email" type="email" class="form-control" placeholder="Email (Optional)" />
+              <div class="validation-warning" id="emailWarning" style="display:none; color:#dc3545; font-size:11px; margin-top:4px; font-weight:500;"><i class="fas fa-exclamation-circle"></i> Please enter a valid Gmail address (ending in @gmail.com)</div>
             </div>
             <div class="col-md-6 form-group">
               <label class="sr-only" for="address">Detailed Address *</label>
@@ -687,9 +690,49 @@
       document.getElementById('name').value = window.currentUser.name;
     }
     
-    // Mobile validation
+    // Name validation as they type (shows inline warning, does not block typing)
+    document.getElementById('name').addEventListener('input', function(e) {
+      const val = this.value;
+      const warningEl = document.getElementById('nameWarning');
+      const nameRegex = /^[a-zA-Z\s]*$/;
+      
+      if (!nameRegex.test(val)) {
+        warningEl.style.display = 'block';
+        this.style.borderColor = '#dc3545'; // red border
+      } else {
+        warningEl.style.display = 'none';
+        this.style.borderColor = val.trim().length > 0 ? '#28a745' : ''; // green border if populated and valid
+      }
+    });
+    
+    // Mobile validation as they type (numbers only, exactly 10 digits check, shows inline warning)
     document.getElementById('mobile').addEventListener('input', function(e) {
       this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+      const val = this.value;
+      const warningEl = document.getElementById('mobileWarning');
+      
+      if (val.length > 0 && val.length !== 10) {
+        warningEl.style.display = 'block';
+        this.style.borderColor = '#dc3545'; // red border
+      } else {
+        warningEl.style.display = 'none';
+        this.style.borderColor = val.length === 10 ? '#28a745' : ''; // green border if exactly 10
+      }
+    });
+
+    // Email validation as they type (shows inline warning and borders)
+    document.getElementById('email').addEventListener('input', function(e) {
+      const val = this.value.trim();
+      const warningEl = document.getElementById('emailWarning');
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail\.com|multivendor\.com)$/i;
+      
+      if (val.length > 0 && !emailRegex.test(val)) {
+        warningEl.style.display = 'block';
+        this.style.borderColor = '#dc3545'; // red border
+      } else {
+        warningEl.style.display = 'none';
+        this.style.borderColor = val.length > 0 ? '#28a745' : ''; // green border if valid
+      }
     });
 
     // Celebration + confetti instead of alert
@@ -708,11 +751,12 @@
     document.getElementById('checkout-form').addEventListener('submit', async function(e){ 
       e.preventDefault();
       
-      const name = document.getElementById('name').value;
-      const mobile = document.getElementById('mobile').value;
+      const name = document.getElementById('name').value.trim();
+      const mobile = document.getElementById('mobile').value.trim();
       const paymentMethod = document.querySelector('input[name="payment"]:checked')?.value || 'cod';
       const areaVal = document.getElementById('areaValue').value;
-      const address = document.getElementById('address').value;
+      const address = document.getElementById('address').value.trim();
+      const email = document.getElementById('email')?.value.trim();
       
       // Validate required fields
       if (!name || !mobile) {
@@ -722,6 +766,35 @@
       
       if(!address || !areaVal) {
         alert('Please fill in all required fields');
+        return;
+      }
+
+      // Name Validation: only letters and spaces allowed
+      const nameRegex = /^[a-zA-Z\s]+$/;
+      if (!nameRegex.test(name)) {
+        alert('Name should only contain letters and spaces (no numbers or special characters).');
+        return;
+      }
+
+      // Phone Validation: exactly 10 digits
+      const phoneRegex = /^[0-9]{10}$/;
+      if (!phoneRegex.test(mobile)) {
+        alert('Phone number must be exactly 10 digits.');
+        return;
+      }
+
+      // Email Validation: check syntax if email is entered - Enforce @gmail.com or @multivendor.com
+      if (email) {
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail\.com|multivendor\.com)$/i;
+        if (!emailRegex.test(email)) {
+          alert('Please enter a valid Gmail address (ending in @gmail.com).');
+          return;
+        }
+      }
+
+      // Address Validation: detailed address should be at least 5 characters long
+      if (address.length < 5) {
+        alert('Please enter a detailed address (at least 5 characters).');
         return;
       }
       

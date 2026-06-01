@@ -1,7 +1,7 @@
 -- Migration: Create seller applications table
 -- This creates the missing farmer_applications table and seller_applications view
 
--- Create farmer_applications table
+-- Create applications table
 CREATE TABLE IF NOT EXISTS public.farmer_applications (
   id uuid primary key default gen_random_uuid(),
   full_name text not null,
@@ -32,4 +32,4 @@ SELECT * FROM public.farmer_applications;
 
 -- Grant permissions
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.farmer_applications TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.seller_applications TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.seller_applications TO authenticated; 

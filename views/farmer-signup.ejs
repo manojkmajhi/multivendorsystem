@@ -462,8 +462,15 @@
     // STEP 1: Send OTP
     $('#emailForm').on('submit', function(e) {
       e.preventDefault();
-      currentEmail = $('#email').val();
+      currentEmail = $('#email').val().trim();
       const btn = $(this).find('button');
+
+      // Email format check - Enforce @gmail.com or @multivendor.com
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail\.com|multivendor\.com)$/i;
+      if (!emailRegex.test(currentEmail)) {
+        showError('Please enter a valid Gmail address (ending in @gmail.com).');
+        return;
+      }
       
       btn.prop('disabled', true).text('Sending OTP...');
       
@@ -534,16 +541,63 @@
       });
     });
 
+    // Real-time Name validation (only letters and spaces, instantly strips unwanted data)
+    $('#farmerName').on('input', function() {
+      this.value = this.value.replace(/[^a-zA-Z\s]/g, '');
+      if (this.value.trim().length > 0) {
+        $(this).css('border-color', '#28a745');
+      } else {
+        $(this).css('border-color', '');
+      }
+    });
+
+    // Real-time Phone validation (numbers only, exactly 10 digits check)
+    $('#phone').on('input', function() {
+      this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+      if (this.value.length === 10) {
+        $(this).css('border-color', '#28a745');
+      } else if (this.value.length > 0) {
+        $(this).css('border-color', '#dc3545');
+      } else {
+        $(this).css('border-color', '');
+      }
+    });
+
     // STEP 3: Complete Signup
     $('#profileForm').on('submit', function(e) {
       e.preventDefault();
       
+      const farmerName = $('#farmerName').val().trim();
+      const phone = $('#phone').val().trim();
+      const password = $('#password').val();
+      const businessName = $('#businessName').val().trim();
+
+      // Full Name validation
+      const nameRegex = /^[a-zA-Z\s]+$/;
+      if (!nameRegex.test(farmerName)) {
+        showError('Name should only contain letters and spaces.');
+        return;
+      }
+
+      // Phone validation (exactly 10 digits)
+      const phoneRegex = /^[0-9]{10}$/;
+      if (!phoneRegex.test(phone)) {
+        showError('Phone number must be exactly 10 digits.');
+        return;
+      }
+
+      // Password length check
+      if (password.length < 6) {
+        showError('Password must be at least 6 characters.');
+        return;
+      }
+
       const data = {
         email: currentEmail,
-        name: $('#farmerName').val(),
-        phone: $('#phone').val(),
-        password: $('#password').val(),
-        businessName: $('#businessName').val()
+        name: farmerName,
+        phone: phone,
+        password: password,
+        businessName: businessName
       };
       
       const btn = $(this).find('button[type="submit"]');

@@ -148,16 +148,75 @@
       });
     });
 
+    // Real-time Name validation (only letters and spaces, instantly strips unwanted data)
+    $('input[name="full_name"]').on('input', function() {
+      this.value = this.value.replace(/[^a-zA-Z\s]/g, '');
+      if (this.value.trim().length > 0) {
+        $(this).css('border-color', '#28a745');
+      } else {
+        $(this).css('border-color', '');
+      }
+    });
+
+    // Real-time Phone validation (numbers only, exactly 10 digits check)
+    $('input[name="phone"]').on('input', function() {
+      this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+      if (this.value.length === 10) {
+        $(this).css('border-color', '#28a745');
+      } else if (this.value.length > 0) {
+        $(this).css('border-color', '#dc3545');
+      } else {
+        $(this).css('border-color', '');
+      }
+    });
+
     // Apply form submission
     $('#applyForm').on('submit', function(e) {
       e.preventDefault();
+      
+      const fullName = $('input[name="full_name"]').val().trim();
+      const phone = $('input[name="phone"]').val().trim();
+      const email = $('input[name="email"]').val().trim();
+      const businessName = $('input[name="business_name"]').val().trim();
+      const location = $('input[name="location"]').val().trim();
+      const message = $('textarea[name="message"]').val().trim();
+
+      // Full Name validation
+      const nameRegex = /^[a-zA-Z\s]+$/;
+      if (!nameRegex.test(fullName)) {
+        alert('Name should only contain letters and spaces (no numbers or special characters).');
+        return;
+      }
+
+      // Phone validation (10 digits)
+      const phoneRegex = /^[0-9]{10}$/;
+      if (!phoneRegex.test(phone)) {
+        alert('Phone number must be exactly 10 digits.');
+        return;
+      }
+
+      // Email validation (optional syntax check) - Enforce @gmail.com or @multivendor.com
+      if (email) {
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail\.com|multivendor\.com)$/i;
+        if (!emailRegex.test(email)) {
+          alert('Please enter a valid Gmail address (ending in @gmail.com).');
+          return;
+        }
+      }
+
+      // Location validation (min 5 characters if provided)
+      if (location && location.length < 5) {
+        alert('Please enter a detailed location (at least 5 characters).');
+        return;
+      }
+
       const formData = {
-        full_name: $('input[name="full_name"]').val(),
-        phone: $('input[name="phone"]').val(),
-        email: $('input[name="email"]').val(),
-        business_name: $('input[name="business_name"]').val(),
-        location: $('input[name="location"]').val(),
-        message: $('textarea[name="message"]').val()
+        full_name: fullName,
+        phone: phone,
+        email: email,
+        business_name: businessName,
+        location: location,
+        message: message
       };
       
       $.post('/api/seller-applications', formData)

@@ -170,10 +170,23 @@
 
     $('#signupForm').on('submit', function(e) {
       e.preventDefault();
-      currentEmail = $('#email').val();
+      currentEmail = $('#email').val().trim();
       currentPassword = $('#password').val();
       const confirmPassword = $('#confirm_password').val();
       
+      // Email format check - Enforce @gmail.com or @multivendor.com
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail\.com|multivendor\.com)$/i;
+      if (!emailRegex.test(currentEmail)) {
+        showError('Please enter a valid Gmail address (ending in @gmail.com).');
+        return;
+      }
+
+      // Password checks
+      if (currentPassword.length < 6) {
+        showError('Password must be at least 6 characters.');
+        return;
+      }
+
       if (currentPassword !== confirmPassword) {
         showError('Passwords do not match');
         return;
